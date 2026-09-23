@@ -1,0 +1,43 @@
+# Integração contínua (plano de início, Etapa 2).
+# Nenhum código entra na main sem passar por: tipos → lint → testes → build → salvaguarda.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Tipos
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Formatação
+        run: pnpm format:check
+      - name: Testes
+        run: pnpm test
+      - name: Build do site (com pré-renderização)
+        run: pnpm build
+      - name: Salvaguarda 1 — sem ganchos de teste no build de produção
+        run: |
+          if grep -rq "__APP_TEST__\|/__test__" apps/web/dist; then
+            echo "::error::Ganchos de teste encontrados no build de produção"
+            exit 1
+          fi
+      - name: Página inicial pré-renderizada
+        run: grep -q 'data-prerendered="/"' apps/web/dist/index.html

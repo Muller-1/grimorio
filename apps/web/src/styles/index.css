@@ -1,0 +1,178 @@
+@import 'tailwindcss';
+@import '@fontsource/cinzel/600.css';
+@import '@fontsource/cinzel/700.css';
+
+/*
+ * Tokens de cor. Tema claro = pergaminho; tema escuro = taverna à noite.
+ * Segue a preferência do sistema; `data-theme` no <html> força um dos dois.
+ */
+:root {
+  --bg: #f4eee2;
+  --surface: #fffcf6;
+  --surface-2: #efe6d5;
+  --border: #d8c9ae;
+  --border-strong: #b9a482;
+  --text: #2a2118;
+  --muted: #6b5c4a;
+  --accent: #8e2a2a;
+  --accent-hover: #7a2222;
+  --accent-soft: #f3dcd6;
+  --accent-contrast: #fff8f0;
+  --gold: #9a6c14;
+  --gold-soft: #f6e7c4;
+  --success: #2f6b3a;
+  --success-soft: #dcefdc;
+  --danger: #a3261f;
+  --danger-soft: #f7dcd9;
+  --focus: #c08a1e;
+  --shadow: 0 1px 2px rgb(60 40 20 / 0.08), 0 2px 8px rgb(60 40 20 / 0.06);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #15120e;
+    --surface: #1f1a15;
+    --surface-2: #29231c;
+    --border: #3b3228;
+    --border-strong: #56493a;
+    --text: #efe6d6;
+    --muted: #ad9d89;
+    --accent: #e0685d;
+    --accent-hover: #ea7c72;
+    --accent-soft: #3a1f1b;
+    --accent-contrast: #1a0f0d;
+    --gold: #e0b252;
+    --gold-soft: #3a2e17;
+    --success: #7cc98a;
+    --success-soft: #1d3322;
+    --danger: #f07a70;
+    --danger-soft: #3b1c19;
+    --focus: #e0b252;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #15120e;
+  --surface: #1f1a15;
+  --surface-2: #29231c;
+  --border: #3b3228;
+  --border-strong: #56493a;
+  --text: #efe6d6;
+  --muted: #ad9d89;
+  --accent: #e0685d;
+  --accent-hover: #ea7c72;
+  --accent-soft: #3a1f1b;
+  --accent-contrast: #1a0f0d;
+  --gold: #e0b252;
+  --gold-soft: #3a2e17;
+  --success: #7cc98a;
+  --success-soft: #1d3322;
+  --danger: #f07a70;
+  --danger-soft: #3b1c19;
+  --focus: #e0b252;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-focus: var(--focus);
+  --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --shadow-card: var(--shadow);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-bg text-text font-sans antialiased;
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  /* Números sem as setinhas do navegador: usamos botões próprios. */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Animação de rolagem (RF-77). "Reduzir movimento" do sistema desliga (regra acima). */
+@keyframes roll-pop {
+  0% {
+    transform: scale(0.4) rotate(-25deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(6deg);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes roll-chip {
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.animate-roll-pop {
+  display: inline-block;
+  animation: roll-pop 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.animate-roll-chip {
+  animation: roll-chip 0.3s ease-out both;
+}
