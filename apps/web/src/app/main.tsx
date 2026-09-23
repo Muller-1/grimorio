@@ -16,8 +16,9 @@ const app = (
   </StrictMode>
 );
 
-// A página inicial vem pré-renderizada no build (HTML pronto, bom para busca).
-// Outras rotas recebem o mesmo arquivo como "fallback" e são desenhadas do zero.
+// Cada rota tem o próprio HTML, gerado no build (scripts/prerender.mjs, ADR-005). As páginas
+// "full" chegam prontas e são só hidratadas; as "shell" (ficha, dados, 404) trazem só a moldura
+// e são desenhadas do zero.
 if (container.dataset.prerendered === window.location.pathname) {
   hydrateRoot(container, app);
 } else {

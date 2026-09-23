@@ -51,6 +51,7 @@ export default defineConfig([
     '**/test-results/**',
     '**/.tsbuild/**',
     '**/coverage/**',
+    '**/.lighthouseci/**',
   ]),
 
   js.configs.recommended,
@@ -70,7 +71,15 @@ export default defineConfig([
 
   // Scripts e configs rodam no Node.
   {
-    files: ['*.js', '*.ts', 'scripts/**', 'apps/*/scripts/**', 'apps/*/*.ts'],
+    files: [
+      '*.js',
+      '*.ts',
+      'scripts/**',
+      'apps/*/scripts/**',
+      'apps/*/build/**',
+      'apps/*/*.ts',
+      'apps/*/.size-limit.mjs',
+    ],
     languageOptions: { globals: globals.node },
   },
 
@@ -81,6 +90,23 @@ export default defineConfig([
     rules: {
       'no-restricted-imports': pureRestrictedImports,
       'no-restricted-properties': nonDeterminism,
+    },
+  },
+
+  {
+    // O `z` sai de packages/shared/src/zod.ts, que desliga o eval do Zod (CSP do site).
+    files: ['packages/shared/src/**/*.ts'],
+    ignores: ['packages/shared/src/zod.ts', ...testFiles],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: 'zod', message: "Importe { z } de '../zod' (sem eval, por causa da CSP)." },
+          ],
+          patterns: pureRestrictedImports[1].patterns,
+        },
+      ],
     },
   },
 

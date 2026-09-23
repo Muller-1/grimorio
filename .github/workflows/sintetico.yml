@@ -1,0 +1,94 @@
+# B14 — monitor sintético (plano v2, RNF-12; plano de início, Etapa 8).
+# A cada 30 minutos abre /dados NA PRODUÇÃO, rola 1d20 e confere que o total está entre 1 e 20.
+# Depois de 2 falhas seguidas, abre (ou comenta) uma issue — o GitHub avisa por e-mail.
+#
+# Para ligar: Settings → Secrets and variables → Actions → aba Variables → New repository variable
+#   PRODUCTION_URL = https://SEU-SITE.pages.dev   (sem barra no fim)
+# Sem a variável, o monitor só avisa que está desligado. Veja docs/publicacao.md.
+name: Monitor sintético (B14)
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: sintetico
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  b14:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BOT_BASE_URL: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - name: Endereço de produção configurado?
+        id: alvo
+        run: |
+          if [ -z "$BOT_BASE_URL" ]; then
+            echo "::notice::Monitor desligado: defina a variável PRODUCTION_URL do repositório."
+            echo "ativo=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ativo=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.alvo.outputs.ativo == 'true'
+      - uses: pnpm/action-setup@v6
+        if: steps.alvo.outputs.ativo == 'true'
+      - uses: actions/setup-node@v7
+        if: steps.alvo.outputs.ativo == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Instalar só o bot
+        if: steps.alvo.outputs.ativo == 'true'
+        run: pnpm install --frozen-lockfile --filter "@grimorio/qa-bot..."
+
+      # Usa o Google Chrome que já vem na máquina do GitHub: poupa o download do Chromium
+      # a cada 30 minutos (e os minutos de Actions, num repositório privado).
+      - name: B14 contra a produção
+        if: steps.alvo.outputs.ativo == 'true'
+        env:
+          BOT_CHROMIUM_PATH: /usr/bin/google-chrome
+        run: pnpm bot --scenario=B14 --project=desktop --env="$BOT_BASE_URL"
+
+      - name: Relatório (só quando falha)
+        if: failure() && steps.alvo.outputs.ativo == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: relatorio-b14
+          path: |
+            apps/qa-bot/playwright-report
+            apps/qa-bot/test-results
+          retention-days: 7
+
+      # RNF-12: alerta depois de 2 falhas seguidas (uma falha isolada pode ser só a rede).
+      - name: Avisar depois de 2 falhas seguidas
+        if: failure() && steps.alvo.outputs.ativo == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          anterior=$(gh run list --workflow sintetico.yml --status completed --limit 1 \
+            --json conclusion --jq '.[0].conclusion // ""')
+          if [ "$anterior" != "failure" ]; then
+            echo "Primeira falha; o alerta sai se a próxima execução também falhar."
+            exit 0
+          fi
+          titulo="B14: o site em produção está com problema"
+          corpo="Duas execuções seguidas do monitor falharam em $BOT_BASE_URL. Última: $RUN_URL"
+          aberta=$(gh issue list --state open --search "\"$titulo\" in:title" \
+            --json number --jq '.[0].number // ""')
+          if [ -n "$aberta" ]; then
+            gh issue comment "$aberta" --body "$corpo"
+          else
+            gh issue create --title "$titulo" --body "$corpo"
+          fi

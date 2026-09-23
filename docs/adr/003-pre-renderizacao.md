@@ -1,6 +1,6 @@
 # ADR-003 — Pré-renderização da página inicial (prova de conceito da Etapa 5)
 
-- **Status:** aceito
+- **Status:** aceito; ampliado pelo [ADR-005](005-publicacao-cloudflare.md) (um HTML por rota)
 - **Data:** 2026-09-22
 
 ## Contexto

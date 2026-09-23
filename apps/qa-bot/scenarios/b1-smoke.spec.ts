@@ -3,7 +3,7 @@
  * no console; com semente fixa, 1d20 dá um valor exato conhecido.
  */
 import { seededRng } from '@grimorio/rules';
-import { expect, openPage, PAGES, rollBy, test } from '../support/bot';
+import { expect, expected404, openPage, PAGES, rollBy, test } from '../support/bot';
 
 test.describe('B1 — fumaça', { tag: '@B1' }, () => {
   for (const path of PAGES) {
@@ -14,9 +14,12 @@ test.describe('B1 — fumaça', { tag: '@B1' }, () => {
     });
   }
 
-  test('página que não existe mostra o aviso, sem erro', async ({ page }) => {
-    await openPage(page, '/nao-existe');
-    await expect(page.locator('h1')).toBeVisible();
+  test('página que não existe responde 404 e mostra o aviso, sem erro', async ({ page }) => {
+    expected404('/nao-existe');
+    const response = await page.goto('/nao-existe');
+    expect(response?.status()).toBe(404);
+    await page.waitForFunction(() => window.__APP_TEST__ !== undefined);
+    await expect(page.locator('h1')).toHaveText('Página não encontrada');
   });
 
   test('o build de teste informa a versão', async ({ page }) => {
@@ -37,8 +40,22 @@ test.describe('B1 — fumaça', { tag: '@B1' }, () => {
     );
   });
 
-  test('a página inicial chega pré-renderizada', async ({ request }) => {
-    const html = await (await request.get('/')).text();
-    expect(html).toContain('data-prerendered="/"');
+  // Etapa 8: cada rota tem o próprio HTML (ver scripts/prerender.mjs).
+  for (const [path, mark] of [
+    ['/', 'data-prerendered="/"'],
+    ['/termos', 'data-prerendered="/termos"'],
+    ['/dados', 'data-shell="/dados"'],
+    ['/ficha', 'data-shell="/ficha"'],
+  ] as const) {
+    test(`${path} chega com o HTML certo (${mark.split('=')[0]})`, async ({ request }) => {
+      const html = await (await request.get(path)).text();
+      expect(html).toContain(mark);
+    });
+  }
+
+  test('responde com os cabeçalhos de segurança da produção', async ({ request }) => {
+    const headers = (await request.get('/dados')).headers();
+    expect(headers['content-security-policy']).toContain("script-src 'self'");
+    expect(headers['x-content-type-options']).toBe('nosniff');
   });
 });

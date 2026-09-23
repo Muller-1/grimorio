@@ -8,7 +8,11 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['packages/*/src/**/*.test.ts', 'apps/*/src/**/*.test.{ts,tsx}'],
+    include: [
+      'packages/*/src/**/*.test.ts',
+      'apps/*/src/**/*.test.{ts,tsx}',
+      'apps/web/build/**/*.test.ts',
+    ],
     environment: 'node',
     // Toda execução com fast-check imprime a semente; para reproduzir: FC_SEED=<n> pnpm test
     reporters: ['default'],

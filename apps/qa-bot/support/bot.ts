@@ -21,13 +21,15 @@ declare global {
   interface Window {
     __APP_TEST__?: AppTestHooks;
     __BOT_EVENTS__?: BotEvent[];
+    __BOT_CSP__?: string[];
   }
 }
 
 /**
  * Fixtures do bot:
  * - `seed`: a semente única da execução (BOT_SEED);
- * - `consoleErrors`: coleta erros do console e da página e FALHA o cenário se houver algum;
+ * - `consoleErrors`: coleta erros do console, da página e violações da CSP e FALHA o cenário se
+ *   houver algum;
  * - registra todos os eventos `app:*` em `window.__BOT_EVENTS__` (sem `sleep`: esperamos eventos).
  */
 export const test = base.extend<{ seed: number; consoleErrors: string[] }>({
@@ -37,13 +39,24 @@ export const test = base.extend<{ seed: number; consoleErrors: string[] }>({
     await use(seed);
   },
   consoleErrors: [
-    async ({ page }, use) => {
+    async ({ page }, use, testInfo) => {
       const errors: string[] = [];
       page.on('console', (m) => {
-        if (m.type() === 'error') errors.push(m.text());
+        if (m.type() !== 'error') return;
+        // Um cenário que abre de propósito uma página inexistente (status 404) marca o teste
+        // com `expected404(...)`; o aviso do navegador sobre ESSE documento não é erro do site.
+        const allowed = testInfo.annotations.some(
+          (a) => a.type === '404-esperado' && m.location().url.endsWith(a.description ?? '\0'),
+        );
+        if (!allowed) errors.push(m.text());
       });
       page.on('pageerror', (e) => errors.push(e.message));
       await page.addInitScript(() => {
+        // Violações da Content-Security-Policy nem sempre aparecem como erro no console.
+        window.__BOT_CSP__ = [];
+        document.addEventListener('securitypolicyviolation', (e) => {
+          window.__BOT_CSP__!.push(`${e.violatedDirective} bloqueou ${e.blockedURI || 'inline'}`);
+        });
         window.__BOT_EVENTS__ = [];
         for (const type of ['app:ready', 'app:roll']) {
           window.addEventListener(type, (e) => {
@@ -52,13 +65,20 @@ export const test = base.extend<{ seed: number; consoleErrors: string[] }>({
         }
       });
       await use(errors);
+      const csp = page.isClosed() ? [] : await page.evaluate(() => window.__BOT_CSP__ ?? []);
       expect(errors, 'o site não pode mostrar erros no console').toEqual([]);
+      expect(csp, 'nada pode ser bloqueado pela Content-Security-Policy').toEqual([]);
     },
     { auto: true },
   ],
 });
 
 export { expect };
+
+/** Avisa a fixture de console que `path` deve mesmo responder 404. */
+export function expected404(path: string): void {
+  test.info().annotations.push({ type: '404-esperado', description: path });
+}
 
 /** Abre a página e espera os ganchos de teste estarem instalados. */
 export async function openPage(page: Page, path: string): Promise<void> {

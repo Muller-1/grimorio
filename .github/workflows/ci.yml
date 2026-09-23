@@ -1,5 +1,6 @@
-# Integração contínua (plano de início, Etapa 2).
-# Nenhum código entra na main sem passar por: tipos → lint → testes → build → salvaguarda.
+# Integração contínua (plano de início, Etapas 2, 6 e 8).
+# Nenhum código entra na main sem passar por: tipos → lint → testes → build → salvaguardas →
+# orçamentos de tamanho → bot (B1, B11, B12, B14) → Lighthouse.
 name: CI
 
 on:
@@ -10,6 +11,9 @@ on:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -39,11 +43,19 @@ jobs:
             echo "::error::Ganchos de teste encontrados no build de produção"
             exit 1
           fi
-      - name: Página inicial pré-renderizada
-        run: grep -q 'data-prerendered="/"' apps/web/dist/index.html
+      - name: Um HTML por rota (+ 404) e cabeçalhos da Cloudflare
+        working-directory: apps/web/dist
+        run: |
+          grep -q 'data-prerendered="/"' index.html
+          for page in ficha dados apoie creditos termos privacidade 404; do
+            test -f "$page.html" || { echo "::error::Falta $page.html no build"; exit 1; }
+          done
+          test -f _headers
+      - name: Orçamentos de tamanho (RNF-01)
+        run: pnpm size
 
-  # Etapa 6: bot de testes (plano v2, seção 15). Sobe o build de TESTE (com ganchos)
-  # e roda os cenários B1 (fumaça), B11 (dados) e B12 (acessibilidade).
+  # Etapa 6: bot de testes (plano v2, seção 15). Sobe o build de TESTE (com ganchos e com os
+  # mesmos cabeçalhos da produção) e roda B1 (fumaça), B11 (dados), B12 (acessibilidade) e B14.
   bot:
     needs: check
     runs-on: ubuntu-latest
@@ -58,7 +70,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Navegador do bot
         run: pnpm --filter @grimorio/qa-bot exec playwright install --with-deps chromium
-      - name: Bot — B1, B11 e B12
+      - name: Bot — todos os cenários
         run: pnpm bot
       - name: Relatório e traces (só quando falha)
         if: failure()
@@ -68,4 +80,28 @@ jobs:
           path: |
             apps/qa-bot/playwright-report
             apps/qa-bot/test-results
+          retention-days: 14
+
+  # Etapa 8: Lighthouse com emulação de celular em /dados e na página inicial (RNF-01: LCP ≤ 2,5 s).
+  lighthouse:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Lighthouse CI
+        run: pnpm lighthouse
+      - name: Relatórios do Lighthouse
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: relatorios-lighthouse
+          path: .lighthouseci/relatorios
           retention-days: 14

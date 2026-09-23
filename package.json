@@ -18,7 +18,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
-    "bot": "pnpm --filter @grimorio/qa-bot bot"
+    "bot": "pnpm --filter @grimorio/qa-bot bot",
+    "size": "pnpm --filter @grimorio/web size",
+    "lighthouse": "pnpm dlx @lhci/cli@0.15.1 autorun"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

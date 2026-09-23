@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 
 /**
  * Atalhos de rolagem com nome (RF-72), ex.: "Magia da mesa" → `100d2`.

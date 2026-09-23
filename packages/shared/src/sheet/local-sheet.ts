@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import {
   ABILITY_KEYS,
   DAMAGE_TYPES,

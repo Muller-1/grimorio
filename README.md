@@ -8,19 +8,20 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 
 ## O que já existe
 
-| Parte                                                                                    | Onde                                                             | Estado                                        |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------- |
-| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                            | raiz                                                             | Etapa 1 ✔                                     |
-| CI (GitHub Actions) + modelo de PR                                                       | `.github/`                                                       | Etapa 2 ✔ (falta ativar a proteção da `main`) |
-| Gerador aleatório (criptográfico + semente para testes)                                  | `packages/rules/src/dice/rng.ts`                                 | Etapa 3 ✔                                     |
-| Parser e avaliação de expressões de dados                                                | `packages/rules/src/dice/`                                       | Etapa 4 ✔                                     |
-| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`              | `apps/web`                                                       | Etapa 5 ✔                                     |
-| Tela inicial                                                                             | `apps/web/src/pages/HomePage.tsx`                                | ✔                                             |
-| Ficha editável com cálculo automático (antecipada, ver ADR-002)                          | `apps/web/src/features/sheet` + `packages/rules/src/sheet`       | ✔                                             |
-| Ganchos de teste + bot (Playwright) com os cenários B1, B11 e B12                        | `apps/web/src/testing` + `apps/qa-bot`                           | Etapa 6 ✔                                     |
-| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice` | Etapa 7 ✔                                     |
+| Parte                                                                                    | Onde                                                             | Estado                                          |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
+| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                            | raiz                                                             | Etapa 1 ✔                                       |
+| CI (GitHub Actions) + modelo de PR                                                       | `.github/`                                                       | Etapa 2 ✔ (falta ativar a proteção da `main`)   |
+| Gerador aleatório (criptográfico + semente para testes)                                  | `packages/rules/src/dice/rng.ts`                                 | Etapa 3 ✔                                       |
+| Parser e avaliação de expressões de dados                                                | `packages/rules/src/dice/`                                       | Etapa 4 ✔                                       |
+| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`              | `apps/web`                                                       | Etapa 5 ✔                                       |
+| Tela inicial                                                                             | `apps/web/src/pages/HomePage.tsx`                                | ✔                                               |
+| Ficha editável com cálculo automático (antecipada, ver ADR-002)                          | `apps/web/src/features/sheet` + `packages/rules/src/sheet`       | ✔                                               |
+| Ganchos de teste + bot (Playwright) com os cenários B1, B11 e B12                        | `apps/web/src/testing` + `apps/qa-bot`                           | Etapa 6 ✔                                       |
+| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice` | Etapa 7 ✔                                       |
+| Publicação: páginas institucionais, Cloudflare Pages, CSP, orçamentos, Lighthouse, B14   | `docs/publicacao.md` + `apps/web/public/_headers`                | Etapa 8 ✔ (falta criar o projeto na Cloudflare) |
 
-Ainda **não** existem: publicação (Etapa 8), back-end e contas (Etapa 9 / R2).
+Ainda **não** existem: back-end e contas (Etapa 9 / R2).
 
 ## Como rodar
 
@@ -39,9 +40,13 @@ Outros comandos:
 pnpm check        # tipos + lint + testes (o mesmo que o CI roda)
 pnpm test         # só os testes
 pnpm test:watch   # testes rodando a cada mudança
-pnpm build        # build de produção com a página inicial pré-renderizada (apps/web/dist)
+pnpm build        # build de produção, um HTML por rota (apps/web/dist)
+pnpm size         # orçamentos de tamanho (depois do build)
+pnpm lighthouse   # Lighthouse em /dados e / (depois do build; precisa do Chrome)
 pnpm format       # formata tudo com o Prettier
 ```
+
+Para publicar, siga [docs/publicacao.md](docs/publicacao.md).
 
 No Windows, o plano recomenda trabalhar dentro do WSL2, mas tudo acima também funciona no
 PowerShell.
@@ -66,16 +71,23 @@ pnpm --filter @grimorio/qa-bot exec playwright show-report   # relatório da úl
 | B1 — fumaça          | todas as páginas abrem sem erro no console; com semente fixa, `1d20` dá o valor do oráculo |
 | B11 — dados          | a mesma sequência de rolagens na tela e no `seededRng` dá os mesmos dados, um a um         |
 | B12 — acessibilidade | axe sem violações sérias ou críticas nas páginas e nos diálogos                            |
+| B14 — monitor        | abre `/dados` na produção, rola `1d20` e confere o total (sem ganchos; roda a cada 30 min) |
 
 Toda execução imprime a semente. Os ganchos (`window.__APP_TEST__`) só existem no build de teste;
-o CI falha se eles aparecerem no build de produção.
+o CI falha se eles aparecerem no build de produção. Em todos os cenários, qualquer erro no
+console ou bloqueio da política de segurança (CSP) faz o teste falhar.
+
+Contra um site publicado: `pnpm bot --scenario=B14 --env=https://SEU-SITE.pages.dev`.
 
 ## Estrutura
 
 ```
 grimorio/
 ├─ apps/
+│  ├─ qa-bot/              # bot de testes (Playwright): cenários B1, B11, B12, B14
 │  └─ web/                 # site (React + Vite + Tailwind)
+│     ├─ build/            # ajudantes do build: cabeçalhos, preview igual à Cloudflare, marca
+│     ├─ public/_headers   # cabeçalhos HTTP de produção (CSP, cache)
 │     └─ src/
 │        ├─ app/           # entrada, rotas, layout, pré-renderização
 │        ├─ pages/         # Início, Dados, Apoie, Créditos, Termos, Privacidade
@@ -101,10 +113,12 @@ grimorio/
 - Nenhum código de produção importa `@grimorio/testkit`.
 - Nenhum texto de interface escrito direto num componente `.tsx`: vai para
   `apps/web/src/lib/i18n/pt-BR.ts`.
+- Em `packages/shared`, o Zod vem de `src/zod.ts` (modo sem `eval`, exigido pela CSP do site).
 
 ## Documentação
 
 - `docs/adr/` — decisões registradas (001: ajustes do plano de início; 002: ficha antecipada;
-  003: pré-renderização; 004: terminologia e edição).
+  003: pré-renderização; 004: terminologia e edição; 005: publicação na Cloudflare).
+- `docs/publicacao.md` — passo a passo para colocar o site no ar e ligar o monitor B14.
 - Os planos (`plano-tecnico-site-dnd-v2.md` e `plano-de-inicio-site-dnd.md`) estão nos arquivos
   do Projeto no Claude; copie-os para `docs/` (Etapa 0).

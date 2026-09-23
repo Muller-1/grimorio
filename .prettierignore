@@ -8,3 +8,4 @@ dist-test
 dist-ssr-test
 playwright-report
 test-results
+.lighthouseci

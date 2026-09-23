@@ -1,0 +1,21 @@
+# Cabeçalhos HTTP da Cloudflare Pages (Etapa 8). Docs: developers.cloudflare.com/pages/configuration/headers/
+# O `vite preview` lê o bloco "/*" deste arquivo, então o bot e o Lighthouse testam o site
+# com a mesma política de segurança da produção. Ao adicionar um serviço externo (ex.: Sentry),
+# libere o domínio dele aqui E atualize a página de Privacidade.
+#
+# style-src precisa de 'unsafe-inline' porque os diálogos (Radix) injetam um <style> para travar
+# a rolagem da página. Scripts continuam só do próprio site.
+# img-src aceita https: por causa do retrato da ficha, que é um link externo.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000
+
+# Arquivos com hash no nome nunca mudam: cache de um ano.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

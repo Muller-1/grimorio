@@ -178,12 +178,13 @@ export function ShortcutPanel({ onNew }: { onNew: () => void }) {
               <button
                 type="button"
                 onClick={() => rollShortcut(sc)}
-                aria-label={s.roll(sc.label, sc.expression)}
                 className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg border border-border bg-surface px-2.5 py-2 text-left transition-colors hover:border-accent hover:bg-accent-soft"
                 data-testid={`shortcut.${sc.id}`}
               >
                 <D20Icon className="size-5 shrink-0 text-accent" />
                 <span className="min-w-0 flex-1">
+                  {/* O nome acessível vem do texto visível (WCAG 2.5.3); "Rolar" é só para leitor de tela. */}
+                  <span className="sr-only">{s.rollPrefix} </span>
                   <span className="block truncate text-sm font-semibold">{sc.label}</span>
                   <span className="block truncate font-mono text-xs text-muted">
                     {sc.expression}

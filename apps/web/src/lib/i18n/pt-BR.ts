@@ -32,7 +32,7 @@ export const ptBR = {
 
   footer: {
     report: 'Relatar problema',
-    reportSoon: 'O formulário de relato entra na publicação do site (Etapa 8).',
+    reportSoon: 'O canal de relatos ainda não foi configurado.',
     credits: 'Créditos',
     terms: 'Termos',
     privacy: 'Privacidade',
@@ -98,23 +98,134 @@ export const ptBR = {
       text: 'Essa página se perdeu na masmorra.',
       back: 'Voltar ao início',
     },
+    updated: (date: string) => `Atualizado em ${date}`,
+    initialVersion: 'Versão inicial, válida enquanto o site não tem contas',
+    contactTitle: 'Contato',
+    contactEmailLead: 'Escreva para',
+    contactReport: 'Use o link "Relatar problema" no rodapé de qualquer página.',
     support: {
       title: 'Apoie o projeto',
-      text: 'O Grimório é gratuito e sem anúncios. O link de apoio entra quando a plataforma for escolhida (decisão #2 do plano).',
+      lead: 'O Grimório é gratuito, sem anúncios e sem nenhuma função bloqueada. Ele é mantido por quem joga e pode apoiar.',
+      button: (platform: string) => `Apoiar pelo ${platform}`,
+      buttonGeneric: 'Apoiar o projeto',
+      soon: 'A plataforma de apoio ainda está sendo escolhida. Enquanto isso, a melhor ajuda é usar o site na sua mesa e relatar qualquer problema que encontrar.',
+      where: 'Para onde vai o apoio',
+      whereText:
+        'Domínio, hospedagem e, quando existirem contas, o servidor e o banco de dados. Apoiar nunca libera funções extras.',
     },
     credits: {
       title: 'Licença e créditos',
-      text: 'Feito com software livre:',
-      libs: 'React, React Router, Vite, Tailwind CSS, Radix UI, Zustand, Zod, Lucide e a fonte Cinzel.',
-      srd: 'Quando o conteúdo de regras abertas (SRD, licença CC BY 4.0) entrar no site, a atribuição completa aparecerá aqui.',
+      lead: 'O Grimório é feito com software livre. Obrigado a quem mantém estes projetos:',
+      nameHeader: 'Projeto',
+      licenseHeader: 'Licença',
+      libs: [
+        ['React e React DOM', 'MIT'],
+        ['React Router', 'MIT'],
+        ['Vite', 'MIT'],
+        ['Tailwind CSS', 'MIT'],
+        ['Radix UI', 'MIT'],
+        ['Zustand', 'MIT'],
+        ['Zod', 'MIT'],
+        ['clsx e tailwind-merge', 'MIT'],
+        ['class-variance-authority', 'Apache-2.0'],
+        ['Ícones Lucide', 'ISC'],
+        ['Fonte Cinzel (via Fontsource)', 'SIL Open Font License 1.1'],
+      ] as [string, string][],
+      rulesTitle: 'Regras do jogo',
+      rules:
+        'O site é compatível com a 5ª edição. Os cálculos seguem as regras; nenhum texto dos livros é reproduzido. Quando o conteúdo de regras abertas (SRD, licença Creative Commons BY 4.0) entrar no site, a atribuição completa aparecerá aqui.',
+      trademark:
+        'Projeto independente, sem vínculo com a Wizards of the Coast nem com as editoras dos livros no Brasil.',
     },
     terms: {
       title: 'Termos de uso',
-      text: 'Rascunho: os termos definitivos serão publicados junto com o lançamento do site.',
+      sections: [
+        {
+          title: 'O que é o Grimório',
+          body: [
+            'Uma ferramenta gratuita para montar e usar fichas de personagem e rolar dados em RPG de mesa compatível com a 5ª edição. Usar o site significa concordar com estes termos.',
+          ],
+        },
+        {
+          title: 'Seus dados ficam com você',
+          body: [
+            'Nesta versão não existem contas. A ficha, os atalhos de dados e as suas preferências ficam salvos apenas no navegador do seu aparelho.',
+            'Limpar os dados do navegador, usar uma aba anônima ou trocar de aparelho faz a ficha sumir. Guarde as informações importantes também em outro lugar.',
+          ],
+        },
+        {
+          title: 'Cálculos e rolagens',
+          body: [
+            'O site faz as contas pelas regras da 5ª edição e mostra de onde vem cada número, mas pode ter erros. Em caso de dúvida, vale a regra do livro e a decisão do mestre da mesa.',
+            'As rolagens usam o gerador aleatório criptográfico do seu navegador.',
+          ],
+        },
+        {
+          title: 'Conteúdo',
+          body: [
+            'O que você escreve na ficha (nomes, descrições, armas, características) é seu. Não copie para o site textos protegidos de livros ou de outras pessoas.',
+          ],
+        },
+        {
+          title: 'Sem garantia',
+          body: [
+            'O Grimório é oferecido como está, de graça, sem garantia de funcionamento contínuo. Ele pode mudar, ficar fora do ar ou ganhar e perder funções.',
+          ],
+        },
+        {
+          title: 'Mudanças nestes termos',
+          body: [
+            'Quando o site ganhar contas, estes termos mudam. A data no topo da página mostra a versão em vigor.',
+          ],
+        },
+      ],
     },
     privacy: {
       title: 'Privacidade',
-      text: 'Nesta versão não existem contas. A ficha e o histórico ficam apenas no seu navegador e não são enviados a nenhum servidor.',
+      sections: [
+        {
+          title: 'Resumo',
+          body: [
+            'Nesta versão, o Grimório não tem contas, não usa cookies, não mostra anúncios e não usa ferramentas de rastreamento. Não recebemos a sua ficha nem as suas rolagens.',
+          ],
+        },
+        {
+          title: 'O que fica no seu aparelho',
+          body: [
+            'A ficha, os atalhos de dados e a preferência de animação ficam guardados no armazenamento local do seu navegador. Eles nunca saem do seu aparelho e você pode apagá-los a qualquer momento limpando os dados do site nas configurações do navegador.',
+          ],
+        },
+        {
+          title: 'Imagem do retrato',
+          body: [
+            'Se você colocar o link de uma imagem como retrato, o seu navegador busca essa imagem direto no site onde ela está. Esse site recebe os dados técnicos da conexão, como em qualquer página que você visita. Nós não guardamos nem vemos esse link.',
+          ],
+        },
+        {
+          title: 'Hospedagem',
+          body: [
+            'O site é entregue pela Cloudflare. Como qualquer servidor na internet, ela recebe dados técnicos da conexão, como o endereço IP e o tipo de navegador, para entregar as páginas e proteger o site contra ataques. Esses servidores podem ficar fora do Brasil. O tratamento segue a política de privacidade da Cloudflare.',
+          ],
+        },
+        {
+          title: 'Relatar problema',
+          body: [
+            'O link "Relatar problema" abre um serviço externo e envia junto só o endereço da página e a versão do site. O que você escrever lá segue a política daquele serviço.',
+          ],
+        },
+        {
+          title: 'Crianças e adolescentes',
+          body: [
+            'Como o site não coleta dados pessoais nesta versão, qualquer pessoa pode usá-lo. As regras para contas de menores de idade serão definidas, com revisão jurídica, antes de existirem contas.',
+          ],
+        },
+        {
+          title: 'Mudanças',
+          body: [
+            'Esta política muda quando o site ganhar contas. A data no topo da página mostra a versão em vigor.',
+          ],
+        },
+      ],
     },
     draft: 'Página provisória',
   },
@@ -438,7 +549,8 @@ export const ptBR = {
       new: 'Novo atalho',
       edit: 'Editar atalho',
       remove: 'Apagar atalho',
-      roll: (label: string, expr: string) => `Rolar ${label} (${expr})`,
+      /** Lido só por leitores de tela, antes do nome e da expressão do atalho. */
+      rollPrefix: 'Rolar',
       editLabel: (label: string) => `Editar ${label}`,
       editorTitleNew: 'Novo atalho',
       editorTitleEdit: 'Editar atalho',
