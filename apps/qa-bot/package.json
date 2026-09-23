@@ -1,0 +1,19 @@
+{
+  "name": "@grimorio/qa-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Bot de testes (plano v2, seção 15): navega pelo site como um jogador e confere os resultados.",
+  "scripts": {
+    "bot": "node cli.mjs",
+    "install-browser": "playwright install chromium"
+  },
+  "dependencies": {
+    "@grimorio/rules": "workspace:*"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.20.4"
+  }
+}

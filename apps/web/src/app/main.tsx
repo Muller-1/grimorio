@@ -25,6 +25,12 @@ if (container.dataset.prerendered === window.location.pathname) {
   createRoot(container).render(app);
 }
 
+// Ganchos do bot de testes (Etapa 6). Só existem no build de teste (`vite build --mode test`):
+// em produção a condição vira `false` no build e o import inteiro some do bundle.
+if (import.meta.env.MODE === 'test') {
+  void import('../testing/test-hooks').then((m) => m.installTestHooks());
+}
+
 // Etapa 5, "pronto quando": rolar 1d20 no console do navegador (só em desenvolvimento).
 if (import.meta.env.DEV) {
   Object.assign(window, { grimorio: { roll: (expr: string) => roll(expr, { rng: cryptoRng }) } });

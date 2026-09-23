@@ -41,3 +41,31 @@ jobs:
           fi
       - name: Página inicial pré-renderizada
         run: grep -q 'data-prerendered="/"' apps/web/dist/index.html
+
+  # Etapa 6: bot de testes (plano v2, seção 15). Sobe o build de TESTE (com ganchos)
+  # e roda os cenários B1 (fumaça), B11 (dados) e B12 (acessibilidade).
+  bot:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Navegador do bot
+        run: pnpm --filter @grimorio/qa-bot exec playwright install --with-deps chromium
+      - name: Bot — B1, B11 e B12
+        run: pnpm bot
+      - name: Relatório e traces (só quando falha)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: relatorio-do-bot
+          path: |
+            apps/qa-bot/playwright-report
+            apps/qa-bot/test-results
+          retention-days: 14

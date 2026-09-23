@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vite build --ssr src/app/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs",
+    "build": "vite build && vite build --ssr src/app/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs dist dist-ssr",
+    "build:test": "vite build --mode test --outDir dist-test && vite build --mode test --ssr src/app/entry-server.tsx --outDir dist-ssr-test && node scripts/prerender.mjs dist-test dist-ssr-test",
     "build:spa": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:test": "vite preview --outDir dist-test --port 4180 --strictPort"
   },
   "dependencies": {
     "@fontsource/cinzel": "^5.3.0",
@@ -28,7 +30,6 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "playwright": "^1.63.0",
     "tailwindcss": "^4.3.3",
     "vite": "^8.3.0"
   }

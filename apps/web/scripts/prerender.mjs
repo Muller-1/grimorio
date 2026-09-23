@@ -2,8 +2,11 @@
 // Roda depois de `vite build` (cliente) e `vite build --ssr` (servidor).
 import { readFile, rm, writeFile } from 'node:fs/promises';
 
-const dist = new URL('../dist/', import.meta.url);
-const ssrEntry = new URL('../dist-ssr/entry-server.js', import.meta.url);
+// Uso: node scripts/prerender.mjs [pasta-do-site] [pasta-ssr]  (padrão: dist dist-ssr)
+const [distDir = 'dist', ssrDir = 'dist-ssr'] = process.argv.slice(2);
+const dist = new URL(`../${distDir}/`, import.meta.url);
+const ssr = new URL(`../${ssrDir}/`, import.meta.url);
+const ssrEntry = new URL('entry-server.js', ssr);
 
 /** Rotas pré-renderizadas. O compêndio (R4) entra aqui depois. */
 const ROUTES = ['/'];
@@ -19,7 +22,7 @@ for (const route of ROUTES) {
   const page = template.replace(MARKER, `<div id="root" data-prerendered="${route}">${html}</div>`);
   const file = route === '/' ? 'index.html' : `${route.slice(1)}/index.html`;
   await writeFile(new URL(file, dist), page);
-  console.log(`pré-renderizado: ${route} → dist/${file} (${html.length} caracteres)`);
+  console.log(`pré-renderizado: ${route} → ${distDir}/${file} (${html.length} caracteres)`);
 }
 
-await rm(new URL('../dist-ssr/', import.meta.url), { recursive: true, force: true });
+await rm(ssr, { recursive: true, force: true });

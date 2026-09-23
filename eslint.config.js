@@ -45,6 +45,10 @@ export default defineConfig([
     '**/node_modules/**',
     '**/dist/**',
     '**/dist-ssr/**',
+    '**/dist-test/**',
+    '**/dist-ssr-test/**',
+    '**/playwright-report/**',
+    '**/test-results/**',
     '**/.tsbuild/**',
     '**/coverage/**',
   ]),
@@ -120,6 +124,14 @@ export default defineConfig([
         },
       ],
     },
+  },
+
+  // ---- bot de testes (Playwright): Node + callbacks que rodam no navegador ----
+  {
+    files: ['apps/qa-bot/**/*.{ts,mjs}'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+    // Fixtures do Playwright exigem `async ({}, use) => …`
+    rules: { 'no-empty-pattern': 'off' },
   },
 
   // ---- testes ----

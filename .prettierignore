@@ -4,3 +4,7 @@ dist-ssr
 .tsbuild
 pnpm-lock.yaml
 docs/*.md
+dist-test
+dist-ssr-test
+playwright-report
+test-results

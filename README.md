@@ -8,19 +8,19 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 
 ## O que já existe
 
-| Parte                                                                                    | Onde                                                             | Estado                                                         |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
-| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                            | raiz                                                             | Etapa 1 ✔                                                      |
-| CI (GitHub Actions) + modelo de PR                                                       | `.github/`                                                       | Etapa 2 ✔ (falta ativar a proteção da `main`)                  |
-| Gerador aleatório (criptográfico + semente para testes)                                  | `packages/rules/src/dice/rng.ts`                                 | Etapa 3 ✔                                                      |
-| Parser e avaliação de expressões de dados                                                | `packages/rules/src/dice/`                                       | Etapa 4 ✔                                                      |
-| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`              | `apps/web`                                                       | Etapa 5 ✔                                                      |
-| Tela inicial                                                                             | `apps/web/src/pages/HomePage.tsx`                                | ✔                                                              |
-| Ficha editável com cálculo automático (antecipada, ver ADR-002)                          | `apps/web/src/features/sheet` + `packages/rules/src/sheet`       | ✔                                                              |
-| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice` | Etapa 7 ✔ (faltam os cenários do bot, que dependem da Etapa 6) |
+| Parte                                                                                    | Onde                                                             | Estado                                        |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------- |
+| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                            | raiz                                                             | Etapa 1 ✔                                     |
+| CI (GitHub Actions) + modelo de PR                                                       | `.github/`                                                       | Etapa 2 ✔ (falta ativar a proteção da `main`) |
+| Gerador aleatório (criptográfico + semente para testes)                                  | `packages/rules/src/dice/rng.ts`                                 | Etapa 3 ✔                                     |
+| Parser e avaliação de expressões de dados                                                | `packages/rules/src/dice/`                                       | Etapa 4 ✔                                     |
+| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`              | `apps/web`                                                       | Etapa 5 ✔                                     |
+| Tela inicial                                                                             | `apps/web/src/pages/HomePage.tsx`                                | ✔                                             |
+| Ficha editável com cálculo automático (antecipada, ver ADR-002)                          | `apps/web/src/features/sheet` + `packages/rules/src/sheet`       | ✔                                             |
+| Ganchos de teste + bot (Playwright) com os cenários B1, B11 e B12                        | `apps/web/src/testing` + `apps/qa-bot`                           | Etapa 6 ✔                                     |
+| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice` | Etapa 7 ✔                                     |
 
-Ainda **não** existem: ganchos de teste e bot (Etapa 6), publicação (Etapa 8), back-end e
-contas (Etapa 9 / R2).
+Ainda **não** existem: publicação (Etapa 8), back-end e contas (Etapa 9 / R2).
 
 ## Como rodar
 
@@ -45,6 +45,30 @@ pnpm format       # formata tudo com o Prettier
 
 No Windows, o plano recomenda trabalhar dentro do WSL2, mas tudo acima também funciona no
 PowerShell.
+
+### Bot de testes (Etapa 6)
+
+O bot abre o site num navegador de verdade, age como um jogador e confere os resultados com o
+motor de regras. Ele gera sozinho o build de **teste** do site (o único que tem os ganchos) e
+roda cada cenário em tela de computador e de celular.
+
+```bash
+pnpm --filter @grimorio/qa-bot install-browser   # só na primeira vez: baixa o Chromium
+pnpm bot                                         # todos os cenários
+pnpm bot --scenario=B11                          # só um cenário
+pnpm bot --scenario=B11 --seed=8812              # repete exatamente uma execução
+pnpm bot --headed                                # mostra o navegador
+pnpm --filter @grimorio/qa-bot exec playwright show-report   # relatório da última execução
+```
+
+| Cenário              | O que confere                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| B1 — fumaça          | todas as páginas abrem sem erro no console; com semente fixa, `1d20` dá o valor do oráculo |
+| B11 — dados          | a mesma sequência de rolagens na tela e no `seededRng` dá os mesmos dados, um a um         |
+| B12 — acessibilidade | axe sem violações sérias ou críticas nas páginas e nos diálogos                            |
+
+Toda execução imprime a semente. Os ganchos (`window.__APP_TEST__`) só existem no build de teste;
+o CI falha se eles aparecerem no build de produção.
 
 ## Estrutura
 

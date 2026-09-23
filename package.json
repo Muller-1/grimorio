@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm typecheck && pnpm lint && pnpm test"
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "bot": "pnpm --filter @grimorio/qa-bot bot"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
