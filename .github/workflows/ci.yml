@@ -105,3 +105,51 @@ jobs:
           name: relatorios-lighthouse
           path: .lighthouseci/relatorios
           retention-days: 14
+
+  # Etapa 9: API com Postgres de verdade (plano v2, 16: testes de integração no CI).
+  api:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U app -d app_test"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL_TEST: postgres://app:app@localhost:5432/app_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Testes de integração (migrações + salvaguardas da API de teste)
+        run: pnpm test:api
+      - name: Build da API (bundle com os pacotes do workspace)
+        run: pnpm build:api
+      - name: A API empacotada migra, sobe e responde
+        env:
+          APP_ENV: test
+          DATABASE_URL: postgres://app:app@localhost:5432/app_test
+          PORT: 3000
+          LOG_LEVEL: warn
+        run: |
+          node apps/api/dist/db/migrate.js
+          node apps/api/dist/server.js &
+          curl --silent --fail --retry 20 --retry-delay 1 --retry-connrefused http://localhost:3000/health
+          curl --silent --fail http://localhost:3000/ready
+          curl --silent --fail http://localhost:3000/version | grep -q "\"commit\":\"${GITHUB_SHA::7}\""
+          # Salvaguarda: sem ENABLE_TEST_API a rota de teste não existe.
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST http://localhost:3000/__test__/reset)" = 404

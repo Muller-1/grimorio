@@ -20,8 +20,10 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 | Ganchos de teste + bot (Playwright) com os cenários B1, B11 e B12                        | `apps/web/src/testing` + `apps/qa-bot`                           | Etapa 6 ✔                                       |
 | Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice` | Etapa 7 ✔                                       |
 | Publicação: páginas institucionais, Cloudflare Pages, CSP, orçamentos, Lighthouse, B14   | `docs/publicacao.md` + `apps/web/public/_headers`                | Etapa 8 ✔ (falta criar o projeto na Cloudflare) |
+| API (Fastify + Postgres/Drizzle): portas, `/health` `/ready` `/version`, API de teste    | `apps/api` + `docker-compose.yml`                                | Etapa 9 ✔ (falta staging e decisões do R2)      |
 
-Ainda **não** existem: back-end e contas (Etapa 9 / R2).
+Ainda **não** existem: contas, login e ficha salva no servidor (R2). As decisões que faltam
+estão no [ADR-007](docs/adr/007-decisoes-do-r2.md).
 
 ## Como rodar
 
@@ -50,6 +52,23 @@ Para publicar, siga [docs/publicacao.md](docs/publicacao.md).
 
 No Windows, o plano recomenda trabalhar dentro do WSL2, mas tudo acima também funciona no
 PowerShell.
+
+### API e banco (Etapa 9)
+
+Precisa do [Docker Desktop](https://www.docker.com/products/docker-desktop/) ligado.
+
+```bash
+pnpm db:up                                   # sobe o Postgres (bancos app_dev e app_test)
+cp apps/api/.env.example apps/api/.env       # copia o exemplo de configuração
+pnpm db:migrate                              # cria as tabelas no app_dev
+pnpm dev:api                                 # API em http://localhost:3000 (/health, /ready, /version)
+pnpm test:api                                # testes de integração (usam só o app_test)
+pnpm db:down                                 # desliga o Postgres (os dados ficam)
+```
+
+Mudou `apps/api/src/db/schema.ts`? Gere a migração com `pnpm --filter @grimorio/api db:generate`
+e confira o SQL em `apps/api/drizzle/` antes de commitar. Detalhes no
+[ADR-006](docs/adr/006-base-do-back-end.md).
 
 ### Bot de testes (Etapa 6)
 
@@ -84,6 +103,16 @@ Contra um site publicado: `pnpm bot --scenario=B14 --env=https://SEU-SITE.pages.
 ```
 grimorio/
 ├─ apps/
+│  ├─ api/                 # API (Fastify + Drizzle + Postgres)
+│  │  ├─ drizzle/          # migrações SQL geradas pelo drizzle-kit
+│  │  └─ src/
+│  │     ├─ config/env.ts  # variáveis de ambiente validadas com Zod
+│  │     ├─ ports/         # rng, clock, mailer, events, ids
+│  │     ├─ db/            # schema, conexão, migrações, trava de banco descartável
+│  │     ├─ modules/       # rotas por assunto (system: /health, /ready, /version)
+│  │     ├─ plugins/       # test-api (/__test__/*, nunca em produção)
+│  │     ├─ app.ts         # buildApp: monta a API (usado também nos testes)
+│  │     └─ server.ts
 │  ├─ qa-bot/              # bot de testes (Playwright): cenários B1, B11, B12, B14
 │  └─ web/                 # site (React + Vite + Tailwind)
 │     ├─ build/            # ajudantes do build: cabeçalhos, preview igual à Cloudflare, marca
@@ -102,13 +131,15 @@ grimorio/
 │  ├─ shared/              # tipos e schemas Zod (ficha local)
 │  ├─ rules/               # motor puro: dados + cálculos da ficha (sem React, sem Node)
 │  └─ testkit/             # utilidades só para testes
-└─ docs/                   # ADRs e referências aos planos
+├─ docker/                 # script que cria o app_test no Postgres do Docker
+├─ docker-compose.yml      # Postgres local
+└─ docs/                   # ADRs, publicação e referências aos planos
 ```
 
 ## Regras que o lint cobra
 
-- `Math.random` e `Date.now` proibidos em `packages/rules`, `packages/shared` e fora de
-  `apps/web/src/ports`.
+- `Math.random` e `Date.now` proibidos em `packages/rules`, `packages/shared` e fora das
+  portas (`apps/web/src/ports`, `apps/api/src/ports`). Na API, `crypto`/`randomUUID` também.
 - `rules` e `shared` não podem importar `node:*`, React nem Fastify.
 - Nenhum código de produção importa `@grimorio/testkit`.
 - Nenhum texto de interface escrito direto num componente `.tsx`: vai para
@@ -118,7 +149,8 @@ grimorio/
 ## Documentação
 
 - `docs/adr/` — decisões registradas (001: ajustes do plano de início; 002: ficha antecipada;
-  003: pré-renderização; 004: terminologia e edição; 005: publicação na Cloudflare).
+  003: pré-renderização; 004: terminologia e edição; 005: publicação na Cloudflare; 006: base
+  do back-end; 007: decisões do R2).
 - `docs/publicacao.md` — passo a passo para colocar o site no ar e ligar o monitor B14.
 - Os planos (`plano-tecnico-site-dnd-v2.md` e `plano-de-inicio-site-dnd.md`) estão nos arquivos
   do Projeto no Claude; copie-os para `docs/` (Etapa 0).

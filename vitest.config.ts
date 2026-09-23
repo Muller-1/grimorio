@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
@@ -13,6 +13,8 @@ export default defineConfig({
       'apps/*/src/**/*.test.{ts,tsx}',
       'apps/web/build/**/*.test.ts',
     ],
+    // Testes de integração da API precisam de Postgres: rodam com `pnpm test:api`.
+    exclude: [...configDefaults.exclude, '**/*.int.test.ts'],
     environment: 'node',
     // Toda execução com fast-check imprime a semente; para reproduzir: FC_SEED=<n> pnpm test
     reporters: ['default'],

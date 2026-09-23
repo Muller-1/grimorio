@@ -20,7 +20,13 @@
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "bot": "pnpm --filter @grimorio/qa-bot bot",
     "size": "pnpm --filter @grimorio/web size",
-    "lighthouse": "pnpm dlx @lhci/cli@0.15.1 autorun"
+    "lighthouse": "pnpm dlx @lhci/cli@0.15.1 autorun",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @grimorio/api db:migrate",
+    "dev:api": "pnpm --filter @grimorio/api dev",
+    "build:api": "pnpm --filter @grimorio/api build",
+    "test:api": "pnpm --filter @grimorio/api test:int"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -6,6 +6,7 @@
     { "path": "./packages/testkit" },
     { "path": "./apps/web" },
     { "path": "./apps/web/tsconfig.node.json" },
-    { "path": "./apps/qa-bot" }
+    { "path": "./apps/qa-bot" },
+    { "path": "./apps/api" }
   ]
 }

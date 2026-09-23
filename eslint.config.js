@@ -52,6 +52,7 @@ export default defineConfig([
     '**/.tsbuild/**',
     '**/coverage/**',
     '**/.lighthouseci/**',
+    'spikes/**',
   ]),
 
   js.configs.recommended,
@@ -147,6 +148,40 @@ export default defineConfig([
           selector:
             'JSXAttribute[name.name=/^(aria-label|title|placeholder|alt)$/] > Literal[value=/[A-Za-zÀ-ÿ]{2,}/]',
           message: 'Texto de interface deve vir do arquivo de traduções (src/lib/i18n).',
+        },
+      ],
+    },
+  },
+
+  // ---- apps/api (Node) ----
+  {
+    files: ['apps/api/**/*.ts'],
+    languageOptions: { globals: globals.node },
+  },
+  {
+    // Serviço nunca chama Date.now() nem crypto direto: usa as portas (plano v2, 7, regra 4).
+    files: ['apps/api/src/**/*.ts'],
+    ignores: ['apps/api/src/ports/**', 'apps/api/src/testing/**', ...testFiles],
+    rules: {
+      'no-restricted-properties': nonDeterminism,
+      'no-restricted-globals': [
+        'error',
+        { name: 'crypto', message: 'Use as portas em src/ports (rng, ids).' },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'node:crypto',
+              importNames: ['randomUUID', 'randomBytes', 'randomInt', 'getRandomValues'],
+              message: 'Use as portas em src/ports (rng, ids).',
+            },
+          ],
+          patterns: [
+            forbidTestkit,
+            { group: ['react', 'react-dom', 'react/*'], message: 'A API não conhece a interface.' },
+          ],
         },
       ],
     },
