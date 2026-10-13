@@ -135,25 +135,46 @@ export function CreditsPage() {
       <section>
         <h2 className="font-display text-lg font-bold">{c.rulesTitle}</h2>
         <p className="mt-2 text-muted">{c.rules}</p>
+        <blockquote
+          className="mt-3 border-l-4 border-border-strong pl-3 text-sm text-muted"
+          lang="en"
+        >
+          {c.srdAttribution}
+        </blockquote>
+        <p className="mt-2 text-sm text-muted">{c.srdNote}</p>
         <p className="mt-2 text-muted">{c.trademark}</p>
       </section>
     </PageShell>
   );
 }
 
+/** Aviso de rascunho enquanto as contas não passaram pela revisão jurídica (decisão #4). */
+function AccountsDraftNote() {
+  if (!siteConfig.accountsEnabled) return null;
+  return (
+    <p className="rounded-md bg-gold-soft px-3 py-2 text-sm text-gold">{t.pages.accountsDraft}</p>
+  );
+}
+
 export function TermsPage() {
+  const sections = t.pages.terms.sections.filter(
+    (s) => !('accountsOnly' in s) || siteConfig.accountsEnabled,
+  );
   return (
     <PageShell title={t.pages.terms.title} meta={<LegalMeta />}>
-      <Sections sections={t.pages.terms.sections} />
+      <AccountsDraftNote />
+      <Sections sections={sections} />
       <Contact />
     </PageShell>
   );
 }
 
 export function PrivacyPage() {
+  const p = t.pages.privacy;
   return (
-    <PageShell title={t.pages.privacy.title} meta={<LegalMeta />}>
-      <Sections sections={t.pages.privacy.sections} />
+    <PageShell title={p.title} meta={<LegalMeta />}>
+      <AccountsDraftNote />
+      <Sections sections={siteConfig.accountsEnabled ? p.accountSections : p.sections} />
       <Contact />
     </PageShell>
   );

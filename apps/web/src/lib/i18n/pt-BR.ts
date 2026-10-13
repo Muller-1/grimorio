@@ -17,7 +17,7 @@ export const ptBR = {
 
   nav: {
     home: 'Início',
-    sheet: 'Ficha',
+    sheet: 'Fichas',
     campaign: 'Campanha',
     dice: 'Dados',
     support: 'Apoie',
@@ -26,6 +26,8 @@ export const ptBR = {
     campaignSoon: 'Campanhas chegam numa próxima versão',
     profileSoon:
       'Contas chegam numa próxima versão. Por enquanto, tudo fica salvo neste navegador.',
+    accountsUnavailable:
+      'O servidor de contas não respondeu. A ficha deste navegador e os dados continuam funcionando.',
     mainLabel: 'Navegação principal',
     skipToContent: 'Pular para o conteúdo',
   },
@@ -92,6 +94,110 @@ export const ptBR = {
     supportCta: 'Quero apoiar',
   },
 
+  auth: {
+    signIn: 'Entrar',
+    signOut: 'Sair',
+    signingOut: 'Saindo…',
+    account: 'Conta',
+    accountMenu: (name: string) => `Conta de ${name}`,
+    myCharacters: 'Meus personagens',
+    signOutFailed: 'Não foi possível sair agora. Tente de novo.',
+    page: {
+      title: 'Entrar no Grimório',
+      lead: 'Com uma conta, suas fichas ficam salvas no servidor e abrem em qualquer aparelho: no celular durante a sessão e no computador na hora de subir de nível.',
+      google: 'Entrar com Google',
+      redirecting: 'Abrindo o Google…',
+      googleOff:
+        'O login com Google ainda não foi configurado neste servidor (faltam as credenciais do Google Cloud).',
+      what: 'O que guardamos',
+      whatItems: [
+        'Seu e-mail, nome e foto, como vêm do Google.',
+        'Suas fichas de personagem.',
+        'Nada de senha: quem confere quem é você é o Google.',
+      ],
+      terms: 'Ao entrar, você concorda com os Termos de uso e a Política de privacidade.',
+      noAccount: 'Prefere não criar conta?',
+      noAccountText: 'Tudo continua funcionando neste navegador, sem login.',
+      openLocalSheet: 'Usar a ficha deste navegador',
+      alreadyIn: (name: string) => `Você já entrou como ${name}.`,
+      goToCharacters: 'Ver meus personagens',
+      disabled: 'Contas ainda não estão disponíveis nesta versão do site.',
+      unavailable:
+        'O servidor de contas não respondeu. Ele pode estar "acordando": tente de novo em alguns segundos.',
+      retry: 'Tentar de novo',
+      failed: 'Não foi possível falar com o Google agora. Tente de novo.',
+      errors: {
+        access_denied: 'Você cancelou o login no Google.',
+        generic: 'O login não foi concluído. Tente de novo.',
+      } as Record<string, string>,
+    },
+  },
+
+  characters: {
+    pageTitle: 'Meus personagens',
+    lead: 'Fichas salvas na sua conta. Abra em qualquer aparelho.',
+    create: 'Criar personagem',
+    empty: 'Você ainda não tem personagens na conta.',
+    emptyHint:
+      'O assistente monta a ficha de nível 1 passo a passo, seguindo o Livro do Jogador (2024).',
+    level: (n: number) => `Nível ${n}`,
+    unnamed: 'Sem nome',
+    noClass: 'Sem classe',
+    updated: (when: string) => `Editado em ${when}`,
+    open: (name: string) => `Abrir ${name}`,
+    remove: (name: string) => `Excluir ${name}`,
+    removeTitle: 'Excluir este personagem?',
+    removeText: (name: string) => `"${name}" vai para a lixeira e some da lista.`,
+    removeConfirm: 'Excluir',
+    removeFailed: 'Não foi possível excluir agora. Tente de novo.',
+    cancel: 'Cancelar',
+    pendingBadge: 'Alterações deste aparelho ainda não enviadas',
+    localTitle: 'Ficha deste navegador',
+    localText: 'A ficha avulsa, salva só aqui, continua disponível — com ou sem conta.',
+    localOpen: 'Abrir ficha do navegador',
+    signedOutTitle: 'Entre para guardar fichas na conta',
+    signedOutText:
+      'Sem conta, você ainda pode criar um personagem com o assistente: ele fica salvo neste navegador.',
+    loadFailed: 'Não foi possível carregar a lista agora.',
+    retry: 'Tentar de novo',
+    loading: 'Carregando personagens…',
+    limit: 'Você chegou ao limite de 50 personagens nesta conta. Exclua algum para criar outro.',
+  },
+
+  sync: {
+    saved: 'Salvo na conta',
+    pending: 'Alterações a salvar…',
+    saving: 'Salvando…',
+    offline: 'Sem internet: salvo neste aparelho, enviaremos depois',
+    error: 'Não foi possível salvar agora; tentaremos de novo',
+    conflict: 'Esta ficha mudou em outro aparelho',
+    problems: {
+      'signed-out': 'Sua sessão terminou. Entre de novo para salvar na conta.',
+      gone: 'Esta ficha foi excluída em outro aparelho.',
+      invalid: 'O servidor recusou esta ficha. Relate o problema, por favor.',
+    },
+    conflictTitle: 'Esta ficha mudou em outro aparelho',
+    conflictText:
+      'As partes abaixo foram alteradas em outro lugar enquanto você editava aqui. Qual versão fica?',
+    keepMine: 'Manter a deste aparelho',
+    useTheirs: 'Usar a versão salva na conta',
+    sections: {
+      identity: 'Identidade e descrição',
+      build: 'Nível, atributos e proficiências',
+      combat: 'Combate (CA, deslocamento, PV máximo)',
+      state: 'Pontos de vida e recursos',
+      weapons: 'Armas',
+      features: 'Características',
+      creation: 'Escolhas da criação',
+    } as Record<string, string>,
+    loadingSheet: 'Abrindo a ficha…',
+    notFound: 'Esta ficha não existe ou não é da sua conta.',
+    needSignIn: 'Entre na sua conta para abrir esta ficha.',
+    unavailable: 'O servidor não respondeu e esta ficha não está guardada neste aparelho.',
+    backToList: 'Voltar para a lista',
+    openedOffline: 'Servidor fora do ar: abrimos a cópia deste aparelho.',
+  },
+
   pages: {
     notFound: {
       title: 'Página não encontrada',
@@ -126,6 +232,7 @@ export const ptBR = {
         ['Radix UI', 'MIT'],
         ['Zustand', 'MIT'],
         ['Zod', 'MIT'],
+        ['Better Auth (login)', 'MIT'],
         ['clsx e tailwind-merge', 'MIT'],
         ['class-variance-authority', 'Apache-2.0'],
         ['Ícones Lucide', 'ISC'],
@@ -133,7 +240,11 @@ export const ptBR = {
       ] as [string, string][],
       rulesTitle: 'Regras do jogo',
       rules:
-        'O site é compatível com a 5ª edição. Os cálculos seguem as regras; nenhum texto dos livros é reproduzido. Quando o conteúdo de regras abertas (SRD, licença Creative Commons BY 4.0) entrar no site, a atribuição completa aparecerá aqui.',
+        'O site é compatível com a 5ª edição (regras de 2024). O assistente de criação usa o conteúdo das regras abertas, o System Reference Document 5.2, publicado sob a licença Creative Commons Atribuição 4.0:',
+      srdAttribution:
+        'This work includes material from the System Reference Document 5.2 ("SRD 5.2") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.',
+      srdNote:
+        'Os nomes de regras seguem a edição brasileira do Livro do Jogador; as descrições e resumos foram escritos para o site e foram adaptados (resumidos e traduzidos). Nenhum texto dos livros é reproduzido.',
       trademark:
         'Projeto independente, sem vínculo com a Wizards of the Coast nem com as editoras dos livros no Brasil.',
     },
@@ -149,8 +260,8 @@ export const ptBR = {
         {
           title: 'Seus dados ficam com você',
           body: [
-            'Nesta versão não existem contas. A ficha, os atalhos de dados e as suas preferências ficam salvos apenas no navegador do seu aparelho.',
-            'Limpar os dados do navegador, usar uma aba anônima ou trocar de aparelho faz a ficha sumir. Guarde as informações importantes também em outro lugar.',
+            'Sem conta, a ficha, os atalhos de dados e as suas preferências ficam salvos apenas no navegador do seu aparelho.',
+            'Sem conta, limpar os dados do navegador, usar uma aba anônima ou trocar de aparelho faz a ficha sumir. Guarde as informações importantes também em outro lugar.',
           ],
         },
         {
@@ -171,6 +282,13 @@ export const ptBR = {
           body: [
             'O Grimório é oferecido como está, de graça, sem garantia de funcionamento contínuo. Ele pode mudar, ficar fora do ar ou ganhar e perder funções.',
           ],
+        },
+        {
+          title: 'Contas',
+          body: [
+            'Entrar com o Google é opcional e serve para guardar as fichas no servidor. Você é responsável pelo que salva na sua conta. Contas usadas para abusar do serviço podem ser suspensas.',
+          ],
+          accountsOnly: true,
         },
         {
           title: 'Mudanças nestes termos',
@@ -226,7 +344,61 @@ export const ptBR = {
           ],
         },
       ],
+      /** Versão usada quando o site tem contas (VITE_ACCOUNTS). Rascunho até a revisão jurídica. */
+      accountSections: [
+        {
+          title: 'Resumo',
+          body: [
+            'Sem conta, nada muda: a ficha fica só no seu navegador e não recebemos nada. Se você entrar com o Google, guardamos o mínimo para a conta funcionar, como descrito abaixo. Não há anúncios nem ferramentas de rastreamento.',
+          ],
+        },
+        {
+          title: 'Conta: o que guardamos e por quê',
+          body: [
+            'Do Google recebemos e guardamos o seu e-mail, nome, foto e o identificador da sua conta Google. Eles servem para você entrar e para mostrar o seu nome no site. Não guardamos senha nem os acessos (tokens) do Google, e não lemos nada da sua conta Google.',
+            'As suas fichas ficam no nosso banco de dados para abrir em qualquer aparelho. Uma cópia fica no navegador para a ficha funcionar sem internet; ela é apagada quando você sai da conta.',
+          ],
+        },
+        {
+          title: 'Cookie de sessão',
+          body: [
+            'Ao entrar, o site grava um cookie de sessão, necessário para manter você conectado (dura até 30 dias ou até você sair). Não usamos cookies de publicidade nem de análise.',
+          ],
+        },
+        {
+          title: 'Onde ficam os dados',
+          body: [
+            'Os dados da conta ficam no servidor e no banco de dados do site, que podem estar fora do Brasil. O login é feito pelo Google, que segue a própria política de privacidade.',
+          ],
+        },
+        {
+          title: 'Seus direitos',
+          body: [
+            'Você pode pedir a qualquer momento uma cópia dos seus dados ou a exclusão da conta e de todas as fichas pelo contato abaixo. Fichas excluídas vão para a lixeira e são apagadas de vez depois de 30 dias.',
+          ],
+        },
+        {
+          title: 'O que fica no seu aparelho',
+          body: [
+            'A ficha avulsa, os atalhos de dados, a preferência de animação e o rascunho do assistente de criação ficam no armazenamento local do seu navegador. Você pode apagá-los limpando os dados do site nas configurações do navegador.',
+          ],
+        },
+        {
+          title: 'Hospedagem',
+          body: [
+            'O site é entregue pela Cloudflare. Como qualquer servidor na internet, ela recebe dados técnicos da conexão, como o endereço IP e o tipo de navegador, para entregar as páginas e proteger o site contra ataques. Esses servidores podem ficar fora do Brasil.',
+          ],
+        },
+        {
+          title: 'Crianças e adolescentes',
+          body: [
+            'As contas estão em fase de testes. As regras para contas de menores de idade serão definidas, com revisão jurídica, antes de as contas serem abertas ao público.',
+          ],
+        },
+      ],
     },
+    accountsDraft:
+      'Contas em fase de testes: este texto ainda passa por revisão jurídica (LGPD e ECA Digital) antes de as contas serem abertas ao público.',
     draft: 'Página provisória',
   },
 
@@ -505,6 +677,7 @@ export const ptBR = {
       hitDie: (die: number, levels: number) =>
         `Dado de vida d${die} (${levels} ${levels === 1 ? 'nível' : 'níveis'})`,
       magic: 'Bônus mágico',
+      trait: 'Traço ou talento',
       override: 'Ajuste manual',
       proficiency: (level: number) =>
         level === 2 ? 'Especialização' : level === 0.5 ? 'Metade da proficiência' : 'Proficiência',

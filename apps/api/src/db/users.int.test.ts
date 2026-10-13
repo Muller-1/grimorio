@@ -10,6 +10,7 @@ const ids = sequentialIds();
 afterAll(() => db.close());
 beforeEach(() => db.truncateAll());
 
+// (O índice antigo, só entre contas ativas, foi coberto pelo índice para sempre — ADR-008.)
 describe('tabela users', () => {
   it('grava e lê um usuário com os padrões do banco', async () => {
     const id = ids.uuid();
@@ -26,15 +27,16 @@ describe('tabela users', () => {
     ).rejects.toThrow();
   });
 
-  it('quem excluiu a conta pode se cadastrar de novo com o mesmo e-mail (11.4)', async () => {
+  it('e-mail continua único mesmo depois de excluir a conta (ADR-007, achado 2)', async () => {
     const first = ids.uuid();
     await db.orm.insert(users).values({ id: first, email: 'caio@x.com', displayName: 'Caio' });
     await db.orm
       .update(users)
       .set({ deletedAt: sql`now()` })
       .where(eq(users.id, first));
-    await db.orm.insert(users).values({ id: ids.uuid(), email: 'caio@x.com', displayName: 'Caio' });
-    const rows = await db.orm.select().from(users).where(eq(users.email, 'caio@x.com'));
-    expect(rows).toHaveLength(2);
+    // A exclusão de conta apaga o e-mail (troca por um valor sem sentido); sem isso, recusa.
+    await expect(
+      db.orm.insert(users).values({ id: ids.uuid(), email: 'caio@x.com', displayName: 'Caio' }),
+    ).rejects.toThrow();
   });
 });

@@ -52,6 +52,7 @@ export default defineConfig([
     '**/.tsbuild/**',
     '**/coverage/**',
     '**/.lighthouseci/**',
+    '**/.wrangler/**',
     'spikes/**',
   ]),
 

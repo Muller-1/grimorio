@@ -9,5 +9,6 @@ dist-ssr-test
 playwright-report
 test-results
 .lighthouseci
+.wrangler
 apps/api/drizzle
 spikes

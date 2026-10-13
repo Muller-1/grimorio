@@ -3,6 +3,7 @@ import { cryptoRng, roll } from '@grimorio/rules';
 import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
+import { useAuthStore } from '@/features/auth/store';
 import { AppRoutes } from './routes';
 
 const container = document.getElementById('root');
@@ -25,6 +26,9 @@ if (container.dataset.prerendered === window.location.pathname) {
   container.replaceChildren();
   createRoot(container).render(app);
 }
+
+// Quem está logado (ADR-008). Sem contas no build, não faz nada.
+void useAuthStore.getState().refresh();
 
 // Ganchos do bot de testes (Etapa 6). Só existem no build de teste (`vite build --mode test`):
 // em produção a condição vira `false` no build e o import inteiro some do bundle.

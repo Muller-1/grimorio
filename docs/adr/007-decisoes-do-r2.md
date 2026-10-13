@@ -85,12 +85,12 @@ prevista antes do R2. Opções para conversar com ele:
 
 ## Resumo
 
-| #   | Decisão                 | Estado                                     | Bloqueia                   |
-| --- | ----------------------- | ------------------------------------------ | -------------------------- |
-| 1   | Edição das regras       | decidido: 2024 (ADR-004)                   | —                          |
-| 5   | Terminologia            | decidido: livro 2024 (ADR-004)             | —                          |
-| 3   | Nome e domínio          | **aberto**                                 | login do R2                |
-| 4   | Idade mínima            | **aberto** (revisão jurídica)              | cadastro do R2             |
-| 6   | Classes da fatia mínima | **aberto** (sugestão: Guerreiro + Clérigo) | conteúdo do R2             |
-| 7   | Biblioteca de login     | **aberto** (sugestão: Better Auth)         | login do R2                |
-| 8   | Instância paga          | **aberto**                                 | staging e lançamento do R2 |
+| #   | Decisão                 | Estado                                          | Bloqueia                   |
+| --- | ----------------------- | ----------------------------------------------- | -------------------------- |
+| 1   | Edição das regras       | decidido: 2024 (ADR-004)                        | —                          |
+| 5   | Terminologia            | decidido: livro 2024 (ADR-004)                  | —                          |
+| 3   | Nome e domínio          | **aberto** (contornado no local: ADR-008)       | login em produção          |
+| 4   | Idade mínima            | **aberto** (revisão jurídica)                   | cadastro do R2             |
+| 6   | Classes da fatia mínima | substituída: as 12 classes no nível 1 (ADR-008) | —                          |
+| 7   | Biblioteca de login     | decidido: Better Auth, só Google (ADR-008)      | —                          |
+| 8   | Instância paga          | **aberto**                                      | staging e lançamento do R2 |

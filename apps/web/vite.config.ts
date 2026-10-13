@@ -36,7 +36,12 @@ export default defineConfig({
   // O manifesto diz quais arquivos cada página carregada sob demanda precisa; o
   // scripts/prerender.mjs usa isso para já pedir esses arquivos no HTML de /ficha e /dados.
   build: { manifest: true },
-  server: { port: 5173 },
+  server: {
+    port: 5173,
+    // A API fica "por baixo" do site (ADR-008): o navegador fala só com :5173 e o Vite repassa
+    // /api para a API em :3000. Assim o cookie de sessão é do próprio site.
+    proxy: { '/api': { target: 'http://localhost:3000', changeOrigin: false } },
+  },
   // O `vite preview` responde com os cabeçalhos de produção (public/_headers), inclusive a CSP:
   // assim o bot e o Lighthouse pegam qualquer coisa que a política bloquearia no ar.
   preview: { headers: siteWideHeaders() },

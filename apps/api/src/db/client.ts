@@ -23,6 +23,10 @@ export interface PostgresDatabase extends DatabasePort {
   pool: pg.Pool;
 }
 
+export function isPostgresDatabase(db: DatabasePort): db is PostgresDatabase {
+  return 'orm' in db && 'pool' in db;
+}
+
 export function createDatabase(url: string, options: { max?: number } = {}): PostgresDatabase {
   const pool = new pg.Pool({
     connectionString: url,

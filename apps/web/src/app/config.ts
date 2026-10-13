@@ -51,8 +51,15 @@ export const siteConfig = {
   /** VITE_CONTACT_EMAIL: e-mail para pedidos sobre dados. Vazio = usa o "Relatar problema". */
   contactEmail: emailOrEmpty(env.VITE_CONTACT_EMAIL),
 
+  /**
+   * Contas e fichas na conta (ADR-008) — VITE_ACCOUNTS=true. Precisa da API respondendo em
+   * /api no MESMO endereço do site. Sem a variável: ligado no `pnpm dev` (o Vite repassa /api
+   * para a API em :3000) e desligado nos builds (o site publicado ainda não tem API).
+   */
+  accountsEnabled: env.VITE_ACCOUNTS ? env.VITE_ACCOUNTS === 'true' : env.DEV,
+
   /** Data da versão em vigor dos termos e da política de privacidade. */
-  legalUpdatedAt: '23/09/2026',
+  legalUpdatedAt: '08/10/2026',
 };
 
 /** Monta o link de "Relatar problema" com a página e a versão do site (RF-104). */

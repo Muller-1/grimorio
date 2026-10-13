@@ -1,0 +1,231 @@
+import {
+  buildCharacterSheet,
+  CREATION_STEPS,
+  stepIssues,
+  type CreationStep,
+} from '@grimorio/rules';
+import { ArrowLeft, ArrowRight, Check, RotateCcw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { useAuthStore } from '@/features/auth/store';
+import { createCharacter } from '@/features/characters/api';
+import { hasLocalSheet, useSheetStore } from '@/features/sheet/store';
+import { useToastStore } from '@/features/toast/store';
+import { t } from '@/lib/i18n';
+import { tw } from '@/lib/i18n/wizard';
+import { newId } from '@/ports/ids';
+import { StepBar } from './components/parts';
+import { AbilitiesStep } from './steps/AbilitiesStep';
+import { ClassStep } from './steps/ClassStep';
+import { DetailsStep } from './steps/DetailsStep';
+import { OriginStep } from './steps/OriginStep';
+import { useBuilderStore } from './store';
+
+const w = tw;
+
+/**
+ * Assistente de criação (RF-20): Classe → Origem → Atributos → Toques Finais, na ordem do
+ * Livro do Jogador 2024. Com conta, o personagem vai para a conta; sem conta, para este navegador.
+ */
+export default function CreatePage() {
+  const step = useBuilderStore((s) => s.step);
+  const draft = useBuilderStore((s) => s.draft);
+  const setStep = useBuilderStore((s) => s.setStep);
+  const reset = useBuilderStore((s) => s.reset);
+  const authStatus = useAuthStore((s) => s.status);
+  const loadLocal = useSheetStore((s) => s.loadLocal);
+  const toast = useToastStore((s) => s.push);
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [confirmRestart, setConfirmRestart] = useState(false);
+  const [confirmReplace, setConfirmReplace] = useState(false);
+  const [accountFailed, setAccountFailed] = useState(false);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  const index = CREATION_STEPS.indexOf(step);
+  const issues = stepIssues(draft, step);
+  const isLast = index === CREATION_STEPS.length - 1;
+  const saveTo = authStatus === 'signed-in' ? 'account' : 'local';
+
+  useEffect(() => {
+    document.title = `${w.pageTitle} · ${t.brand.name}`;
+  }, []);
+
+  const go = (next: CreationStep) => {
+    setStep(next);
+    topRef.current?.scrollIntoView({ block: 'start' });
+  };
+
+  /** Dá para pular para uma etapa se todas as anteriores estão completas. */
+  const reachable = (target: CreationStep) =>
+    CREATION_STEPS.slice(0, CREATION_STEPS.indexOf(target)).every(
+      (s) => stepIssues(draft, s).length === 0,
+    );
+  const done = (s: CreationStep) => stepIssues(draft, s).length === 0;
+
+  const finishLocal = () => {
+    const sheet = buildCharacterSheet(draft, { newId });
+    if (!sheet) return;
+    loadLocal(sheet);
+    reset();
+    toast(w.result.savedLocal, 'success');
+    void navigate('/ficha');
+  };
+
+  const create = async () => {
+    const sheet = buildCharacterSheet(draft, { newId });
+    if (!sheet) return;
+    if (saveTo === 'local') {
+      if (hasLocalSheet()) setConfirmReplace(true);
+      else finishLocal();
+      return;
+    }
+    setBusy(true);
+    setAccountFailed(false);
+    const id = newId();
+    const result = await createCharacter(id, sheet);
+    setBusy(false);
+    if (result.ok) {
+      reset();
+      toast(w.result.created(sheet.identity.name), 'success');
+      void navigate(`/personagem?id=${id}`);
+      return;
+    }
+    if (result.error?.code === 'LIMIT_EXCEEDED') toast(w.result.limit, 'danger');
+    else setAccountFailed(true);
+  };
+
+  return (
+    <div ref={topRef} className="mx-auto w-full max-w-6xl scroll-mt-16 px-4 pt-6 pb-32">
+      <div className="mb-8 flex items-center gap-3">
+        <StepBar
+          current={step}
+          done={done}
+          reachable={reachable}
+          onSelect={(s) => reachable(s) && go(s)}
+        />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={w.restart}
+          title={w.restart}
+          onClick={() => setConfirmRestart(true)}
+        >
+          <RotateCcw className="size-4" />
+        </Button>
+      </div>
+
+      <p className="sr-only" aria-live="polite">
+        {w.stepOf(index + 1, CREATION_STEPS.length)}
+      </p>
+
+      {step === 'class' ? <ClassStep /> : null}
+      {step === 'origin' ? <OriginStep /> : null}
+      {step === 'abilities' ? <AbilitiesStep /> : null}
+      {step === 'details' ? <DetailsStep saveTo={saveTo} /> : null}
+
+      {/* Rodapé fixo: voltar, o que falta e avançar */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
+          <Button
+            variant="ghost"
+            disabled={index === 0}
+            onClick={() => go(CREATION_STEPS[index - 1]!)}
+            data-testid="wizard.back"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            {w.back}
+          </Button>
+          <div className="min-w-0 flex-1 text-sm" aria-live="polite">
+            {issues.length ? (
+              <p className="truncate text-muted" data-testid="wizard.issues">
+                <span className="font-semibold">{w.pending} </span>
+                {issues.map((i) => w.issues[i]).join(' ')}
+              </p>
+            ) : accountFailed ? (
+              <p className="text-danger">{w.result.failed}</p>
+            ) : (
+              <p className="max-sm:hidden text-muted">{w.draftSaved}</p>
+            )}
+          </div>
+          {accountFailed ? (
+            <Button
+              variant="outline"
+              onClick={() => (hasLocalSheet() ? setConfirmReplace(true) : finishLocal())}
+            >
+              {w.result.saveLocalInstead}
+            </Button>
+          ) : null}
+          {isLast ? (
+            <Button
+              variant="primary"
+              disabled={issues.length > 0 || busy}
+              onClick={() => void create()}
+              data-testid="wizard.finish"
+            >
+              <Check className="size-4" aria-hidden="true" />
+              {busy ? w.creating : w.create}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              disabled={issues.length > 0}
+              onClick={() => go(CREATION_STEPS[index + 1]!)}
+              data-testid="wizard.next"
+            >
+              {w.next}
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <Dialog
+        open={confirmRestart}
+        onOpenChange={setConfirmRestart}
+        title={w.restartTitle}
+        description={w.restartText}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmRestart(false)}>
+              {w.cancel}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                reset();
+                setConfirmRestart(false);
+              }}
+            >
+              {w.restartConfirm}
+            </Button>
+          </>
+        }
+      />
+      <Dialog
+        open={confirmReplace}
+        onOpenChange={setConfirmReplace}
+        title={w.result.replaceTitle}
+        description={w.result.replaceText}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmReplace(false)}>
+              {w.cancel}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setConfirmReplace(false);
+                finishLocal();
+              }}
+            >
+              {w.result.replaceConfirm}
+            </Button>
+          </>
+        }
+      />
+    </div>
+  );
+}

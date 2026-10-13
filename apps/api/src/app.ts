@@ -4,7 +4,10 @@
  */
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { Env } from './config/env';
-import { createDatabase, type DatabasePort } from './db/client';
+import { createDatabase, isPostgresDatabase, type DatabasePort } from './db/client';
+import { authRoutes } from './modules/auth/routes';
+import { characterRoutes } from './modules/characters/routes';
+import { proxyGuard } from './modules/proxy-guard';
 import { systemRoutes } from './modules/system/routes';
 import { testApi } from './plugins/test-api';
 import { defaultPorts, type Ports } from './ports';
@@ -42,7 +45,15 @@ export async function buildApp(env: Env, options: BuildOptions = {}): Promise<Fa
   });
   if (!options.db) app.addHook('onClose', async () => db.close());
 
+  // Antes de todas as rotas: publicado, só atende /api/* que chegue pelo site (ADR-009).
+  await app.register(proxyGuard);
   await app.register(systemRoutes);
+  // Login e personagens precisam do Postgres. Os testes de unidade usam um banco falso e só
+  // exercitam as rotas de sistema e as salvaguardas da API de teste.
+  if (isPostgresDatabase(db)) {
+    await app.register(authRoutes);
+    await app.register(characterRoutes);
+  }
   if (env.ENABLE_TEST_API) await app.register(testApi);
 
   return app;

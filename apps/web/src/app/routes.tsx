@@ -14,6 +14,10 @@ import { Layout } from './Layout';
 // Ficha e rolador são carregados sob demanda: a página inicial fica leve.
 const SheetPage = lazy(() => import('@/features/sheet/SheetPage'));
 const DicePage = lazy(() => import('@/pages/DicePage'));
+const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
+const CharactersPage = lazy(() => import('@/features/characters/CharactersPage'));
+const AccountSheetPage = lazy(() => import('@/features/characters/AccountSheetPage'));
+const CreatePage = lazy(() => import('@/features/builder/CreatePage'));
 
 function Loading({ children }: { children: ReactNode }) {
   return (
@@ -40,7 +44,7 @@ interface PageRoute {
   lazyModule?: string;
 }
 
-/** Rotas do R1 (plano de início, Etapa 5) + a ficha. Fonte única para o roteador e o build. */
+/** Rotas do R1 (plano de início, Etapa 5) + fichas e contas. Fonte única para o roteador e o build. */
 const PAGES: readonly PageRoute[] = [
   { path: '/', element: <HomePage />, prerender: 'full' },
   {
@@ -62,6 +66,47 @@ const PAGES: readonly PageRoute[] = [
     ),
     prerender: 'shell',
     lazyModule: 'src/pages/DicePage.tsx',
+  },
+  {
+    path: '/personagens',
+    element: (
+      <Loading>
+        <CharactersPage />
+      </Loading>
+    ),
+    prerender: 'shell',
+    lazyModule: 'src/features/characters/CharactersPage.tsx',
+  },
+  {
+    // A ficha da conta: /personagem?id=… (um HTML só; o id vai na busca, não no caminho).
+    path: '/personagem',
+    element: (
+      <Loading>
+        <AccountSheetPage />
+      </Loading>
+    ),
+    prerender: 'shell',
+    lazyModule: 'src/features/characters/AccountSheetPage.tsx',
+  },
+  {
+    path: '/criar',
+    element: (
+      <Loading>
+        <CreatePage />
+      </Loading>
+    ),
+    prerender: 'shell',
+    lazyModule: 'src/features/builder/CreatePage.tsx',
+  },
+  {
+    path: '/entrar',
+    element: (
+      <Loading>
+        <LoginPage />
+      </Loading>
+    ),
+    prerender: 'shell',
+    lazyModule: 'src/features/auth/LoginPage.tsx',
   },
   { path: '/apoie', element: <SupportPage />, prerender: 'full' },
   { path: '/creditos', element: <CreditsPage />, prerender: 'full' },

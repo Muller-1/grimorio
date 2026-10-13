@@ -4,6 +4,9 @@ Como colocar o site no ar na **Cloudflare Pages**, ligar os canais que ainda est
 ativar o monitor B14. As decisões por trás disto estão no
 [ADR-005](adr/005-publicacao-cloudflare.md).
 
+> **Com contas (login e fichas na conta):** siga [publicar-com-contas.md](publicar-com-contas.md),
+> que inclui a criação do projeto na Cloudflare, a API no Render e o banco no Neon (ADR-009).
+
 ## 1. Subir o repositório para o GitHub
 
 1. Em [github.com/new](https://github.com/new), crie um repositório **vazio** (sem README,
@@ -68,6 +71,7 @@ faça um novo deploy (**Deployments → ⋯ → Retry deployment**) — os valor
 | `VITE_SUPPORT_PLATFORM` | Nome da plataforma de apoio (decisão #2)          | `Apoia.se`                                                         |
 | `VITE_SUPPORT_URL`      | Link da página de apoio                           | `https://apoia.se/grimorio`                                        |
 | `VITE_CONTACT_EMAIL`    | E-mail para pedidos sobre dados (termos/privac.)  | `contato@exemplo.com`                                              |
+| `VITE_ACCOUNTS`         | Liga contas/login (ADR-008/009). Só com a API ligada | `true` (com `API_ORIGIN` e `API_PROXY_SECRET`: [publicar-com-contas.md](publicar-com-contas.md)) |
 
 Só links `https://` são aceitos. Sem valor, o site mostra que o canal ainda não existe.
 

@@ -1,20 +1,36 @@
-import { CircleUserRound, Dices, House, ScrollText, Swords } from 'lucide-react';
+import { Dices, House, ScrollText, Swords } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { D20Icon } from '@/components/ui/d20-icon';
+import { AccountMenu } from '@/features/auth/AccountMenu';
 import { Toaster } from '@/features/toast/Toaster';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { reportLink, siteConfig } from './config';
 
-function NavTab({ to, icon, children }: { to: string; icon: ReactNode; children: ReactNode }) {
+/** Páginas que contam como "Fichas" na barra (a lista, a ficha, o assistente). */
+const SHEET_PATHS = ['/personagens', '/personagem', '/ficha', '/criar'];
+
+function NavTab({
+  to,
+  icon,
+  children,
+  activeFor,
+}: {
+  to: string;
+  icon: ReactNode;
+  children: ReactNode;
+  activeFor?: readonly string[];
+}) {
+  const { pathname } = useLocation();
+  const extra = activeFor?.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ?? false;
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
         cn(
           'flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-semibold transition-colors',
-          isActive ? 'bg-accent text-accent-contrast' : 'text-text hover:bg-surface-2',
+          isActive || extra ? 'bg-accent text-accent-contrast' : 'text-text hover:bg-surface-2',
         )
       }
     >
@@ -45,7 +61,11 @@ function Header() {
           aria-label={t.nav.mainLabel}
           className="mx-auto flex items-center gap-1 rounded-lg border border-border bg-bg p-1"
         >
-          <NavTab to="/ficha" icon={<ScrollText className="size-4" />}>
+          <NavTab
+            to="/personagens"
+            activeFor={SHEET_PATHS}
+            icon={<ScrollText className="size-4" />}
+          >
             {t.nav.sheet}
           </NavTab>
           <span
@@ -61,14 +81,7 @@ function Header() {
           </NavTab>
         </nav>
 
-        <span
-          className="grid size-9 place-items-center rounded-full text-muted"
-          title={t.nav.profileSoon}
-          aria-label={t.nav.profileSoon}
-          role="img"
-        >
-          <CircleUserRound className="size-7" aria-hidden="true" />
-        </span>
+        <AccountMenu />
       </div>
     </header>
   );

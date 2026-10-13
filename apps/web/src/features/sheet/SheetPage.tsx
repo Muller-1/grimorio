@@ -1,6 +1,7 @@
 import { createBlankSheet } from '@grimorio/shared';
-import { FilePlus2, HardDriveDownload, Sparkles } from 'lucide-react';
+import { ArrowLeft, FilePlus2, HardDriveDownload, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { RollTray } from '@/features/dice/components/RollTray';
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { ActionsColumn } from './components/ActionsColumn';
 import { CharacterColumn } from './components/CharacterColumn';
 import { CombatColumn } from './components/CombatColumn';
+import { SyncIndicator } from '@/features/characters/SyncIndicator';
 import { exampleSheet } from './example';
 import { useSheetStore } from './store';
 
@@ -19,9 +21,13 @@ type Confirm = 'blank' | 'example' | null;
 /**
  * A ficha do protótipo: 3 colunas no computador, 2 no tablet e abas no celular
  * (plano v2, seção 2 e RNF-02).
+ *
+ * `local` = a ficha deste navegador (/ficha). `account` = uma ficha da conta (/personagem),
+ * aberta pela AccountSheetPage, com salvamento automático no servidor.
  */
-export default function SheetPage() {
+export default function SheetPage({ mode = 'local' }: { mode?: 'local' | 'account' }) {
   const name = useSheetStore((s) => s.sheet.identity.name);
+  const openLocal = useSheetStore((s) => s.openLocal);
   const recovered = useSheetStore((s) => s.recoveredFromBadData);
   const replace = useSheetStore((s) => s.replace);
   const toast = useToastStore((s) => s.push);
@@ -36,6 +42,11 @@ export default function SheetPage() {
     if (recovered) toast(t.sheet.restoredBackup, 'danger');
   }, [recovered, toast]);
 
+  // Vindo de uma ficha da conta, /ficha volta a mostrar a ficha deste navegador.
+  useEffect(() => {
+    if (mode === 'local') openLocal();
+  }, [mode, openLocal]);
+
   const columns: { key: Column; label: string }[] = [
     { key: 'character', label: t.sheet.mobileTabs.character },
     { key: 'combat', label: t.sheet.mobileTabs.combat },
@@ -45,23 +56,38 @@ export default function SheetPage() {
   return (
     <div className="mx-auto w-full max-w-[1400px] px-3 pt-3 pb-40 sm:px-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="min-w-0">
-          <h1 className="truncate font-display text-xl font-bold">{name || t.sheet.unnamed}</h1>
-          <p className="flex items-center gap-1 text-xs text-muted">
-            <HardDriveDownload className="size-3.5" aria-hidden="true" />
-            {t.sheet.savedLocally}
-          </p>
+        <div className="flex min-w-0 items-center gap-2">
+          {mode === 'account' ? (
+            <Button asChild variant="ghost" size="icon-sm" aria-label={t.sync.backToList}>
+              <Link to="/personagens">
+                <ArrowLeft className="size-4" />
+              </Link>
+            </Button>
+          ) : null}
+          <div className="min-w-0">
+            <h1 className="truncate font-display text-xl font-bold">{name || t.sheet.unnamed}</h1>
+            {mode === 'account' ? (
+              <SyncIndicator />
+            ) : (
+              <p className="flex items-center gap-1 text-xs text-muted">
+                <HardDriveDownload className="size-3.5" aria-hidden="true" />
+                {t.sheet.savedLocally}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={() => setConfirm('example')}>
-            <Sparkles className="size-4" />
-            {t.sheet.loadExample}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => setConfirm('blank')}>
-            <FilePlus2 className="size-4" />
-            {t.sheet.newSheet}
-          </Button>
-        </div>
+        {mode === 'local' ? (
+          <div className="flex gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setConfirm('example')}>
+              <Sparkles className="size-4" />
+              {t.sheet.loadExample}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setConfirm('blank')}>
+              <FilePlus2 className="size-4" />
+              {t.sheet.newSheet}
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {/* Abas só no celular */}

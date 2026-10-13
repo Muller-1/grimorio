@@ -18,6 +18,21 @@ export const safeStorage = {
       return false;
     }
   },
+  /** Chaves que começam com `prefix`. */
+  keys(prefix: string): string[] {
+    try {
+      const storage = globalThis.localStorage;
+      if (!storage) return [];
+      const found: string[] = [];
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        if (key?.startsWith(prefix)) found.push(key);
+      }
+      return found;
+    } catch {
+      return [];
+    }
+  },
   remove(key: string): void {
     try {
       globalThis.localStorage?.removeItem(key);

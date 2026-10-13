@@ -25,6 +25,24 @@ const ClockBody = z.union([
 ]);
 const RngBody = z.object({ seed: z.number().int().min(0).max(0xffffffff).nullable() });
 const EventsQuery = z.object({ type: z.string().optional() });
+const SessionBody = z.union([
+  z.object({ userId: z.uuid() }),
+  z.object({
+    email: z.email().max(200),
+    name: z.string().min(1).max(60).default('Jogador de Teste'),
+    image: z.url().max(2000).optional(),
+  }),
+]);
+
+/** Parte do plugin `testUtils` da biblioteca de login que usamos (ADR-008). */
+interface LoginTestHelpers {
+  createUser(overrides: Record<string, unknown>): { id: string };
+  saveUser(user: { id: string }): Promise<{ id: string; email: string; name: string }>;
+  login(opts: { userId: string }): Promise<{
+    user: { id: string; email: string; name: string };
+    cookies: { name: string; value: string }[];
+  }>;
+}
 
 function tokenMatches(given: unknown, expected: Buffer): boolean {
   if (typeof given !== 'string') return false;
@@ -95,6 +113,48 @@ export const testApi: FastifyPluginAsync = async (app) => {
         }
         ports.rng.reseed(body.data.seed);
         return { ok: true, seed: body.data.seed };
+      });
+
+      /**
+       * Sessão sem passar pelo Google (plano v2, 15.4): cria o usuário (ou usa um existente) e
+       * devolve o cookie, já gravado na resposta. É a única forma de o bot entrar numa conta.
+       */
+      scope.post('/session', async (request, reply) => {
+        const body = SessionBody.safeParse(request.body);
+        if (!body.success) return badRequest(reply, body.error);
+        if (!app.hasDecorator('auth')) return reply.code(501).send({ error: 'auth-unavailable' });
+        const context = (await app.auth.$context) as { test?: LoginTestHelpers };
+        const helpers = context.test;
+        if (!helpers) return reply.code(501).send({ error: 'auth-test-utils-off' });
+
+        let userId: string;
+        if ('userId' in body.data) {
+          userId = body.data.userId;
+        } else {
+          const { email, name, image } = body.data;
+          const draft = helpers.createUser({
+            email,
+            name,
+            emailVerified: true,
+            image: image ?? null,
+          });
+          userId = (await helpers.saveUser(draft)).id;
+        }
+        let login;
+        try {
+          login = await helpers.login({ userId });
+        } catch {
+          return reply.code(404).send({ error: 'user-not-found' });
+        }
+        const cookie = login.cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+        reply.header(
+          'set-cookie',
+          login.cookies.map((c) => `${c.name}=${c.value}; Path=/; HttpOnly; SameSite=Lax`),
+        );
+        return {
+          user: { id: login.user.id, email: login.user.email, displayName: login.user.name },
+          cookie,
+        };
       });
 
       scope.get('/outbox', async (_request, reply) => {

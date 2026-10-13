@@ -7,6 +7,7 @@ import {
   SKILL_KEYS,
   type AbilityKey,
 } from '../character/keys';
+import { CreationRecordSchema } from './creation';
 
 /**
  * Ficha local — formato PROVISÓRIO (ver docs/adr/002-ficha-antecipada.md).
@@ -97,6 +98,10 @@ export const LocalSheetSchema = z.object({
     armorClassOverride: int().min(0).max(50).optional(),
     /** Ajuste manual do PV máximo; sem ele, usa a média do dado de vida. */
     hpMaxOverride: int().min(1).max(999).optional(),
+    /** PV máximo extra a cada nível (ex.: Tenacidade Anã = 1). */
+    hpBonusPerLevel: int().min(0).max(5).optional(),
+    /** Soma o Bônus de Proficiência à Iniciativa (ex.: talento Alerta). */
+    initiativeProficiency: z.boolean().optional(),
   }),
   state: z.object({
     hp: z.object({ current: int().min(0).max(9999), temp: int().min(0).max(9999) }),
@@ -107,6 +112,8 @@ export const LocalSheetSchema = z.object({
   }),
   weapons: z.array(WeaponSchema).max(50),
   features: z.array(FeatureSchema).max(100),
+  /** Escolhas do assistente de criação, quando a ficha nasceu nele (opcional). */
+  creation: CreationRecordSchema.optional(),
 });
 
 export type LocalSheet = z.infer<typeof LocalSheetSchema>;

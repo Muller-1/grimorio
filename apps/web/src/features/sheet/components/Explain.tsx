@@ -20,6 +20,8 @@ export function partLabel(source: PartSource): string {
       return t.sheet.explain.hitDie(source.die, source.levels);
     case 'magic':
       return t.sheet.explain.magic;
+    case 'trait':
+      return t.sheet.explain.trait;
     case 'override':
       return t.sheet.explain.override;
   }

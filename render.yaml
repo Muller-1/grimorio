@@ -1,0 +1,46 @@
+# Blueprint do Render (ADR-009): a API do grimorio no plano grátis.
+# No painel do Render: New → Blueprint → escolha este repositório. Ele pede os valores marcados
+# com "sync: false" uma vez só; o passo a passo está em docs/publicacao.md.
+services:
+  - type: web
+    name: grimorio-api
+    runtime: docker
+    plan: free
+    # Perto do banco no Neon (AWS us-east-1, N. Virginia). Não dá para trocar depois.
+    region: virginia
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    # Só publica de novo quando muda algo que a API usa.
+    buildFilter:
+      paths:
+        - apps/api/**
+        - packages/rules/**
+        - packages/shared/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+        - render.yaml
+        - .dockerignore
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      # Endereço do site na Cloudflare, sem barra no fim (ex.: https://grimorio.pages.dev).
+      - key: SITE_URL
+        sync: false
+      # Endereço do banco no Neon (postgresql://...).
+      - key: DATABASE_URL
+        sync: false
+      # Do Google Cloud (o mesmo cliente OAuth do computador serve).
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # Gerados pelo Render. O PROXY_SECRET também vai para a Cloudflare (API_PROXY_SECRET).
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: PROXY_SECRET
+        generateValue: true

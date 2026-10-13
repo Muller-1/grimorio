@@ -26,6 +26,8 @@ export type PartSource =
   | { kind: 'level' }
   | { kind: 'hit-die'; die: HitDieSides; levels: number }
   | { kind: 'magic' }
+  /** Traço de espécie ou talento (ex.: Tenacidade Anã). */
+  | { kind: 'trait' }
   | { kind: 'override' };
 
 export interface ExplainedPart {
@@ -109,7 +111,12 @@ function mapAbilities<T>(fn: (key: AbilityKey) => T): Record<AbilityKey, T> {
 }
 
 /** PV máximo pela média fixa do livro: dado cheio no 1º nível, (dado/2 + 1) nos seguintes. */
-function averageHpMax(level: number, die: HitDieSides, conMod: number): Explained {
+function averageHpMax(
+  level: number,
+  die: HitDieSides,
+  conMod: number,
+  bonusPerLevel = 0,
+): Explained {
   const first = Math.max(1, die + conMod);
   const perLevel = Math.max(1, die / 2 + 1 + conMod);
   const later = (level - 1) * perLevel;
@@ -120,6 +127,7 @@ function averageHpMax(level: number, die: HitDieSides, conMod: number): Explaine
     withoutZeros([
       { source: { kind: 'hit-die', die, levels: level }, value: diceTotal },
       { source: { kind: 'ability', ability: 'con' }, value: conTotal },
+      { source: { kind: 'trait' }, value: bonusPerLevel * level },
     ]),
   );
 }
@@ -173,7 +181,12 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
           { source: { kind: 'ability', ability: 'dex' }, value: mods.dex },
         ]);
 
-  const initiative = explained([{ source: { kind: 'ability', ability: 'dex' }, value: mods.dex }]);
+  const initiative = explained([
+    { source: { kind: 'ability', ability: 'dex' }, value: mods.dex },
+    ...(sheet.combat.initiativeProficiency
+      ? [{ source: { kind: 'proficiency', level: 1 } as const, value: prof }]
+      : []),
+  ]);
 
   const passivePerception = explained([
     { source: { kind: 'base' }, value: 10 },
@@ -183,7 +196,7 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
   const hpMax =
     sheet.combat.hpMaxOverride !== undefined
       ? explained([{ source: { kind: 'override' }, value: sheet.combat.hpMaxOverride }])
-      : averageHpMax(level, sheet.combat.hitDie, mods.con);
+      : averageHpMax(level, sheet.combat.hitDie, mods.con, sheet.combat.hpBonusPerLevel ?? 0);
 
   const hitDice = {
     die: sheet.combat.hitDie,

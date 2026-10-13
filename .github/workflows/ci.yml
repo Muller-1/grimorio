@@ -145,6 +145,7 @@ jobs:
           DATABASE_URL: postgres://app:app@localhost:5432/app_test
           PORT: 3000
           LOG_LEVEL: warn
+          AUTH_SECRET: segredo-so-do-ci-com-mais-de-32-caracteres
         run: |
           node apps/api/dist/db/migrate.js
           node apps/api/dist/server.js &
@@ -153,3 +154,26 @@ jobs:
           curl --silent --fail http://localhost:3000/version | grep -q "\"commit\":\"${GITHUB_SHA::7}\""
           # Salvaguarda: sem ENABLE_TEST_API a rota de teste não existe.
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST http://localhost:3000/__test__/reset)" = 404
+          # Login (ADR-008): sem sessão, /api/v1/me responde 401; sem credenciais, sem Google.
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:3000/api/v1/me)" = 401
+          curl --silent --fail http://localhost:3000/api/v1/auth/providers | grep -q '"google":false'
+      - name: Imagem do Render (apps/api/Dockerfile) sobe como em produção (ADR-009)
+        env:
+          PROXY_SECRET: segredo-do-repasse-so-do-ci-com-32-caracteres
+        run: |
+          docker build --file apps/api/Dockerfile --tag grimorio-api .
+          docker run --detach --name api --network host \
+            -e APP_ENV=production -e PORT=10000 -e LOG_LEVEL=warn \
+            -e DATABASE_URL=postgres://app:app@localhost:5432/app_test \
+            -e SITE_URL=https://grimorio-ci.pages.dev \
+            -e AUTH_SECRET=segredo-de-producao-so-do-ci-com-32-caracteres \
+            -e PROXY_SECRET="$PROXY_SECRET" \
+            grimorio-api
+          curl --silent --fail --retry 30 --retry-delay 1 --retry-connrefused http://localhost:10000/health
+          curl --silent --fail http://localhost:10000/ready
+          # Sem o segredo do repasse do site, /api/* responde 403; com ele, atende.
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:10000/api/v1/session)" = 403
+          curl --silent --fail -H "x-grimorio-proxy: $PROXY_SECRET" http://localhost:10000/api/v1/session | grep -q '"user":null'
+      - name: Registro da imagem (só quando falha)
+        if: failure()
+        run: docker logs api || true

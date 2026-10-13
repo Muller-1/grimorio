@@ -34,20 +34,52 @@ export function loadSheet(): LoadResult {
   return { sheet: createBlankSheet(), recoveredFromBadData: true };
 }
 
+/** Grava a ficha deste navegador (ex.: a que o assistente de criação acabou de montar). */
+export function saveLocalSheet(sheet: LocalSheet): boolean {
+  return safeStorage.set(SHEET_STORAGE_KEY, JSON.stringify(sheet));
+}
+
+/** A ficha deste navegador tem alguma coisa (nome, classe ou alteração)? */
+export function hasLocalSheet(): boolean {
+  const raw = safeStorage.get(SHEET_STORAGE_KEY);
+  if (!raw) return false;
+  try {
+    return JSON.stringify(JSON.parse(raw)) !== JSON.stringify(createBlankSheet());
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * De onde a ficha aberta vem e para onde vai cada mudança:
+ * - `local`: este navegador (localStorage), como sempre foi;
+ * - `account`: uma ficha da conta; as mudanças vão para o servidor (features/characters/sync).
+ */
+export type SheetSource = { kind: 'local' } | { kind: 'account'; id: string };
+
 interface SheetState {
   sheet: LocalSheet;
+  source: SheetSource;
   recoveredFromBadData: boolean;
   /** Edita campos de "build"/identidade. Depois, normaliza (ex.: PV acima do novo máximo). */
   edit(recipe: (draft: LocalSheet) => void): void;
   /** Ações de jogo (dano, cura, dados de vida...). Devolve avisos para a interface. */
   dispatch(action: SheetAction): SheetNotice[];
   replace(sheet: LocalSheet): void;
+  /** Volta para a ficha deste navegador. */
+  openLocal(): void;
+  /** Abre uma ficha da conta (não conta como edição). */
+  openAccount(id: string, sheet: LocalSheet): void;
+  /** Troca a ficha deste navegador por outra (ex.: criada no assistente) e a abre. */
+  loadLocal(sheet: LocalSheet): void;
 }
 
 const initial = loadSheet();
+const LOCAL: SheetSource = { kind: 'local' };
 
 export const useSheetStore = create<SheetState>((set, get) => ({
   sheet: initial.sheet,
+  source: LOCAL,
   recoveredFromBadData: initial.recoveredFromBadData,
 
   edit(recipe) {
@@ -68,11 +100,41 @@ export const useSheetStore = create<SheetState>((set, get) => ({
   replace(sheet) {
     set({ sheet: normalizeSheet(sheet).sheet });
   },
+
+  openLocal() {
+    if (get().source.kind === 'local') return;
+    const loaded = loadSheet();
+    set({ sheet: loaded.sheet, source: LOCAL, recoveredFromBadData: loaded.recoveredFromBadData });
+  },
+
+  openAccount(id, sheet) {
+    set({ sheet, source: { kind: 'account', id }, recoveredFromBadData: false });
+  },
+
+  loadLocal(sheet) {
+    const normalized = normalizeSheet(sheet).sheet;
+    saveLocalSheet(normalized);
+    set({ sheet: normalized, source: { kind: 'local' }, recoveredFromBadData: false });
+  },
 }));
+
+type AccountListener = (id: string, sheet: LocalSheet) => void;
+const accountListeners = new Set<AccountListener>();
+
+/** O salvamento da conta se inscreve aqui (evita import circular com o sync). */
+export function onAccountSheetEdit(listener: AccountListener): () => void {
+  accountListeners.add(listener);
+  return () => accountListeners.delete(listener);
+}
 
 // Salva a cada mudança. Falhar ao salvar (aba anônima, cota cheia) não derruba a ficha.
 useSheetStore.subscribe((state, previous) => {
-  if (state.sheet !== previous.sheet) {
+  if (state.sheet === previous.sheet) return;
+  // Trocou de ficha (abriu outra): não é uma edição.
+  if (state.source !== previous.source) return;
+  if (state.source.kind === 'local') {
     safeStorage.set(SHEET_STORAGE_KEY, JSON.stringify(state.sheet));
+  } else {
+    for (const listener of accountListeners) listener(state.source.id, state.sheet);
   }
 });

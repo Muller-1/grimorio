@@ -4,6 +4,7 @@ import { buildApp } from './app';
 import type { Env } from './config/env';
 import { controllableClock, inMemoryMailer, sequentialIds } from './ports';
 import { TEST_API_PREFIX, TEST_TOKEN_HEADER } from './plugins/test-api';
+import { PROXY_SECRET_HEADER } from './modules/proxy-guard';
 import { fakeDatabase, type FakeDatabase } from './testing/fake-db';
 import { TEST_TOKEN, testEnv } from './testing/env';
 
@@ -182,5 +183,52 @@ describe('API de teste — ganchos', () => {
     await app.inject({ method: 'POST', url: `${TEST_API_PREFIX}/reset`, headers: auth });
     expect(mailer.outbox()).toEqual([]);
     expect(app.ports.events.recorded()).toEqual([]);
+  });
+});
+
+describe('repasse do site — PROXY_SECRET (ADR-009)', () => {
+  const secret = 'segredo-do-repasse-com-mais-de-32-caracteres';
+
+  it('sem PROXY_SECRET, nada muda (computador e testes)', async () => {
+    const { app } = await start();
+    expect((await app.inject('/api/v1/session')).statusCode).toBe(404);
+  });
+
+  it('com PROXY_SECRET, /api/* sem o segredo certo recebe 403', async () => {
+    const { app } = await start({ PROXY_SECRET: secret });
+    for (const headers of [{}, { [PROXY_SECRET_HEADER]: 'chute' }, { [PROXY_SECRET_HEADER]: '' }]) {
+      const res = await app.inject({ url: '/api/v1/session', headers });
+      expect(res.statusCode).toBe(403);
+      expect(res.json()).toMatchObject({ code: 'FORBIDDEN' });
+    }
+  });
+
+  it('com o segredo certo, o pedido segue (aqui, 404: o banco falso não tem as rotas)', async () => {
+    const { app } = await start({ PROXY_SECRET: secret });
+    const res = await app.inject({
+      url: '/api/v1/session',
+      headers: { [PROXY_SECRET_HEADER]: secret },
+    });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('não dá para escapar com caminho codificado ou barras duplas', async () => {
+    const { app } = await start({ PROXY_SECRET: secret });
+    for (const url of [
+      '/%61pi/v1/session',
+      '//api/v1/session',
+      '/API/v1/session',
+      '/health/../api/v1/me',
+    ]) {
+      expect((await app.inject(url)).statusCode, url).toBe(403);
+    }
+  });
+
+  it('rotas de sistema continuam abertas (o Render confere /health)', async () => {
+    const { app } = await start({ PROXY_SECRET: secret });
+    expect((await app.inject('/health')).statusCode).toBe(200);
+    expect((await app.inject('/ready')).statusCode).toBe(200);
+    expect((await app.inject('/version')).statusCode).toBe(200);
+    expect((await app.inject('/health?x=1')).statusCode).toBe(200);
   });
 });

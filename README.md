@@ -8,22 +8,28 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 
 ## O que já existe
 
-| Parte                                                                                    | Onde                                                             | Estado                                          |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
-| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                            | raiz                                                             | Etapa 1 ✔                                       |
-| CI (GitHub Actions) + modelo de PR                                                       | `.github/`                                                       | Etapa 2 ✔ (falta ativar a proteção da `main`)   |
-| Gerador aleatório (criptográfico + semente para testes)                                  | `packages/rules/src/dice/rng.ts`                                 | Etapa 3 ✔                                       |
-| Parser e avaliação de expressões de dados                                                | `packages/rules/src/dice/`                                       | Etapa 4 ✔                                       |
-| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`              | `apps/web`                                                       | Etapa 5 ✔                                       |
-| Tela inicial                                                                             | `apps/web/src/pages/HomePage.tsx`                                | ✔                                               |
-| Ficha editável com cálculo automático (antecipada, ver ADR-002)                          | `apps/web/src/features/sheet` + `packages/rules/src/sheet`       | ✔                                               |
-| Ganchos de teste + bot (Playwright) com os cenários B1, B11 e B12                        | `apps/web/src/testing` + `apps/qa-bot`                           | Etapa 6 ✔                                       |
-| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice` | Etapa 7 ✔                                       |
-| Publicação: páginas institucionais, Cloudflare Pages, CSP, orçamentos, Lighthouse, B14   | `docs/publicacao.md` + `apps/web/public/_headers`                | Etapa 8 ✔ (falta criar o projeto na Cloudflare) |
-| API (Fastify + Postgres/Drizzle): portas, `/health` `/ready` `/version`, API de teste    | `apps/api` + `docker-compose.yml`                                | Etapa 9 ✔ (falta staging e decisões do R2)      |
+| Parte                                                                                    | Onde                                                               | Estado                                          |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------- |
+| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                            | raiz                                                               | Etapa 1 ✔                                       |
+| CI (GitHub Actions) + modelo de PR                                                       | `.github/`                                                         | Etapa 2 ✔ (falta ativar a proteção da `main`)   |
+| Gerador aleatório (criptográfico + semente para testes)                                  | `packages/rules/src/dice/rng.ts`                                   | Etapa 3 ✔                                       |
+| Parser e avaliação de expressões de dados                                                | `packages/rules/src/dice/`                                         | Etapa 4 ✔                                       |
+| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`              | `apps/web`                                                         | Etapa 5 ✔                                       |
+| Tela inicial                                                                             | `apps/web/src/pages/HomePage.tsx`                                  | ✔                                               |
+| Ficha editável com cálculo automático (antecipada, ver ADR-002)                          | `apps/web/src/features/sheet` + `packages/rules/src/sheet`         | ✔                                               |
+| Ganchos de teste + bot (Playwright) com os cenários B1, B11 e B12                        | `apps/web/src/testing` + `apps/qa-bot`                             | Etapa 6 ✔                                       |
+| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice`   | Etapa 7 ✔                                       |
+| Publicação: páginas institucionais, Cloudflare Pages, CSP, orçamentos, Lighthouse, B14   | `docs/publicacao.md` + `apps/web/public/_headers`                  | Etapa 8 ✔ (falta criar o projeto na Cloudflare) |
+| API (Fastify + Postgres/Drizzle): portas, `/health` `/ready` `/version`, API de teste    | `apps/api` + `docker-compose.yml`                                  | Etapa 9 ✔ (falta staging e decisões do R2)      |
+| Login com Google (Better Auth) e fichas salvas na conta, com salvamento por seção        | `apps/api/src/modules` + `apps/web/src/features/{auth,characters}` | ✔ (ADR-008; contas em fase de testes)           |
+| Assistente de criação: Classe → Origem → Atributos → Toques Finais (regras de 2024)      | `apps/web/src/features/builder` + `packages/rules/src/creation`    | ✔ (ADR-008)                                     |
 
-Ainda **não** existem: contas, login e ficha salva no servidor (R2). As decisões que faltam
-estão no [ADR-007](docs/adr/007-decisoes-do-r2.md).
+Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas só para os **usuários de
+teste** do Google, com a API no Render, o banco no Neon e o `/api` repassado pela Cloudflare
+([ADR-009](docs/adr/009-publicacao-com-contas.md), passo a passo em
+[docs/publicar-com-contas.md](docs/publicar-com-contas.md)). Abrir ao público depende da revisão
+jurídica (decisão #4 do [ADR-007](docs/adr/007-decisoes-do-r2.md)). Login local:
+[docs/login-google.md](docs/login-google.md).
 
 ## Como rodar
 
@@ -61,10 +67,14 @@ Precisa do [Docker Desktop](https://www.docker.com/products/docker-desktop/) lig
 pnpm db:up                                   # sobe o Postgres (bancos app_dev e app_test)
 cp apps/api/.env.example apps/api/.env       # copia o exemplo de configuração
 pnpm db:migrate                              # cria as tabelas no app_dev
-pnpm dev:api                                 # API em http://localhost:3000 (/health, /ready, /version)
+pnpm dev:api                                 # API em http://localhost:3000 (o site a acessa por /api)
 pnpm test:api                                # testes de integração (usam só o app_test)
 pnpm db:down                                 # desliga o Postgres (os dados ficam)
 ```
+
+Login com Google: preencha `AUTH_SECRET`, `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` no
+`apps/api/.env` — passo a passo em [docs/login-google.md](docs/login-google.md). Com `pnpm dev` e
+`pnpm dev:api` rodando, o site em `http://localhost:5173` repassa `/api` para a API.
 
 Mudou `apps/api/src/db/schema.ts`? Gere a migração com `pnpm --filter @grimorio/api db:generate`
 e confira o SQL em `apps/api/drizzle/` antes de commitar. Detalhes no
@@ -90,6 +100,7 @@ pnpm --filter @grimorio/qa-bot exec playwright show-report   # relatório da úl
 | B1 — fumaça          | todas as páginas abrem sem erro no console; com semente fixa, `1d20` dá o valor do oráculo |
 | B11 — dados          | a mesma sequência de rolagens na tela e no `seededRng` dá os mesmos dados, um a um         |
 | B12 — acessibilidade | axe sem violações sérias ou críticas nas páginas e nos diálogos                            |
+| B2 — assistente      | percorre a criação com escolhas aleatórias (pela semente) e confere a ficha com o motor    |
 | B14 — monitor        | abre `/dados` na produção, rola `1d20` e confere o total (sem ganchos; roda a cada 30 min) |
 
 Toda execução imprime a semente. Os ganchos (`window.__APP_TEST__`) só existem no build de teste;
@@ -109,7 +120,7 @@ grimorio/
 │  │     ├─ config/env.ts  # variáveis de ambiente validadas com Zod
 │  │     ├─ ports/         # rng, clock, mailer, events, ids
 │  │     ├─ db/            # schema, conexão, migrações, trava de banco descartável
-│  │     ├─ modules/       # rotas por assunto (system: /health, /ready, /version)
+│  │     ├─ modules/       # rotas: system, auth (login Google), characters (fichas na conta)
 │  │     ├─ plugins/       # test-api (/__test__/*, nunca em produção)
 │  │     ├─ app.ts         # buildApp: monta a API (usado também nos testes)
 │  │     └─ server.ts
@@ -121,6 +132,9 @@ grimorio/
 │        ├─ app/           # entrada, rotas, layout, pré-renderização
 │        ├─ pages/         # Início, Dados, Apoie, Créditos, Termos, Privacidade
 │        ├─ features/
+│        │  ├─ auth/       # entrar/sair, menu da conta, página /entrar
+│        │  ├─ builder/    # assistente de criação (/criar)
+│        │  ├─ characters/ # lista, ficha da conta e salvamento automático
 │        │  ├─ sheet/      # a ficha do protótipo
 │        │  ├─ dice/       # rolagem, histórico, resultado
 │        │  └─ toast/      # avisos curtos
@@ -129,7 +143,7 @@ grimorio/
 │        └─ lib/i18n/      # TODOS os textos em português
 ├─ packages/
 │  ├─ shared/              # tipos e schemas Zod (ficha local)
-│  ├─ rules/               # motor puro: dados + cálculos da ficha (sem React, sem Node)
+│  ├─ rules/               # motor puro: dados, cálculos da ficha e criação (conteúdo SRD 5.2)
 │  └─ testkit/             # utilidades só para testes
 ├─ docker/                 # script que cria o app_test no Postgres do Docker
 ├─ docker-compose.yml      # Postgres local
@@ -150,7 +164,10 @@ grimorio/
 
 - `docs/adr/` — decisões registradas (001: ajustes do plano de início; 002: ficha antecipada;
   003: pré-renderização; 004: terminologia e edição; 005: publicação na Cloudflare; 006: base
-  do back-end; 007: decisões do R2).
+  do back-end; 007: decisões do R2; 008: login com Google, fichas na conta e assistente;
+  009: publicação com contas para um grupo de teste).
 - `docs/publicacao.md` — passo a passo para colocar o site no ar e ligar o monitor B14.
+- `docs/publicar-com-contas.md` — site + API (Render) + banco (Neon) com login, para testar com
+  amigos.
 - Os planos (`plano-tecnico-site-dnd-v2.md` e `plano-de-inicio-site-dnd.md`) estão nos arquivos
   do Projeto no Claude; copie-os para `docs/` (Etapa 0).
