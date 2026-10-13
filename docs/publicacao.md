@@ -1,6 +1,6 @@
 # Publicação (Etapa 8)
 
-Como colocar o site no ar na **Cloudflare Pages**, ligar os canais que ainda estão em aberto e
+Como colocar o site no ar na **Cloudflare** (Worker com arquivos estáticos; antes, Pages), ligar os canais que ainda estão em aberto e
 ativar o monitor B14. As decisões por trás disto estão no
 [ADR-005](adr/005-publicacao-cloudflare.md).
 
@@ -21,36 +21,23 @@ ativar o monitor B14. As decisões por trás disto estão no
 3. O CI roda sozinho no primeiro push. Em **Settings → Branches**, proteja a `main` exigindo os
    checks `check`, `bot` e `lighthouse` antes do merge (Etapa 2).
 
-## 2. Criar o projeto na Cloudflare Pages
+## 2. Criar o projeto na Cloudflare
 
-1. No painel da Cloudflare: **Workers & Pages → Create application → aba Pages → Import an
-   existing Git repository**. Autorize o GitHub e escolha o repositório.
-2. Configuração do build:
-
-   | Campo                  | Valor           |
-   | ---------------------- | --------------- |
-   | Production branch      | `main`          |
-   | Framework preset       | `None`          |
-   | Build command          | `pnpm build`    |
-   | Build output directory | `apps/web/dist` |
-   | Root directory         | (deixe vazio)   |
-
-3. Em **Environment variables**, adicione `PNPM_VERSION` = `10.28.0` (a Cloudflare usa outra
-   versão por padrão). O Node vem do arquivo `.nvmrc` sozinho.
-4. **Save and Deploy**. O endereço fica como `https://NOME-DO-PROJETO.pages.dev`.
+O site é publicado como **Worker com arquivos estáticos** (o tipo que o painel da Cloudflare
+cria hoje), configurado pelo `wrangler.jsonc` da raiz ([ADR-009](adr/009-publicacao-com-contas.md)).
+Passo a passo no item 1 de [publicar-com-contas.md](publicar-com-contas.md): build `pnpm build`,
+deploy `npx wrangler deploy`. O endereço fica como `https://grimorio.SUA-CONTA.workers.dev`.
 
 Depois disso:
 
 - todo push na `main` publica em produção;
-- todo pull request ganha um endereço de pré-visualização, que aparece como comentário no PR.
-  Esses endereços não são indexados por buscadores (a Cloudflare manda `X-Robots-Tag: noindex`);
 - os cabeçalhos de segurança vêm de `apps/web/public/_headers` e o 404 de `404.html`, gerado no
-  build. Não é preciso configurar nada disso no painel.
+  build (o `wrangler.jsonc` liga os dois). Não é preciso configurar nada disso no painel.
 
 ### Conferir depois de publicar
 
 ```bash
-pnpm bot --scenario=B14 --env=https://NOME-DO-PROJETO.pages.dev
+pnpm bot --scenario=B14 --env=https://grimorio.SUA-CONTA.workers.dev
 ```
 
 Se passar, o site abre, rola dados e não tem nada bloqueado pela política de segurança.
@@ -61,9 +48,9 @@ Se passar, o site abre, rola dados e não tem nada bloqueado pela política de s
 
 ## 3. Ligar "Relatar problema", apoio e contato
 
-Tudo é configurado por variáveis de ambiente **da Cloudflare** (Settings → Variables and
-Secrets, tipo _Text_, ambiente _Production_; repita em _Preview_ se quiser). Depois de mudar,
-faça um novo deploy (**Deployments → ⋯ → Retry deployment**) — os valores entram no build.
+Tudo é configurado por variáveis **do build** na Cloudflare (no Worker: Settings → Build →
+Variables and secrets). Depois de mudar, publique de novo (um `git push`, ou
+`git commit --allow-empty -m "publicar de novo"` e `git push`) — os valores entram no build.
 
 | Variável                | Para quê                                          | Exemplo                                                            |
 | ----------------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
@@ -91,7 +78,7 @@ No GitHub: **Settings → Secrets and variables → Actions → aba Variables �
 variable**:
 
 - Nome: `PRODUCTION_URL`
-- Valor: `https://NOME-DO-PROJETO.pages.dev` (sem barra no fim)
+- Valor: `https://grimorio.SUA-CONTA.workers.dev` (sem barra no fim)
 
 A partir daí, a cada 30 minutos o workflow **Monitor sintético (B14)** abre `/dados`, rola `1d20`
 e confere o total. Depois de 2 falhas seguidas ele abre uma issue, e o GitHub avisa por e-mail.
@@ -105,9 +92,9 @@ Dá para rodar na hora em **Actions → Monitor sintético (B14) → Run workflo
 
 ## 5. Domínio próprio (decisão #3)
 
-Quando o nome estiver escolhido (sem "D&D" nem "Dungeons & Dragons"): no projeto da Pages,
-**Custom domains → Set up a custom domain**. O HTTPS é automático. Depois, atualize a variável
-`PRODUCTION_URL` do GitHub.
+Quando o nome estiver escolhido (sem "D&D" nem "Dungeons & Dragons"): no Worker, **Settings →
+Domains & Routes → Add → Custom domain**. O HTTPS é automático. Depois, atualize a variável
+`PRODUCTION_URL` do GitHub, o `SITE_URL` do Render e os endereços no Google.
 
 ## Checklist de lançamento (plano de início, Etapa 8)
 

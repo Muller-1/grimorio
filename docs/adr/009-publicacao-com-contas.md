@@ -14,8 +14,9 @@ contas seguem **em fase de testes**.
 ## Decisões
 
 1. **Tudo no plano grátis**, conferido em 13/10/2026:
-   - **Site:** Cloudflare Pages (ADR-005). Arquivos estáticos são grátis e sem limite; as
-     funções somam 100 mil pedidos por dia no plano grátis.
+   - **Site:** Cloudflare, como **Worker com arquivos estáticos** (o tipo que o painel cria
+     hoje; o ADR-005 previa Pages). Arquivos estáticos são grátis e sem limite; o Worker, que só
+     roda para `/api/*`, tem 100 mil pedidos por dia no plano grátis.
    - **API:** Render, plano _free_ (0,1 CPU, 512 MB), região Virginia. **Dorme depois de 15 min
      sem pedidos** e leva cerca de 1 min para acordar; 750 horas por mês por conta. Responde à
      decisão #8 por enquanto: **instância grátis, que dorme**. Para o lançamento público, rever.
@@ -23,12 +24,18 @@ contas seguem **em fase de testes**.
      5 min parado e volta sozinho no próximo pedido), região AWS us-east-1, perto da API. O banco
      grátis do Render foi descartado porque expira em 30 dias.
 
-2. **Mesma origem sem domínio: uma função da Pages repassa `/api/*`** (`functions/api/[[path]].ts`,
-   com a lógica e os testes em `apps/web/src/edge/api-proxy.ts`). O navegador só fala com
-   `https://PROJETO.pages.dev`; o cookie de sessão continua "do próprio site" (ADR-007, achado 1).
-   A função não segue redirecionamentos (o retorno do Google passa como veio), não mexe na
-   resposta e, sem configuração ou com a API fora do ar, responde JSON 503/502. Com isso o site
-   mostra "contas indisponíveis" e continua funcionando sem conta.
+2. **Mesma origem sem domínio: o Worker do site repassa `/api/*`.** O `wrangler.jsonc` da raiz
+   publica `apps/web/dist` com `_headers`, `/dados` → `dados.html` (`auto-trailing-slash`) e
+   404 de verdade com o `404.html` (`404-page`), igual ao ADR-005. Com `run_worker_first:
+["/api/*"]`, só a API passa pelo código (`apps/web/src/edge/worker.ts`, que chama
+   `api-proxy.ts`). O navegador só fala com `https://grimorio.SUA-CONTA.workers.dev`; o cookie
+   de sessão continua "do próprio site" (ADR-007, achado 1; `workers.dev` está na lista de
+   sufixos públicos, então cada site tem os seus cookies). O repasse não segue
+   redirecionamentos (o retorno do Google passa como veio), não mexe na resposta e, sem
+   configuração ou com a API fora do ar, responde JSON 503/502. Com isso o site mostra "contas
+   indisponíveis" e continua funcionando sem conta. `keep_vars` evita que a publicação apague
+   `API_ORIGIN`, criada no painel. A primeira versão usava uma Pages Function
+   (`functions/api/[[path]].ts`); saiu quando o projeto foi criado como Worker.
 
 3. **Segredo entre o repasse e a API (`PROXY_SECRET`).** Sem ele, todos os jogadores chegariam
    à API com o IP da Cloudflare e dividiriam um único limite de tentativas do login (3 a cada
@@ -53,18 +60,20 @@ contas seguem **em fase de testes**.
    está em **Usuários de teste** (até 100 contas). É o jeito de abrir para os amigos sem abrir ao
    público antes da revisão jurídica (#4).
 
-6. **Prévias de pull request ficam sem contas:** `VITE_ACCOUNTS` só é definido no ambiente
-   _Production_ da Pages. O retorno do Google aponta sempre para o endereço principal
-   (`SITE_URL`), então o login numa prévia não teria como funcionar.
+6. **`VITE_ACCOUNTS` é variável do build** (Settings → Build), e `API_ORIGIN`/`API_PROXY_SECRET`
+   são variáveis do Worker no ar (Settings → Variables and Secrets). O retorno do Google aponta
+   sempre para o endereço principal (`SITE_URL`), então o login só funciona nele, não em
+   endereços de prévia.
 
 ## Conferido
 
-- Unidade: repasse (7 testes), proteção da API (5), ambiente (2).
+- Unidade: repasse (7 testes), Worker (3), proteção da API (5), ambiente (2).
 - Integração (Postgres de verdade): em modo produção atrás do repasse, cada IP tem o seu
   limite, o retorno do Google sai em `https://…/api/auth/callback/google`, o cookie é
   `__Secure-` e pedido sem segredo leva 403.
-- Ponta a ponta no contêiner da nuvem: `wrangler pages dev` com o build de produção
-  (`VITE_ACCOUNTS=true`) e a imagem Docker da API em modo produção. Conferidos sessão,
+- Ponta a ponta no contêiner da nuvem: `wrangler dev` com o `wrangler.jsonc` e o build de
+  produção (`VITE_ACCOUNTS=true`), e a imagem Docker da API em modo produção. Rotas estáticas,
+  `/dados/` → `/dados`, 404 com status 404, CSP e cache de `/assets` conferidos. Conferidos sessão,
   criar/listar/salvar seção/excluir personagem, corpo grande demais (413), sair, origem
   estranha com cookie (403), API desligada (502 em JSON) e IP forjado pelo navegador ignorado.
   No Chromium, `/entrar` foi até o Google sem nenhum erro de CSP.

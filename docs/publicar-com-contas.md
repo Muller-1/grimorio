@@ -1,25 +1,25 @@
 # Publicar com contas (para um grupo de teste)
 
-Resultado: o site em `https://NOME.pages.dev`, com **Entrar com Google** e fichas salvas na
-conta, para as pessoas que você colocar na lista de teste do Google. Tudo no plano grátis.
-Por que foi feito assim: [ADR-009](adr/009-publicacao-com-contas.md).
+Resultado: o site em `https://grimorio.SUA-CONTA.workers.dev`, com **Entrar com Google** e
+fichas salvas na conta, para as pessoas que você colocar na lista de teste do Google. Tudo no
+plano grátis. Por que foi feito assim: [ADR-009](adr/009-publicacao-com-contas.md).
 
 ## Como as peças se encaixam
 
 ```
-navegador ──► Cloudflare Pages (o site)  ──/api/*──►  Render (a API)  ──►  Neon (o banco)
-                 NOME.pages.dev                       grimorio-api.onrender.com
+navegador ──► Cloudflare (o site)  ──/api/*──►  Render (a API)  ──►  Neon (o banco)
+          grimorio.SUA-CONTA.workers.dev      grimorio-api.onrender.com
 ```
 
-- O navegador só conversa com o endereço do site. Uma função da Cloudflare leva o que for
-  `/api/...` até a API e traz a resposta. É isso que faz o login funcionar em todos os
-  navegadores.
+- O navegador só conversa com o endereço do site. Quando o pedido é `/api/...`, um pequeno
+  programa da Cloudflare (o Worker, em `apps/web/src/edge/`) leva o pedido até a API e traz a
+  resposta. É isso que faz o login funcionar em todos os navegadores.
 - A API **dorme depois de 15 min sem uso** e leva cerca de 1 minuto para acordar. O site
   funciona nesse meio-tempo; só a parte da conta espera.
 - Segredos (senha do banco, chaves do Google, `PROXY_SECRET`) só vão nos painéis do Render e da
   Cloudflare. Nunca no Git nem em conversas.
 
-Ordem: **Neon → Cloudflare → Render → Cloudflare de novo → Google → testar.** Cada passo usa um
+Ordem: **Cloudflare → Neon → Render → Cloudflare de novo → Google → testar.** Cada passo usa um
 endereço que o anterior criou.
 
 ## 0. Antes: o código no GitHub
@@ -33,7 +33,32 @@ git commit -m "Descrição do que mudou"
 git push
 ```
 
-## 1. Banco no Neon
+## 1. Site na Cloudflare
+
+1. <https://dash.cloudflare.com> → **Workers & Pages** → **Create application** → importe o
+   repositório `grimorio` do GitHub.
+2. Configuração do build:
+
+   | Campo                       | Valor               |
+   | --------------------------- | ------------------- |
+   | Project name                | `grimorio`          |
+   | Build command               | `pnpm build`        |
+   | Deploy command              | `npx wrangler deploy` |
+   | Root directory / Path       | (vazio)             |
+
+   O arquivo `wrangler.jsonc`, na raiz do projeto, diz o resto à Cloudflare: onde ficam os
+   arquivos do site, o `404.html` e que só `/api/*` passa pelo Worker.
+
+3. No Worker → **Settings** → **Build** → **Variables and secrets** (variáveis do _build_):
+   `VITE_ACCOUNTS` = `true`. Ela liga o botão **Entrar** e só vale para a próxima publicação.
+4. Publique (um `git push` publica sozinho). Quando terminar, o endereço aparece no Worker (botão
+   **Visit**, ou em **Settings → Domains & Routes**), algo como
+   `https://grimorio.SUA-CONTA.workers.dev`. **Anote o endereço exato**: ele é o `SITE_URL`.
+
+Abra o endereço: o site já funciona. O ícone de nuvem riscada no canto é normal até o passo 4,
+porque a API ainda não existe.
+
+## 2. Banco no Neon
 
 1. Entre em <https://neon.com> (pode usar a conta do GitHub) e crie um projeto:
    - **Project name:** `grimorio`
@@ -44,31 +69,6 @@ git push
 
 Não precisa criar tabelas: a API cria sozinha quando sobe.
 
-## 2. Site na Cloudflare Pages
-
-Se o projeto já existe na Cloudflare, pule para o passo 3 e só anote o endereço dele.
-
-1. <https://dash.cloudflare.com> → **Workers & Pages** → **Create application** → **Pages** →
-   **Connect to Git**. Autorize o GitHub e escolha o repositório `grimorio`.
-2. Em **Set up builds and deployments**:
-
-   | Campo                  | Valor           |
-   | ---------------------- | --------------- |
-   | Project name           | `grimorio`      |
-   | Production branch      | `main`          |
-   | Framework preset       | `None`          |
-   | Build command          | `pnpm build`    |
-   | Build output directory | `apps/web/dist` |
-   | Root directory         | (vazio)         |
-
-   Em **Environment variables**: `PNPM_VERSION` = `10.28.0`.
-
-3. **Save and Deploy**. Em poucos minutos aparece o endereço, por exemplo
-   `https://grimorio.pages.dev`. Se o nome já for de outra pessoa, a Cloudflare acrescenta
-   letras no fim. **Anote o endereço exato**: ele é o `SITE_URL`.
-
-Abra o endereço: o site já funciona, ainda sem contas.
-
 ## 3. API no Render
 
 1. <https://dashboard.render.com> (pode usar a conta do GitHub) → **New** → **Blueprint** →
@@ -76,12 +76,12 @@ Abra o endereço: o site já funciona, ainda sem contas.
    o serviço `grimorio-api` (plano _Free_).
 2. Ele pede quatro valores:
 
-   | Variável               | O que colocar                                                  |
-   | ---------------------- | -------------------------------------------------------------- |
-   | `SITE_URL`             | o endereço do passo 2, **sem barra no fim**                    |
-   | `DATABASE_URL`         | o endereço do Neon (passo 1)                                   |
-   | `GOOGLE_CLIENT_ID`     | o mesmo do seu `apps/api/.env`                                 |
-   | `GOOGLE_CLIENT_SECRET` | o mesmo do seu `apps/api/.env`                                 |
+   | Variável               | O que colocar                                   |
+   | ---------------------- | ----------------------------------------------- |
+   | `SITE_URL`             | o endereço do passo 1, **sem barra no fim**     |
+   | `DATABASE_URL`         | o endereço do Neon (passo 2)                    |
+   | `GOOGLE_CLIENT_ID`     | o mesmo do seu `apps/api/.env`                  |
+   | `GOOGLE_CLIENT_SECRET` | o mesmo do seu `apps/api/.env`                  |
 
    `AUTH_SECRET` e `PROXY_SECRET` o Render gera sozinho.
 
@@ -92,19 +92,18 @@ Abra o endereço: o site já funciona, ainda sem contas.
 5. No serviço → **Environment**, revele e copie o valor de **`PROXY_SECRET`** (vai para o passo
    seguinte).
 
-## 4. Ligar as contas no site (Cloudflare)
+## 4. Ligar o site à API (Cloudflare)
 
-1. No projeto da Pages → **Settings** → **Variables and Secrets** → **Add**, no ambiente
-   **Production**:
+No Worker → **Settings** → **Variables and Secrets** (variáveis de quando o site está no ar,
+diferentes das do build) → **Add**:
 
-   | Nome               | Tipo   | Valor                                      |
-   | ------------------ | ------ | ------------------------------------------ |
-   | `VITE_ACCOUNTS`    | Text   | `true`                                     |
-   | `API_ORIGIN`       | Text   | o endereço da API (passo 3), sem barra     |
-   | `API_PROXY_SECRET` | Secret | o `PROXY_SECRET` copiado do Render         |
+| Nome               | Tipo   | Valor                                  |
+| ------------------ | ------ | -------------------------------------- |
+| `API_ORIGIN`       | Text   | o endereço da API (passo 3), sem barra |
+| `API_PROXY_SECRET` | Secret | o `PROXY_SECRET` copiado do Render     |
 
-2. **Deployments** → no último → **⋯** → **Retry deployment** (as variáveis só entram numa
-   publicação nova).
+**Deploy** para salvar. Estas valem na hora, sem montar o site de novo, e continuam lá nas
+próximas publicações.
 
 ## 5. Google
 
@@ -112,8 +111,9 @@ No <https://console.cloud.google.com>, no mesmo projeto do login local:
 
 1. **Google Auth Platform → Clientes** → o seu cliente. Acrescente, sem apagar os de
    `localhost`:
-   - **Origens JavaScript autorizadas:** `https://grimorio.pages.dev` (o seu endereço)
-   - **URIs de redirecionamento autorizados:** `https://grimorio.pages.dev/api/auth/callback/google`
+   - **Origens JavaScript autorizadas:** `https://grimorio.SUA-CONTA.workers.dev`
+   - **URIs de redirecionamento autorizados:**
+     `https://grimorio.SUA-CONTA.workers.dev/api/auth/callback/google`
 2. **Público-alvo (Audience) → Usuários de teste → Add users**: o Gmail de cada amigo (até
    100). Deixe o app em **Teste**: só entra quem está nessa lista.
 
@@ -121,8 +121,8 @@ O Google pode levar alguns minutos para aplicar.
 
 ## 6. Testar
 
-1. Abra `https://grimorio.pages.dev/entrar` → **Entrar com Google**. Se a API estava dormindo,
-   o primeiro acesso demora até 1 minuto.
+1. Abra `https://grimorio.SUA-CONTA.workers.dev/entrar` → **Entrar com Google**. Se a API
+   estava dormindo, o primeiro acesso demora até 1 minuto.
 2. Em **Fichas**, clique em **Criar personagem** e siga o assistente. O personagem deve aparecer
    em **Meus personagens** e também abrir em outro aparelho, com a mesma conta.
 3. Mande o link para os amigos. Eles precisam usar exatamente o Gmail que você colocou na lista.
@@ -137,8 +137,9 @@ Em **Register → Server**: aba _Connection_ com o host do Neon (o trecho depois
 
 | Sintoma | Causa provável |
 | --- | --- |
+| Na Cloudflare: "application detection logic has been run in the root of a workspace" | falta o `wrangler.jsonc` na raiz (veio no commit da publicação; faça `git pull`/`git push`) |
 | Ícone de nuvem riscada no canto do site | API dormindo (espere 1 min e recarregue) ou `API_ORIGIN`/`API_PROXY_SECRET` errados na Cloudflare |
-| Não aparece o botão **Entrar** | falta `VITE_ACCOUNTS=true` na Cloudflare, ou faltou o **Retry deployment** |
+| Não aparece o botão **Entrar** | `VITE_ACCOUNTS=true` não está nas variáveis do **Build**, ou o site não foi publicado depois de colocá-la (faça um `git push`; sem nada para enviar: `git commit --allow-empty -m "publicar de novo"` e `git push`) |
 | Google mostra `redirect_uri_mismatch` | o URI no Google não é exatamente `https://SEU-SITE/api/auth/callback/google` |
 | Google mostra "acesso bloqueado" | o Gmail não está em **Usuários de teste** |
 | `/ready` da API mostra `"database":"down"` | `DATABASE_URL` errado no Render (copie de novo do Neon) |

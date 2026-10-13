@@ -1,0 +1,22 @@
+// Site na Cloudflare Workers (ADR-009). Publicado pelo "Workers Builds" a cada push na main:
+//   build:  pnpm build           deploy: npx wrangler deploy
+// Variáveis do site (painel do Worker):
+//   Settings → Build → Variables and secrets:  VITE_ACCOUNTS=true   (entra no build)
+//   Settings → Variables and Secrets:          API_ORIGIN (Text), API_PROXY_SECRET (Secret)
+{
+  "name": "grimorio",
+  "main": "apps/web/src/edge/worker.ts",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "apps/web/dist",
+    "binding": "ASSETS",
+    // /dados serve dados.html; endereço desconhecido responde 404 com o 404.html.
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    // O Worker só roda para a API; o resto é arquivo estático (grátis e sem limite).
+    "run_worker_first": ["/api/*"],
+  },
+  // Não apaga as variáveis criadas no painel (API_ORIGIN) a cada publicação.
+  "keep_vars": true,
+  "observability": { "enabled": true },
+}

@@ -25,7 +25,7 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 | Assistente de criação: Classe → Origem → Atributos → Toques Finais (regras de 2024)      | `apps/web/src/features/builder` + `packages/rules/src/creation`    | ✔ (ADR-008)                                     |
 
 Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas só para os **usuários de
-teste** do Google, com a API no Render, o banco no Neon e o `/api` repassado pela Cloudflare
+teste** do Google, com a API no Render, o banco no Neon e o `/api` repassado pelo Worker do site na Cloudflare
 ([ADR-009](docs/adr/009-publicacao-com-contas.md), passo a passo em
 [docs/publicar-com-contas.md](docs/publicar-com-contas.md)). Abrir ao público depende da revisão
 jurídica (decisão #4 do [ADR-007](docs/adr/007-decisoes-do-r2.md)). Login local:
@@ -107,7 +107,7 @@ Toda execução imprime a semente. Os ganchos (`window.__APP_TEST__`) só existe
 o CI falha se eles aparecerem no build de produção. Em todos os cenários, qualquer erro no
 console ou bloqueio da política de segurança (CSP) faz o teste falhar.
 
-Contra um site publicado: `pnpm bot --scenario=B14 --env=https://SEU-SITE.pages.dev`.
+Contra um site publicado: `pnpm bot --scenario=B14 --env=https://grimorio.SUA-CONTA.workers.dev`.
 
 ## Estrutura
 
