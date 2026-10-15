@@ -11,6 +11,7 @@ export { DICE_LIMITS } from './limits';
 export type { ParseOptions } from './parser';
 export { createRng, cryptoRng, seededRng, sfc32Source, type RandomSource, type Rng } from './rng';
 export { critical, halve } from './transforms';
+export { withModifier } from './modifier';
 
 export type ParseResult = { ok: true; ast: Expr } | { ok: false; error: DiceError };
 export type EvalResult = { ok: true; value: RollResult } | { ok: false; error: DiceError };

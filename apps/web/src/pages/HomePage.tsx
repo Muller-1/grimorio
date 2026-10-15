@@ -1,11 +1,21 @@
-import { ArrowRight, Calculator, Dices, HeartPulse, Lightbulb } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  Calculator,
+  Cloud,
+  Dices,
+  HeartPulse,
+  Lightbulb,
+  Wand2,
+} from 'lucide-react';
 import { Link } from 'react-router';
+import { siteConfig } from '@/app/config';
 import { Button } from '@/components/ui/button';
 import { D20Icon } from '@/components/ui/d20-icon';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
-const FEATURE_ICONS = [Calculator, Lightbulb, Dices, HeartPulse];
+const FEATURE_ICONS = [Wand2, Calculator, Lightbulb, Dices, HeartPulse, Cloud];
 
 /** Cartão ilustrativo: como a ficha explica um número (valores do personagem de exemplo). */
 function PreviewCard() {
@@ -68,6 +78,10 @@ function PreviewCard() {
 
 export default function HomePage() {
   const h = t.home;
+  // Com contas, um 6º item explica onde a ficha fica salva.
+  const features = siteConfig.accountsEnabled
+    ? [...h.features.items, h.features.accounts]
+    : h.features.items;
   return (
     <div>
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 sm:py-16 lg:grid-cols-[1.15fr_1fr]">
@@ -79,8 +93,8 @@ export default function HomePage() {
           <p className="mt-5 max-w-xl text-lg text-muted">{h.lead}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild variant="primary" size="lg">
-              <Link to="/ficha">
-                {h.ctaSheet}
+              <Link to="/criar" data-testid="home.create">
+                {h.ctaCreate}
                 <ArrowRight className="size-5" />
               </Link>
             </Button>
@@ -91,44 +105,82 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
-          <p className="mt-4 text-sm text-muted">{h.localNote}</p>
+          <ul className="mt-5 space-y-1.5 text-sm">
+            <li>
+              <Link
+                to="/comecar"
+                className="inline-flex items-center gap-1.5 font-semibold text-accent underline-offset-4 hover:underline"
+                data-testid="home.start"
+              >
+                <BookOpen className="size-4" aria-hidden="true" />
+                {h.startLink}
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/ficha"
+                className="text-muted underline underline-offset-4 hover:text-text"
+                data-testid="home.blank"
+              >
+                {h.blankLink}
+              </Link>
+            </li>
+          </ul>
+          <p className="mt-4 text-sm text-muted">
+            {siteConfig.accountsEnabled ? h.accountsNote : h.localNote}
+          </p>
         </div>
         <PreviewCard />
       </section>
 
       <section className="border-y border-border bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-12">
-          <h2 className="font-display text-2xl font-bold">{h.features.title}</h2>
-          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {h.features.items.map((item, i) => {
-              const Icon = FEATURE_ICONS[i] ?? Calculator;
-              return (
-                <li key={item.title} className="rounded-xl border border-border bg-bg p-5">
-                  <Icon className="size-6 text-accent" aria-hidden="true" />
-                  <h3 className="mt-3 font-semibold">{item.title}</h3>
-                  <p className="mt-1 text-sm text-muted">{item.text}</p>
-                </li>
-              );
-            })}
-          </ul>
+          <h2 className="font-display text-2xl font-bold">{h.how.title}</h2>
+          <p className="mt-2 max-w-2xl text-muted">{h.how.lead}</p>
+          <ol className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {h.how.steps.map((step, i) => (
+              <li key={step.title} className="flex gap-4 rounded-xl border border-border bg-bg p-4">
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent font-display text-lg font-bold text-accent-contrast">
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 className="font-semibold">{step.title}</h3>
+                  <p className="text-sm text-muted">{step.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <Button asChild variant="primary">
+              <Link to="/criar">
+                {h.how.cta}
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Link
+              to="/comecar"
+              className="text-sm font-semibold text-accent underline-offset-4 hover:underline"
+            >
+              {h.how.basics}
+            </Link>
+          </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-12">
-        <h2 className="font-display text-2xl font-bold">{h.how.title}</h2>
-        <ol className="mt-6 grid gap-4 sm:grid-cols-3">
-          {h.how.steps.map((step, i) => (
-            <li key={step.title} className="flex gap-4">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent font-display text-lg font-bold text-accent-contrast">
-                {i + 1}
-              </span>
-              <div>
-                <h3 className="font-semibold">{step.title}</h3>
-                <p className="text-sm text-muted">{step.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
+        <h2 className="font-display text-2xl font-bold">{h.features.title}</h2>
+        <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((item, i) => {
+            const Icon = FEATURE_ICONS[i] ?? Calculator;
+            return (
+              <li key={item.title} className="rounded-xl border border-border bg-surface p-5">
+                <Icon className="size-6 text-accent" aria-hidden="true" />
+                <h3 className="mt-3 font-semibold">{item.title}</h3>
+                <p className="mt-1 text-sm text-muted">{item.text}</p>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-6 px-4 pb-16 md:grid-cols-2">

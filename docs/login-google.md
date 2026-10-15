@@ -8,8 +8,9 @@ Resultado: `pnpm dev` + `pnpm dev:api` e o botão **Entrar com Google** funciona
 1. Abra <https://console.cloud.google.com> e crie um projeto (ex.: `grimorio`).
 2. **APIs e serviços → Tela de consentimento OAuth** (ou **Google Auth Platform → Branding**):
    - nome do app, e-mail de suporte, público **Externo**;
-   - em **Público/Audience**, deixe em **Teste** e adicione o seu Gmail em **Usuários de teste**
-     (enquanto o app estiver em teste, só quem está nessa lista consegue entrar).
+   - em **Público/Audience**, deixe em **Teste**. Como o site só pede nome, e-mail e foto,
+     qualquer conta Google consegue entrar mesmo em teste; a lista de **Usuários de teste** só
+     faria diferença se o app pedisse mais do que isso.
 3. **Clientes** (ou **Credenciais → Criar credenciais → ID do cliente OAuth**):
    - tipo **Aplicativo da Web**;
    - **Origens JavaScript autorizadas:** `http://localhost:5173`
@@ -57,7 +58,7 @@ canto e **Fichas → Criar personagem** salva o personagem na conta.
 | --- | --- |
 | Botão do Google desabilitado com "ainda não foi configurado" | `GOOGLE_CLIENT_ID`/`SECRET` vazios no `.env` (reinicie a API) |
 | Google mostra `redirect_uri_mismatch` | o URI de redirecionamento no Google não é exatamente `http://localhost:5173/api/auth/callback/google` |
-| Google mostra "acesso bloqueado / app não verificado" | o seu e-mail não está em **Usuários de teste** |
+| Google mostra "acesso bloqueado / app não verificado" | o app está pedindo algo além de nome, e-mail e foto (aí só entra quem está em **Usuários de teste**) |
 | Ícone de nuvem riscada no canto | a API não está rodando (`pnpm dev:api`) ou o banco está desligado (`pnpm db:up`) |
 | A API não sobe: "Variáveis de ambiente inválidas" | falta `AUTH_SECRET` (32+ caracteres) no `.env` |
 
@@ -65,5 +66,5 @@ canto e **Fichas → Criar personagem** salva o personagem na conta.
 
 Passo a passo completo em [publicar-com-contas.md](publicar-com-contas.md) (ADR-009). No Google,
 acrescente o endereço do site nas origens e `https://SEU-SITE/api/auth/callback/google` nos
-redirecionamentos, e coloque cada pessoa que vai testar em **Usuários de teste**. Antes de abrir
-ao público: revisão jurídica (decisão #4) e publicar o app no Google.
+redirecionamentos. Qualquer conta Google consegue entrar (não precisa de lista de teste nem de
+publicar o app). Antes de divulgar amplamente: revisão jurídica (decisão #4).

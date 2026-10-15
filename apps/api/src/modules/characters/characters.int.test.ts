@@ -1,4 +1,5 @@
 // Personagens na conta (plano v2, 10.3, 11 e 13) contra um Postgres de verdade.
+import { readFileSync } from 'node:fs';
 import { createBlankSheet, MAX_CHARACTERS_PER_ACCOUNT, type LocalSheet } from '@grimorio/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -128,6 +129,70 @@ describe('criar, listar e abrir', () => {
     const res = await create(cookie, { id: ids.uuid(), sheet: base });
     expect(res.statusCode).toBe(409);
     expect(res.json().code).toBe('LIMIT_EXCEEDED');
+  });
+});
+
+// ADR-010: fichas salvas no formato antigo (v1) continuam abrindo e salvando.
+const v1Barbarian: unknown = JSON.parse(
+  readFileSync(
+    new URL('../../../../../packages/shared/src/sheet/fixtures/v1-barbarian.json', import.meta.url),
+    'utf8',
+  ),
+);
+
+describe('fichas salvas antes da ficha v2', () => {
+  it('abre migrada, com as seções novas em 0, e salva já no formato novo', async () => {
+    const { cookie, userId } = await loginAs(app, { email: 'ana@x.com' });
+    const id = ids.uuid();
+    await db.orm.insert(characters).values({
+      id,
+      ownerId: userId,
+      name: 'Grum',
+      rulesEdition: '2024',
+      data: v1Barbarian,
+      schemaVersion: 1,
+      sectionRevs: {
+        identity: 3,
+        build: 1,
+        combat: 1,
+        state: 5,
+        weapons: 1,
+        features: 1,
+        creation: 1,
+      },
+    });
+    const opened = await app.inject({ url: `/api/v1/characters/${id}`, headers: { cookie } });
+    expect(opened.statusCode).toBe(200);
+    const doc = opened.json();
+    expect(doc.sheet).toMatchObject({
+      schemaVersion: 2,
+      identity: { name: 'Grum' },
+      progression: { classId: 'barbarian', levels: [] },
+      spells: { cantrips: [], prepared: [] },
+    });
+    expect(doc.sectionRevs).toMatchObject({ identity: 3, state: 5, progression: 0, spells: 0 });
+
+    const saved = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/characters/${id}`,
+      headers: { cookie },
+      payload: {
+        sections: { spells: { ...doc.sheet.spells, cantrips: ['light'] } },
+        baseRevs: { spells: 0 },
+      },
+    });
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json().sectionRevs).toMatchObject({ spells: 1, identity: 3 });
+    const [row] = await db.orm.select().from(characters);
+    expect(row!.schemaVersion).toBe(2);
+    expect(row!.data).toMatchObject({ schemaVersion: 2, spells: { cantrips: ['light'] } });
+  });
+
+  it('o navegador ainda com a versão antiga do site consegue criar (v1 vira v2)', async () => {
+    const { cookie } = await loginAs(app, { email: 'ana@x.com' });
+    const res = await create(cookie, { id: ids.uuid(), sheet: v1Barbarian as never });
+    expect(res.statusCode).toBe(201);
+    expect(res.json().sheet.schemaVersion).toBe(2);
   });
 });
 

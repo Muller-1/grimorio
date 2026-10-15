@@ -1,4 +1,6 @@
-import type { HpEvent, LocalSheet } from '@grimorio/shared';
+import { freshAbilityState, type HpEvent, type LocalSheet } from '@grimorio/shared';
+import { SPELL_ACTIVE_PREFIX } from '../engine/character';
+import { SPELL_EFFECTS } from '../spells/effects';
 import { deriveSheet } from './derive';
 
 /**
@@ -17,7 +19,22 @@ export type SheetAction =
   | { type: 'death-save'; d20: number }
   | { type: 'set-death-saves'; successes: number; failures: number }
   | { type: 'spend-hit-die'; rolled: number }
-  | { type: 'long-rest' };
+  | { type: 'long-rest' }
+  /** Descanso curto: recursos de descanso curto e Magia de Pacto voltam (Dados de Vida à parte). */
+  | { type: 'short-rest' }
+  | { type: 'spend-resource'; id: string; amount?: number }
+  | { type: 'restore-resource'; id: string; amount?: number }
+  /** Liga/desliga uma habilidade (Fúria). Ligar gasta o custo; desligar não devolve. */
+  | { type: 'toggle-activation'; id: string }
+  /** Usa uma habilidade de uso único (Retomar o Fôlego): gasta o custo e aplica a cura rolada. */
+  | { type: 'use-activation'; id: string; healRolled?: number; tempHpRolled?: number }
+  /** Espaço de magia (círculo 1–9) ou de Magia de Pacto (`pact`). */
+  | { type: 'spend-slot'; circle: number; pact?: boolean }
+  | { type: 'restore-slot'; circle: number; pact?: boolean }
+  /** Começa (ou troca) a Concentração; `null` encerra. */
+  | { type: 'set-concentration'; spellId: string | null }
+  /** Marca que o efeito de uma magia está valendo em você (Bênção, Escudo da Fé…). */
+  | { type: 'toggle-spell-effect'; spellId: string };
 
 /** Avisos para a interface mostrar (códigos; a interface traduz). */
 export type SheetNotice =
@@ -28,7 +45,13 @@ export type SheetNotice =
   | 'not-dying'
   | 'no-hit-dice'
   | 'needs-1-hp'
-  | 'nothing-to-undo';
+  | 'nothing-to-undo'
+  | 'no-uses'
+  | 'requires-active'
+  | 'no-slot'
+  | 'unknown-ability'
+  /** Ligar a Fúria encerrou a Concentração. */
+  | 'concentration-ended';
 
 export interface ActionContext {
   /** Momento da ação (ISO). Vem da porta Clock: a função continua pura. */
@@ -51,7 +74,8 @@ export function applySheetAction(
   action: SheetAction,
   ctx: ActionContext,
 ): ActionOutcome {
-  const hpMax = deriveSheet(sheet).hpMax.value;
+  const derived = deriveSheet(sheet);
+  const hpMax = derived.hpMax.value;
   const notices: SheetNotice[] = [];
   const { hp, deathSaves } = sheet.state;
 
@@ -200,7 +224,7 @@ export function applySheetAction(
     }
 
     case 'spend-hit-die': {
-      const { hitDice, abilities } = deriveSheet(sheet);
+      const { hitDice, abilities } = derived;
       if (hitDice.remaining <= 0) return { sheet, notices: ['no-hit-dice'] };
       if (hp.current < 1) return { sheet, notices: ['needs-1-hp'] };
 
@@ -222,18 +246,184 @@ export function applySheetAction(
       };
     }
 
-    case 'long-rest':
-      // Regras de 2024: precisa de pelo menos 1 PV para começar; ao terminar,
-      // recupera todos os PV e todos os Dados de Vida gastos.
-      if (hp.current < 1) return { sheet, notices: ['needs-1-hp'] };
+    case 'short-rest': {
+      const resources = { ...sheet.state.resources };
+      for (const r of derived.engine.resources) {
+        if (r.shortRest === 'all') delete resources[r.id];
+        else if (r.shortRest === 'one' && r.spent > 0) resources[r.id] = r.spent - 1;
+      }
+      return { sheet: withState({ resources, pactSlotsSpent: 0 }), notices };
+    }
+
+    case 'spend-resource':
+    case 'restore-resource': {
+      const r = derived.engine.resources.find((x) => x.id === action.id);
+      if (!r) return { sheet, notices: ['unknown-ability'] };
+      const amount = Math.max(1, Math.floor(action.amount ?? 1));
+      if (action.type === 'spend-resource' && r.remaining < amount) {
+        return { sheet, notices: ['no-uses'] };
+      }
+      const spent = clamp(
+        r.spent + (action.type === 'spend-resource' ? amount : -amount),
+        0,
+        r.max,
+      );
+      return { sheet: withState({ resources: withSpent(sheet, r.id, spent) }), notices };
+    }
+
+    case 'toggle-activation': {
+      const a = derived.engine.activations.find((x) => x.id === action.id && x.mode === 'toggle');
+      if (!a) return { sheet, notices: ['unknown-ability'] };
+      if (a.active) {
+        // Desliga esta e o que dependia dela (Golpe Brutal depende do Ataque Imprudente).
+        const off = new Set([a.id]);
+        for (const other of derived.engine.activations) {
+          if (other.requires.some((id) => off.has(id))) off.add(other.id);
+        }
+        return {
+          sheet: withState({ active: sheet.state.active.filter((id) => !off.has(id)) }),
+          notices,
+        };
+      }
+      if (a.blockedBy === 'requires') return { sheet, notices: ['requires-active'] };
+      if (a.blockedBy === 'no-uses') return { sheet, notices: ['no-uses'] };
+      let state: Partial<LocalSheet['state']> = { active: [...sheet.state.active, a.id] };
+      if (a.cost) state = { ...state, resources: spendCost(sheet, derived, a.cost) };
+      const next = withState(state);
+      // Fúria: sem Concentração (Livro do Jogador, Bárbaro).
+      if (a.id === 'rage' && next.state.concentration) {
+        notices.push('concentration-ended');
+        return { sheet: { ...next, state: withoutConcentration(next.state) }, notices };
+      }
+      return { sheet: next, notices };
+    }
+
+    case 'use-activation': {
+      const a = derived.engine.activations.find((x) => x.id === action.id && x.mode === 'use');
+      if (!a) return { sheet, notices: ['unknown-ability'] };
+      if (a.blockedBy === 'no-uses') return { sheet, notices: ['no-uses'] };
+      if (a.blockedBy === 'requires') return { sheet, notices: ['requires-active'] };
+      let next: LocalSheet = a.cost
+        ? withState({ resources: spendCost(sheet, derived, a.cost) })
+        : sheet;
+      if (action.healRolled !== undefined) {
+        const amount = nonNegativeInt(action.healRolled);
+        const current = Math.min(hpMax, next.state.hp.current + amount);
+        const revived = next.state.hp.current === 0 && current > 0;
+        next = {
+          ...next,
+          state: {
+            ...next.state,
+            hp: { ...next.state.hp, current },
+            deathSaves: revived ? { successes: 0, failures: 0 } : next.state.deathSaves,
+            hpLog: [
+              ...next.state.hpLog,
+              {
+                actionId: ctx.actionId,
+                at: ctx.now,
+                kind: 'heal' as const,
+                amount,
+                effect: { current: current - next.state.hp.current, temp: 0 },
+              },
+            ].slice(-HP_LOG_LIMIT),
+          },
+        };
+      }
+      if (action.tempHpRolled !== undefined) {
+        const temp = Math.max(next.state.hp.temp, nonNegativeInt(action.tempHpRolled));
+        next = { ...next, state: { ...next.state, hp: { ...next.state.hp, temp } } };
+      }
+      return { sheet: next, notices };
+    }
+
+    case 'spend-slot':
+    case 'restore-slot': {
+      const sc = derived.spellcasting;
+      const delta = action.type === 'spend-slot' ? 1 : -1;
+      if (action.pact) {
+        if (!sc?.pact) return { sheet, notices: ['no-slot'] };
+        const spent = sc.pact.spent + delta;
+        if (spent > sc.pact.max) return { sheet, notices: ['no-slot'] };
+        return { sheet: withState({ pactSlotsSpent: clamp(spent, 0, sc.pact.max) }), notices };
+      }
+      const slot = sc?.slots.find((x) => x.circle === action.circle);
+      if (!slot) return { sheet, notices: ['no-slot'] };
+      const spent = slot.spent + delta;
+      if (spent > slot.max) return { sheet, notices: ['no-slot'] };
+      const slotsSpent = [...sheet.state.slotsSpent];
+      slotsSpent[slot.circle - 1] = clamp(spent, 0, slot.max);
+      return { sheet: withState({ slotsSpent }), notices };
+    }
+
+    case 'set-concentration': {
+      const ended = withoutConcentration(sheet.state);
+      if (action.spellId === null) return { sheet: { ...sheet, state: ended }, notices };
+      return {
+        sheet: { ...sheet, state: { ...ended, concentration: action.spellId.slice(0, 60) } },
+        notices,
+      };
+    }
+
+    case 'toggle-spell-effect': {
+      const key = `${SPELL_ACTIVE_PREFIX}${action.spellId}`;
+      if (!SPELL_EFFECTS[action.spellId]) return { sheet, notices: ['unknown-ability'] };
+      const on = sheet.state.active.includes(key);
       return {
         sheet: withState({
-          hp: { current: hpMax, temp: 0 },
-          deathSaves: { successes: 0, failures: 0 },
-          hitDiceSpent: 0,
-          hpLog: [],
+          active: on ? sheet.state.active.filter((id) => id !== key) : [...sheet.state.active, key],
         }),
         notices,
       };
+    }
+
+    case 'long-rest':
+      // Regras de 2024: precisa de pelo menos 1 PV para começar; ao terminar,
+      // recupera todos os PV, todos os Dados de Vida, os espaços de magia e os usos das
+      // habilidades, e o que estava ativo (Fúria, concentração) termina.
+      if (hp.current < 1) return { sheet, notices: ['needs-1-hp'] };
+      {
+        const { concentration: _ended, ...rest } = sheet.state;
+        return {
+          sheet: {
+            ...sheet,
+            state: {
+              ...rest,
+              ...freshAbilityState(),
+              hp: { current: hpMax, temp: 0 },
+              deathSaves: { successes: 0, failures: 0 },
+              hitDiceSpent: 0,
+              hpLog: [],
+            },
+          },
+          notices,
+        };
+      }
   }
+}
+
+function withSpent(sheet: LocalSheet, id: string, spent: number): Record<string, number> {
+  const resources = { ...sheet.state.resources };
+  if (spent <= 0) delete resources[id];
+  else resources[id] = spent;
+  return resources;
+}
+
+function spendCost(
+  sheet: LocalSheet,
+  derived: ReturnType<typeof deriveSheet>,
+  cost: { resource: string; amount: number },
+): Record<string, number> {
+  const r = derived.engine.resources.find((x) => x.id === cost.resource);
+  if (!r) return sheet.state.resources;
+  return withSpent(sheet, r.id, Math.min(r.max, r.spent + cost.amount));
+}
+
+/**
+ * Encerra a Concentração: tira `concentration` e o efeito ligado dessa magia em você.
+ */
+function withoutConcentration(state: LocalSheet['state']): LocalSheet['state'] {
+  const { concentration, ...rest } = state;
+  if (!concentration) return state;
+  const key = `${SPELL_ACTIVE_PREFIX}${concentration}`;
+  return { ...rest, active: rest.active.filter((id) => id !== key) };
 }

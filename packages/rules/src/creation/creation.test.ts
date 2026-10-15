@@ -14,11 +14,22 @@ import {
   validateBaseScores,
 } from './abilities';
 import { buildCharacterSheet } from './build';
-import { BACKGROUNDS, CLASS_ORDER, CLASSES, SPECIES, SPECIES_ORDER, type ClassId } from './content';
+import {
+  BACKGROUNDS,
+  CLASS_ORDER,
+  CLASSES,
+  SPECIES,
+  SPECIES_ORDER,
+  WEAPONS,
+  type ClassId,
+  type WeaponId,
+} from './content';
+import { masteryOptions, suggestedMasteries } from './mastery';
 import {
   emptyDraft,
   firstIncompleteStep,
   overlappingSkills,
+  sanitizeDraft,
   stepIssues,
   withBackground,
   withClass,
@@ -49,6 +60,7 @@ function completeDraft(
   d.backgroundBonus = suggestBackgroundBonus(bg.abilities, cls.primary);
   d.name = 'Teste';
   if (cls.expertise) d.expertise = d.classSkills.slice(0, cls.expertise);
+  if (cls.weaponMastery) d.weaponMasteries = masteryOptions(cls).slice(0, cls.weaponMastery.count);
   edit(d);
   return d;
 }
@@ -307,6 +319,18 @@ describe('ficha montada', () => {
     expect(sheet.combat.speedFt).toBe(35);
     expect(sheet.weapons).toEqual([]);
     expect(sheet.features.find((f) => f.name === 'Equipamento inicial')?.text).toMatch(/^200 PO/);
+    // ADR-010: o truque da linhagem já vem na aba Magias, sempre preparado.
+    expect(sheet.spells.granted).toEqual([{ id: 'druidcraft', source: 'species' }]);
+    expect(sheet.progression).toEqual({ classId: 'ranger', levels: [] });
+  });
+
+  it('Tiferino Infernal ganha Taumaturgia e Raio de Fogo como magias da espécie', () => {
+    const d = completeDraft('fighter', (x) => {
+      x.speciesId = 'tiefling';
+      x.speciesOptionId = 'infernal';
+    });
+    const sheet = buildCharacterSheet(d, ctx)!;
+    expect(sheet.spells.granted.map((g) => g.id)).toEqual(['thaumaturgy', 'fire-bolt']);
   });
 
   it('antecedente "Outro (do livro)" preenchido pelo jogador', () => {
@@ -338,7 +362,6 @@ describe('ficha montada', () => {
 
 describe('rascunho salvo no navegador', () => {
   it('lixo vira rascunho vazio; tipos errados voltam ao padrão', async () => {
-    const { sanitizeDraft } = await import('./draft');
     expect(sanitizeDraft(null)).toEqual(emptyDraft());
     const d = sanitizeDraft({
       classId: 'necromante',
@@ -357,8 +380,100 @@ describe('rascunho salvo no navegador', () => {
   });
 
   it('um rascunho válido sobrevive à ida e volta', async () => {
-    const { sanitizeDraft } = await import('./draft');
     const d = completeDraft('rogue', (x) => (x.rolled = [15, 14, 13, 12, 10, 8]));
     expect(sanitizeDraft(JSON.parse(JSON.stringify(d)))).toEqual(d);
+  });
+});
+
+describe('Maestria em Arma (nível 1)', () => {
+  it('toda arma da tabela tem uma propriedade de maestria', () => {
+    expect(Object.keys(WEAPONS)).toHaveLength(38);
+    for (const weapon of Object.values(WEAPONS)) expect(weapon.mastery).toBeTruthy();
+  });
+
+  it('quem tem e quantas: Bárbaro 2, Guerreiro 3, Paladino 2, Guardião 2, Ladino 2', () => {
+    const counts = Object.fromEntries(
+      CLASS_ORDER.map((id) => [id, CLASSES[id].weaponMastery?.count ?? 0]),
+    );
+    expect(counts).toMatchObject({ barbarian: 2, fighter: 3, paladin: 2, ranger: 2, rogue: 2 });
+    for (const id of [
+      'bard',
+      'cleric',
+      'druid',
+      'monk',
+      'sorcerer',
+      'warlock',
+      'wizard',
+    ] as const) {
+      expect(counts[id]).toBe(0);
+    }
+  });
+
+  it('opções seguem o treinamento: Bárbaro só corpo a corpo; Ladino só Marciais com Acuidade ou Leve', () => {
+    const barbarian = masteryOptions(CLASSES.barbarian);
+    expect(barbarian.every((id) => !WEAPONS[id].ranged)).toBe(true);
+    expect(barbarian).toContain('greataxe');
+    const rogue = masteryOptions(CLASSES.rogue);
+    expect(rogue).toContain('rapier');
+    expect(rogue).toContain('shortbow');
+    expect(rogue).not.toContain('greatsword');
+    expect(masteryOptions(CLASSES.fighter)).toHaveLength(38);
+    expect(masteryOptions(CLASSES.wizard)).toEqual([]);
+  });
+
+  it('sugestão vem do equipamento inicial', () => {
+    expect(suggestedMasteries(CLASSES.barbarian, 'A')).toEqual(['greataxe', 'handaxe']);
+    expect(suggestedMasteries(CLASSES.barbarian, 'B')).toEqual([]);
+  });
+
+  it('a etapa Classe exige a quantidade certa e trocar de classe limpa', () => {
+    const d = completeDraft('fighter', (x) => void (x.weaponMasteries = ['greatsword']));
+    expect(stepIssues(d, 'class')).toContain('weapon-mastery-count');
+    d.weaponMasteries = ['greatsword', 'longbow', 'flail'];
+    expect(stepIssues(d, 'class')).not.toContain('weapon-mastery-count');
+    expect(withClass(d, 'rogue').weaponMasteries).toEqual([]);
+    // Arma fora do treinamento não conta.
+    const rogue = completeDraft(
+      'rogue',
+      (x) => void (x.weaponMasteries = ['greatsword', 'dagger']),
+    );
+    expect(stepIssues(rogue, 'class')).toContain('weapon-mastery-count');
+  });
+
+  it('a ficha marca as armas com maestria e explica o efeito', () => {
+    const d = completeDraft('barbarian', (x) => void (x.weaponMasteries = ['greataxe', 'handaxe']));
+    const sheet = buildCharacterSheet(d, ctx)!;
+    const greataxe = sheet.weapons.find((w) => w.name.startsWith('Machado Grande'))!;
+    expect(greataxe.properties).toContain('Maestria: Trespassar (você usa)');
+    const feature = sheet.features.find((f) => f.name === 'Maestria em Arma')!;
+    expect(feature.text).toContain('Machado Grande — Trespassar');
+    expect(sheet.creation?.weaponMasteries).toEqual(['greataxe', 'handaxe']);
+  });
+
+  it('rascunho salvo: ids de arma desconhecidos somem', () => {
+    const d = sanitizeDraft({ weaponMasteries: ['greataxe', 'espada-laser', 7, 'greataxe'] });
+    expect(d.weaponMasteries).toEqual(['greataxe' satisfies WeaponId]);
+  });
+});
+
+describe('Bruxo: Invocação Mística no nível 1', () => {
+  it('é obrigatória e vai para a ficha', () => {
+    const d = completeDraft('warlock', (x) => void (x.classOptionId = null));
+    expect(stepIssues(d, 'class')).toContain('class-option-missing');
+    d.classOptionId = 'pact-of-the-tome';
+    expect(stepIssues(d, 'class')).toEqual([]);
+    const sheet = buildCharacterSheet(d, ctx)!;
+    expect(sheet.features.map((f) => f.name)).toContain('Invocação Mística: Pacto do Tomo');
+    expect(sheet.creation?.classOptionId).toBe('pact-of-the-tome');
+  });
+
+  it('só invocações sem pré-requisito de nível', () => {
+    expect(CLASSES.warlock.option?.choices.map((c) => c.id)).toEqual([
+      'armor-of-shadows',
+      'eldritch-mind',
+      'pact-of-the-blade',
+      'pact-of-the-chain',
+      'pact-of-the-tome',
+    ]);
   });
 });

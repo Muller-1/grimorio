@@ -144,6 +144,7 @@ export async function loadExampleSheet(page: Page): Promise<void> {
 /** Páginas públicas do R1 (+ ficha). */
 export const PAGES = [
   '/',
+  '/comecar',
   '/ficha',
   '/dados',
   '/personagens',

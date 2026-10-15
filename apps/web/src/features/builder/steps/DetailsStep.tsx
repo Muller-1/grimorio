@@ -13,7 +13,7 @@ import { feetToMeters, formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { tw } from '@/lib/i18n/wizard';
 import { cn } from '@/lib/utils';
-import { Badge, BlockTitle, SkillPicker } from '../components/parts';
+import { Badge, BlockTitle, SkillPicker, Term } from '../components/parts';
 import { useBuilderStore } from '../store';
 
 const dt = tw.details;
@@ -141,7 +141,7 @@ export function DetailsStep({ saveTo }: { saveTo: 'account' | 'local' }) {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div>
+          <div id="wizard-name" className="scroll-mt-24">
             <Label htmlFor={nameId}>{dt.name}</Label>
             <Input
               id={nameId}
@@ -193,10 +193,13 @@ export function DetailsStep({ saveTo }: { saveTo: 'account' | 'local' }) {
         </fieldset>
 
         {expertise ? (
-          <div>
+          <div id="wizard-expertise" className="scroll-mt-24">
             <BlockTitle aside={`${draft.expertise.length}/${expertise}`}>
               {dt.expertise(expertise)}
             </BlockTitle>
+            <p className="mb-2 text-sm text-muted">
+              {dt.expertiseHint} <Term id="expertise" />
+            </p>
             <SkillPicker
               name={dt.expertise(expertise)}
               options={proficientSkills(draft)}

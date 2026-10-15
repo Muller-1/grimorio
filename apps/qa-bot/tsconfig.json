@@ -8,5 +8,12 @@
     "types": ["node"]
   },
   "include": ["scenarios", "support", "playwright.config.ts"],
-  "references": [{ "path": "../../packages/rules" }]
+  "references": [
+    {
+      "path": "../../packages/shared"
+    },
+    {
+      "path": "../../packages/rules"
+    }
+  ]
 }

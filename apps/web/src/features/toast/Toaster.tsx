@@ -24,6 +24,19 @@ export function Toaster() {
           )}
         >
           <p className="flex-1">{toast.message}</p>
+          {toast.action ? (
+            <button
+              type="button"
+              onClick={() => {
+                toast.action!.run();
+                dismiss(toast.id);
+              }}
+              className="-my-1 rounded-md border border-current px-2 py-0.5 text-xs font-semibold"
+              data-testid="toast.action"
+            >
+              {toast.action.label}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => dismiss(toast.id)}

@@ -25,6 +25,15 @@ export const wizardPtBR = {
   cancel: 'Cancelar',
   draftSaved: 'O rascunho fica salvo neste navegador até você criar o personagem.',
   pending: 'Para avançar:',
+  pendingHint: 'Toque num item para ir até ele.',
+  chooseOption: (label: string) => `Escolha: ${label}.`,
+  whatIsThis: '(o que é isso?)',
+  intro: {
+    title: 'Como funciona',
+    text: 'São 4 passos. Em cada um, escolha as opções e clique em Avançar — se faltar algo, o site mostra o quê e leva você até lá. Pode voltar quando quiser: o rascunho fica salvo neste navegador.',
+    ok: 'Entendi',
+    basics: 'Nunca jogou? Veja os primeiros passos',
+  },
   armorKinds: { light: 'Leve', medium: 'Média', heavy: 'Pesada', shield: 'Escudos' } as Record<
     string,
     string
@@ -38,6 +47,15 @@ export const wizardPtBR = {
       'A classe é a decisão mais importante da criação: ela diz o que o seu personagem faz de melhor — lutar, conjurar magia, se esconder, curar — e define seus Pontos de Vida, as salvaguardas e o equipamento inicial.',
       'Na dúvida, Guerreiro e Ladino são as mais simples para começar.',
     ],
+    pickHint: 'Clique numa classe para ver os detalhes e fazer as escolhas dela.',
+    mastery: (n: number) => `Maestria em Arma: escolha ${n} tipos de arma`,
+    masteryHint:
+      'Com estas armas você usa a propriedade de maestria, um efeito extra no ataque. Pode trocar um tipo a cada Descanso Longo.',
+    masterySuggest: 'Usar as armas do equipamento inicial',
+    masterySuggested: 'sugerida',
+    masteryChosen: 'O que as escolhidas fazem',
+    expertiseLater:
+      'Você escolhe as perícias com Especialização no último passo, depois de saber todas as perícias do personagem.',
     complexity: { low: 'Simples', medium: 'Média', high: 'Complexa' } as Record<string, string>,
     primary: 'Atributo primário',
     hitDie: 'Dado de Vida',
@@ -122,7 +140,8 @@ export const wizardPtBR = {
     featSkills: (n: number) => `Talento Habilidoso: escolha ${n} perícias`,
     alreadyProficient: 'Já tem proficiência',
     overlap: (skills: string) =>
-      `Atenção: ${skills} já vem do antecedente. Volte à etapa Classe e troque por outra perícia para não desperdiçar a escolha.`,
+      `Atenção: ${skills} já vem do antecedente. Troque por outra perícia na etapa Classe para não desperdiçar a escolha.`,
+    overlapFix: 'Trocar na etapa Classe',
     languages: 'Idiomas',
     languagesHint: (n: number) => `Todo personagem fala Comum. Escolha mais ${n}.`,
     languagesFixed: (list: string) => `Também conhece: ${list}.`,
@@ -130,6 +149,7 @@ export const wizardPtBR = {
   },
 
   abilities: {
+    bonusJump: 'Depois, aplique o bônus do antecedente (logo abaixo)',
     title: 'Defina os atributos',
     intro: [
       'Os seis atributos medem o corpo e a mente do personagem. Cada valor gera um modificador (10 ou 11 = +0; cada 2 pontos acima, +1) que entra em quase toda rolagem.',
@@ -175,6 +195,8 @@ export const wizardPtBR = {
   },
 
   details: {
+    expertiseHint:
+      'Escolha entre as perícias em que o personagem já é treinado: nelas, o Bônus de Proficiência conta em dobro.',
     title: 'Toques finais',
     intro: [
       'Dê um nome e uma personalidade ao personagem. Pense em como os atributos aparecem nele: alguém com Força alta e Carisma baixo anda e fala diferente de alguém carismático e franzino.',
@@ -226,6 +248,7 @@ export const wizardPtBR = {
     'fighting-style-missing': 'Escolha um Estilo de Luta.',
     'class-skills-count': 'Escolha as perícias da classe.',
     'class-equipment-invalid': 'Escolha o equipamento da classe.',
+    'weapon-mastery-count': 'Escolha as armas da Maestria em Arma.',
     'background-missing': 'Escolha um antecedente.',
     'custom-background-incomplete': 'Preencha o antecedente: nome, 3 atributos e 2 perícias.',
     'species-missing': 'Escolha uma espécie.',

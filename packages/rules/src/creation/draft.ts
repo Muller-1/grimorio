@@ -26,13 +26,16 @@ import {
   ORIGIN_FEATS,
   SPECIES,
   STANDARD_LANGUAGES,
+  WEAPONS,
   type BackgroundDef,
   type ClassDef,
   type ClassId,
   type FightingStyleId,
   type OriginFeatId,
   type SpeciesDef,
+  type WeaponId,
 } from './content';
+import { masteryOptions } from './mastery';
 
 export const CREATION_STEPS = ['class', 'origin', 'abilities', 'details'] as const;
 export type CreationStep = (typeof CREATION_STEPS)[number];
@@ -59,6 +62,8 @@ export interface CreationDraft {
   fightingStyleId: FightingStyleId | null;
   classSkills: SkillKey[];
   classEquipment: 'A' | 'B' | 'C';
+  /** Maestria em Arma: tipos de arma escolhidos (Bárbaro, Guerreiro, Paladino, Guardião, Ladino). */
+  weaponMasteries: WeaponId[];
   // Etapa 2 — Origem
   backgroundId: string | null;
   customBackground: CustomBackground;
@@ -97,6 +102,7 @@ export function emptyDraft(): CreationDraft {
     fightingStyleId: null,
     classSkills: [],
     classEquipment: 'A',
+    weaponMasteries: [],
     backgroundId: null,
     customBackground: { name: '', abilities: [], skills: [], feat: 'skilled', tool: '' },
     backgroundEquipment: 'A',
@@ -199,6 +205,7 @@ export type CreationIssue =
   | 'fighting-style-missing'
   | 'class-skills-count'
   | 'class-equipment-invalid'
+  | 'weapon-mastery-count'
   | 'background-missing'
   | 'custom-background-incomplete'
   | 'species-missing'
@@ -231,6 +238,14 @@ function classIssues(d: CreationDraft): CreationIssue[] {
   }
   if (!cls.equipment.some((p) => p.option === d.classEquipment)) {
     issues.push('class-equipment-invalid');
+  }
+  const mastery = cls.weaponMastery?.count ?? 0;
+  if (mastery) {
+    const allowedWeapons = masteryOptions(cls);
+    const valid = d.weaponMasteries.filter((w) => allowedWeapons.includes(w));
+    if (valid.length !== mastery || new Set(d.weaponMasteries).size !== d.weaponMasteries.length) {
+      issues.push('weapon-mastery-count');
+    }
   }
   return issues;
 }
@@ -329,6 +344,7 @@ export function withClass(d: CreationDraft, classId: ClassId): CreationDraft {
     fightingStyleId: null,
     classSkills: [],
     classEquipment: 'A',
+    weaponMasteries: [],
     expertise: [],
     languages: d.languages.slice(0, 2),
   };
@@ -416,6 +432,15 @@ export function sanitizeDraft(raw: unknown): CreationDraft {
       : null,
     classSkills: skills(r.classSkills),
     classEquipment: oneOf(r.classEquipment, ['A', 'B', 'C'] as const, 'A'),
+    weaponMasteries: Array.isArray(r.weaponMasteries)
+      ? ([
+          ...new Set(
+            r.weaponMasteries.filter(
+              (w): w is WeaponId => typeof w === 'string' && Object.hasOwn(WEAPONS, w),
+            ),
+          ),
+        ].slice(0, 4) as WeaponId[])
+      : [],
     backgroundId: idOrNull(r.backgroundId),
     customBackground: {
       name: str(customBg.name, 60),

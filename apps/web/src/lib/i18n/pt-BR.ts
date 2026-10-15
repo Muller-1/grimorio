@@ -28,11 +28,26 @@ export const ptBR = {
       'Contas chegam numa próxima versão. Por enquanto, tudo fica salvo neste navegador.',
     accountsUnavailable:
       'O servidor de contas não respondeu. A ficha deste navegador e os dados continuam funcionando.',
+    help: 'Primeiros passos: como jogar e criar o personagem',
     mainLabel: 'Navegação principal',
     skipToContent: 'Pular para o conteúdo',
   },
 
+  theme: {
+    trigger: 'Tema de cores',
+    title: 'Tema de cores',
+    hint: 'Fica salvo neste navegador.',
+    options: {
+      auto: { name: 'Automático', text: 'Claro ou escuro, igual ao seu aparelho.' },
+      light: { name: 'Pergaminho', text: 'Claro, cor de papel antigo.' },
+      dark: { name: 'Taverna', text: 'Escuro, à luz de vela.' },
+      arcane: { name: 'Arcano', text: 'Escuro, azul-noite e violeta.' },
+      forest: { name: 'Floresta', text: 'Claro, verde-musgo.' },
+      contrast: { name: 'Alto contraste', text: 'Preto no branco, para ler melhor.' },
+    },
+  },
   footer: {
+    start: 'Primeiros passos',
     report: 'Relatar problema',
     reportSoon: 'O canal de relatos ainda não foi configurado.',
     credits: 'Créditos',
@@ -45,13 +60,46 @@ export const ptBR = {
 
   home: {
     eyebrow: 'Grátis · sem anúncios · em português',
-    title: 'Sua ficha de RPG, com as contas feitas por você.',
-    lead: 'Preencha o básico e o Grimório calcula modificadores, proficiência, perícias, salvaguardas e pontos de vida — e rola os dados na hora, com um gerador aleatório criptográfico.',
-    ctaSheet: 'Abrir minha ficha',
+    title: 'Crie seu personagem de RPG sem complicação.',
+    lead: 'Um assistente guia você passo a passo pela criação, com as regras de 2024 da 5ª edição. Depois, a ficha faz as contas sozinha e rola os dados na hora.',
+    ctaCreate: 'Criar personagem',
     ctaDice: 'Rolar dados',
+    startLink: 'Nunca jogou? Veja os primeiros passos',
+    blankLink: 'Já sabe preencher? Abrir uma ficha em branco',
+    localNote: 'Nesta versão, a ficha fica salva só neste navegador.',
+    accountsNote:
+      'Sem conta, tudo fica salvo neste navegador. Entrando com o Google, suas fichas abrem em qualquer aparelho.',
+    how: {
+      title: 'Novo por aqui? Seu personagem em 4 passos',
+      lead: 'Não precisa saber as regras: em cada passo o assistente explica o que cada opção faz e marca as sugestões do livro.',
+      steps: [
+        {
+          title: 'Classe',
+          text: 'O que o personagem faz de melhor: lutar, conjurar magia, se esconder, curar…',
+        },
+        {
+          title: 'Origem',
+          text: 'De onde ele vem: o antecedente (o que fazia antes) e a espécie (anão, elfo, humano…).',
+        },
+        {
+          title: 'Atributos',
+          text: 'Força, Destreza, Constituição, Inteligência, Sabedoria e Carisma. O assistente sugere os valores.',
+        },
+        {
+          title: 'Toques finais',
+          text: 'Nome, aparência e história. Pronto: a ficha está montada e faz as contas sozinha.',
+        },
+      ],
+      cta: 'Começar pelo passo 1',
+      basics: 'Prefiro entender o básico antes (2 minutos)',
+    },
     features: {
       title: 'O que já dá para fazer',
       items: [
+        {
+          title: 'Criação guiada',
+          text: 'Classe, origem e atributos em passos curtos, com as regras abertas do jogo e explicações para iniciantes.',
+        },
         {
           title: 'Contas automáticas',
           text: 'Mudou a Destreza? Iniciativa, CA, perícias e ataques se ajustam sozinhos.',
@@ -69,29 +117,150 @@ export const ptBR = {
           text: 'Dano, cura, PV temporários, desfazer, dados de vida e salvaguardas contra morte com as regras certas.',
         },
       ],
-    },
-    how: {
-      title: 'Como funciona',
-      steps: [
-        { title: 'Preencha', text: 'Nome, classe, nível e os seis atributos.' },
-        { title: 'Marque', text: 'As perícias e salvaguardas em que você é proficiente.' },
-        { title: 'Jogue', text: 'Role testes, ataques e dano direto da ficha.' },
-      ],
+      accounts: {
+        title: 'Na conta ou no navegador',
+        text: 'Sem cadastro, a ficha fica neste aparelho. Com uma conta Google, ela abre no celular e no computador.',
+      },
     },
     next: {
       title: 'O que vem por aí',
       items: [
-        'Criação guiada passo a passo, com as regras abertas do jogo',
-        'Magias, inventário e subida de nível',
-        'Contas para acessar a ficha de qualquer aparelho',
+        'Magias na criação e na ficha',
+        'Subida de nível mostrando o que você ganhou',
+        'Temas de cores para o site',
         'Campanhas com o mestre e o grupo',
       ],
     },
-    localNote: 'Nesta versão, a ficha fica salva só neste navegador.',
     supportTitle: 'Mantido por quem joga',
     supportText:
       'O Grimório é e continuará gratuito. Se ele ajudar a sua mesa, considere apoiar o projeto.',
     supportCta: 'Quero apoiar',
+  },
+
+  start: {
+    pageTitle: 'Primeiros passos',
+    lead: 'Nunca jogou RPG de mesa? Em dois minutos de leitura você entende o básico para criar o seu personagem e participar da primeira sessão.',
+    sections: [
+      {
+        title: 'O que é um RPG de mesa',
+        body: [
+          'É um jogo de contar histórias em grupo. Uma pessoa, o Mestre, descreve o mundo, os personagens que vocês encontram e os desafios. Cada jogador interpreta um herói e diz o que ele faz.',
+          'Quando uma ação é difícil (escalar um muro, convencer um guarda, acertar um golpe), os dados decidem se dá certo. Não existe ganhar ou perder: o objetivo é a história ficar boa para todo mundo.',
+        ],
+      },
+      {
+        title: 'Do que você precisa',
+        body: [
+          'Um grupo (de 3 a 6 pessoas é comum), alguém para ser o Mestre, uma ficha de personagem para cada jogador e dados. O Grimório monta a ficha, faz as contas e tem um rolador de dados, então o celular já resolve.',
+        ],
+      },
+      {
+        title: 'A ficha do personagem',
+        body: [
+          'É o "documento" do seu herói: quem ele é, o que sabe fazer e quanto aguenta. Os números mais usados são os atributos, os Pontos de Vida, a Classe de Armadura e os bônus das perícias. No Grimório, toque em qualquer número para ver de onde ele vem.',
+        ],
+      },
+      {
+        title: 'Os dados',
+        body: [
+          'O jogo usa dados de 4, 6, 8, 10, 12 e 20 lados: d4, d6, d8, d10, d12 e d20. "1d8+3" quer dizer: role um dado de 8 lados e some 3.',
+          'O mais importante é o d20. Para saber se algo dá certo, você rola 1d20, soma o seu bônus e compara com um número que o Mestre define (a Classe de Dificuldade). Igualou ou passou, deu certo.',
+          'Com Vantagem, role dois d20 e fique com o maior; com Desvantagem, fique com o menor.',
+        ],
+      },
+      {
+        title: 'Criando o personagem no Grimório',
+        body: [
+          'O assistente tem 4 passos: Classe (o que ele faz de melhor), Origem (antecedente e espécie), Atributos (os seis números básicos) e Toques Finais (nome e história). Em cada passo, escolha as opções e clique em Avançar. O que falta aparece no rodapé, e o rascunho fica salvo se você sair.',
+          'Na dúvida, escolha Guerreiro ou Ladino: são as classes mais simples para começar. Os botões de sugestão usam os valores recomendados pelo livro.',
+        ],
+      },
+      {
+        title: 'Na primeira sessão',
+        body: [
+          'Combine com o grupo o dia, o horário e o tipo de história. Leve a ficha (no celular serve) e pergunte ao Mestre sempre que tiver dúvida: errar regra faz parte, e ninguém sabe tudo de cabeça.',
+        ],
+      },
+    ],
+    glossaryTitle: 'Palavras que você vai ouvir',
+    ctaCreate: 'Criar meu personagem',
+    ctaDice: 'Testar o rolador de dados',
+  },
+
+  /** Termos de regra explicados em linguagem simples (página Primeiros passos e assistente). */
+  glossary: {
+    attribute: {
+      term: 'Atributo',
+      text: 'Os seis números básicos do personagem: Força, Destreza, Constituição, Inteligência, Sabedoria e Carisma. Vão de 1 a 20 para heróis comuns.',
+    },
+    modifier: {
+      term: 'Modificador',
+      text: 'O número que você soma de verdade nas rolagens. Sai do atributo: 10 ou 11 é +0, e cada 2 pontos acima soma +1 (12 é +1, 14 é +2…).',
+    },
+    proficiency: {
+      term: 'Bônus de Proficiência',
+      text: 'Um bônus que cresce com o nível (+2 no nível 1). Você soma nas coisas em que é treinado: certas perícias, salvaguardas, armas e magias.',
+    },
+    skill: {
+      term: 'Perícia',
+      text: 'Algo que o personagem sabe fazer, como Furtividade, Percepção ou Persuasão. Se for treinado nela, soma o Bônus de Proficiência no teste.',
+    },
+    expertise: {
+      term: 'Especialização',
+      text: 'Treino acima do normal numa perícia: o Bônus de Proficiência conta em dobro nela. No nível 1, só o Ladino tem (em 2 perícias à escolha).',
+    },
+    save: {
+      term: 'Salvaguarda',
+      text: 'Uma rolagem para resistir a algo ruim, como veneno, uma explosão ou uma magia. Cada classe é treinada em duas.',
+    },
+    armorClass: {
+      term: 'Classe de Armadura (CA)',
+      text: 'O quanto é difícil acertar o personagem. Um ataque acerta se a rolagem do inimigo igualar ou passar a CA.',
+    },
+    hitPoints: {
+      term: 'Pontos de Vida (PV)',
+      text: 'O quanto o personagem aguenta. O dano tira PV; com 0, ele cai e começa a fazer salvaguardas contra a morte.',
+    },
+    hitDie: {
+      term: 'Dado de Vida',
+      text: 'O dado da classe que define os Pontos de Vida (d6 a d12). Também serve para recuperar PV num Descanso Curto.',
+    },
+    weaponMastery: {
+      term: 'Maestria em Arma',
+      text: 'Um efeito extra de cada tipo de arma, que só personagens treinados usam. Ex.: a Adaga tem Ágil (ataque extra mais fácil) e o Machado Grande tem Trespassar (acerta um segundo inimigo).',
+    },
+    cantrip: {
+      term: 'Truque',
+      text: 'Magia simples que pode ser usada à vontade, sem gastar nada.',
+    },
+    spellSlot: {
+      term: 'Espaço de Magia',
+      text: 'Uma "carga" para conjurar magias mais fortes que truques. Gasta ao conjurar e volta com o descanso.',
+    },
+    rest: {
+      term: 'Descanso Curto e Longo',
+      text: 'Curto: uma pausa de cerca de 1 hora para recuperar um pouco. Longo: uma noite de sono, que recupera quase tudo.',
+    },
+    initiative: {
+      term: 'Iniciativa',
+      text: 'A rolagem no começo de um combate que define a ordem dos turnos.',
+    },
+    advantage: {
+      term: 'Vantagem e Desvantagem',
+      text: 'Com Vantagem, role dois d20 e fique com o maior; com Desvantagem, com o menor.',
+    },
+    background: {
+      term: 'Antecedente',
+      text: 'O que o personagem fazia antes da aventura (Acólito, Criminoso, Sábio, Soldado…). Dá perícias, um talento e aumentos de atributo.',
+    },
+    species: {
+      term: 'Espécie',
+      text: 'De que povo o personagem é (Anão, Elfo, Humano…). Define tamanho, deslocamento e traços especiais.',
+    },
+    feat: {
+      term: 'Talento',
+      text: 'Uma habilidade especial extra. Todo personagem ganha um talento de Origem pelo antecedente.',
+    },
   },
 
   auth: {
@@ -140,6 +309,7 @@ export const ptBR = {
     empty: 'Você ainda não tem personagens na conta.',
     emptyHint:
       'O assistente monta a ficha de nível 1 passo a passo, seguindo o Livro do Jogador (2024).',
+    emptyCta: 'Criar o primeiro personagem',
     level: (n: number) => `Nível ${n}`,
     unnamed: 'Sem nome',
     noClass: 'Sem classe',
@@ -240,11 +410,11 @@ export const ptBR = {
       ] as [string, string][],
       rulesTitle: 'Regras do jogo',
       rules:
-        'O site é compatível com a 5ª edição (regras de 2024). O assistente de criação usa o conteúdo das regras abertas, o System Reference Document 5.2, publicado sob a licença Creative Commons Atribuição 4.0:',
+        'O site é compatível com a 5ª edição (regras de 2024). O assistente de criação, a progressão das classes do nível 1 ao 20, a subida de nível e as 339 magias usam o conteúdo das regras abertas, o System Reference Document 5.2, publicado sob a licença Creative Commons Atribuição 4.0:',
       srdAttribution:
         'This work includes material from the System Reference Document 5.2 ("SRD 5.2") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.',
       srdNote:
-        'Os nomes de regras seguem a edição brasileira do Livro do Jogador; as descrições e resumos foram escritos para o site e foram adaptados (resumidos e traduzidos). Nenhum texto dos livros é reproduzido.',
+        'Os nomes de regras seguem a edição brasileira do Livro do Jogador; as descrições, resumos e textos das magias foram escritos para o site a partir do SRD 5.2 e foram adaptados (resumidos, traduzidos e com as medidas em metros). Nenhum texto dos livros é reproduzido. O que não está no SRD entra como "Outro (do livro)", preenchido pelo jogador.',
       trademark:
         'Projeto independente, sem vínculo com a Wizards of the Coast nem com as editoras dos livros no Brasil.',
     },
@@ -310,7 +480,7 @@ export const ptBR = {
         {
           title: 'O que fica no seu aparelho',
           body: [
-            'A ficha, os atalhos de dados e a preferência de animação ficam guardados no armazenamento local do seu navegador. Eles nunca saem do seu aparelho e você pode apagá-los a qualquer momento limpando os dados do site nas configurações do navegador.',
+            'A ficha, os atalhos de dados e as preferências de animação e de tema de cores ficam guardados no armazenamento local do seu navegador. Eles nunca saem do seu aparelho e você pode apagá-los a qualquer momento limpando os dados do site nas configurações do navegador.',
           ],
         },
         {
@@ -380,7 +550,7 @@ export const ptBR = {
         {
           title: 'O que fica no seu aparelho',
           body: [
-            'A ficha avulsa, os atalhos de dados, a preferência de animação e o rascunho do assistente de criação ficam no armazenamento local do seu navegador. Você pode apagá-los limpando os dados do site nas configurações do navegador.',
+            'A ficha avulsa, os atalhos de dados, as preferências de animação e de tema de cores e o rascunho do assistente de criação ficam no armazenamento local do seu navegador. Você pode apagá-los limpando os dados do site nas configurações do navegador.',
           ],
         },
         {
@@ -461,6 +631,12 @@ export const ptBR = {
     pageTitle: 'Ficha de personagem',
     unnamed: 'Personagem sem nome',
     savedLocally: 'Salvo neste navegador',
+    wizardHint: {
+      title: 'Primeira vez? Deixe o assistente montar a ficha',
+      text: 'Em 4 passos você escolhe classe, origem e atributos, e a ficha sai pronta, com as contas feitas. Esta ficha em branco é para quem já sabe preencher à mão.',
+      cta: 'Criar com o assistente',
+      dismiss: 'Prefiro preencher à mão',
+    },
     newSheet: 'Nova ficha',
     loadExample: 'Carregar exemplo',
     newSheetConfirmTitle: 'Começar uma ficha nova?',
@@ -559,7 +735,11 @@ export const ptBR = {
         undone: 'desfeito',
       },
       longRest: 'Descanso longo',
-      longRestHint: 'Recupera todos os PV e todos os Dados de Vida (regras de 2024).',
+      longRestHint:
+        'Recupera todos os PV, os Dados de Vida, os espaços de magia e os usos das habilidades (regras de 2024).',
+      shortRest: 'Descanso curto',
+      shortRestHint:
+        'Devolve os usos de descanso curto e a Magia de Pacto. Para curar, gaste Dados de Vida.',
       maxManual: 'PV máximo manual',
       maxAuto: 'Voltar ao cálculo pela média',
       maxHint: 'Calculado pela média do dado de vida. Se você rolou os PV, ajuste aqui.',
@@ -594,6 +774,11 @@ export const ptBR = {
       'no-hit-dice': 'Não há dados de vida disponíveis. Eles voltam no descanso longo.',
       'needs-1-hp': 'É preciso ter pelo menos 1 PV para descansar.',
       'nothing-to-undo': 'Nada para desfazer.',
+      'no-uses': 'Sem usos sobrando. Eles voltam no descanso.',
+      'requires-active': 'Ligue antes a habilidade de que esta depende.',
+      'no-slot': 'Sem espaço de magia desse círculo.',
+      'unknown-ability': 'Essa habilidade não está disponível nesta ficha.',
+      'concentration-ended': 'A Fúria encerrou a Concentração.',
     } satisfies Record<SheetNotice, string>,
 
     actions: {
@@ -621,6 +806,11 @@ export const ptBR = {
       disadvantage: 'Desvantagem',
       rollDamage: 'Dano',
       rollCritDamage: 'Dano crítico',
+      firstHit: 'Dano + 1º acerto',
+      firstHitLabel: (name: string, extras: string) =>
+        `Dano no 1º acerto do turno (${extras}): ${name}`,
+      extraDamage: (list: string) => `Extras: ${list}`,
+      oncePerTurn: '1×/turno',
       edit: 'Editar',
       remove: 'Remover',
       expand: (name: string) => `Detalhes de ${name}`,
@@ -670,12 +860,60 @@ export const ptBR = {
       nameRequired: 'Dê um nome à característica.',
     },
 
+    levelUp: {
+      button: 'Subir de nível',
+      hint: 'Escolha quantos níveis subiu e o site mostra o que você ganha em cada um.',
+      max: 'Nível 20: o máximo.',
+    },
+
+    powers: {
+      title: 'Habilidades',
+      empty:
+        'Sem habilidades de classe com usos ou para ligar. Fichas do assistente mostram aqui Fúria, Canalizar Divindade e afins.',
+      uses: (remaining: number, max: number) => `${remaining}/${max}`,
+      usesLabel: (name: string, remaining: number, max: number) =>
+        `${name}: ${remaining} de ${max} usos`,
+      spend: (name: string) => `Gastar um uso de ${name}`,
+      restore: (name: string) => `Devolver um uso de ${name}`,
+      die: (n: number) => `d${n}`,
+      recharge: {
+        all: 'volta no descanso curto',
+        one: '1 volta no descanso curto',
+        none: 'volta no descanso longo',
+      },
+      turnOn: 'Ligar',
+      turnOff: 'Desligar',
+      use: 'Usar',
+      on: 'Ligada',
+      toggleLabel: (name: string, on: boolean) => `${name}: ${on ? 'ligada' : 'desligada'}`,
+      costs: (n: number, resource: string) => `gasta ${n} ${resource}`,
+      requires: (names: string) => `precisa de: ${names}`,
+      noUses: 'sem usos',
+      heals: (expr: string) => `cura ${expr}`,
+      tempHp: (expr: string) => `${expr} PV temporários`,
+      healRoll: (name: string) => `Cura: ${name}`,
+      tempRoll: (name: string) => `PV temporários: ${name}`,
+      activeTitle: 'Valendo agora',
+      resistances: (types: string) => `Resistência: ${types}`,
+      spellsOnYou: 'Magias em você',
+      spellsOnYouHint: 'Alguém conjurou Bênção, Escudo da Fé…? Marque e a ficha soma sozinha.',
+      addSpell: 'Marcar magia em você',
+      addSpellNone: 'Escolha a magia',
+      removeSpell: (name: string) => `Tirar ${name}`,
+      concentration: (name: string) => `Concentrado em: ${name}`,
+      endConcentration: 'Encerrar',
+      advantageShort: 'V',
+      advantage: 'Vantagem por habilidade ativa',
+    },
+
     explain: {
       title: 'De onde vem este número',
       base: 'Base',
       level: 'Pelo nível',
-      hitDie: (die: number, levels: number) =>
-        `Dado de vida d${die} (${levels} ${levels === 1 ? 'nível' : 'níveis'})`,
+      hitDie: (die: number, levels: number, rolled = 0) =>
+        `Dado de vida d${die} (${levels} ${levels === 1 ? 'nível' : 'níveis'}${
+          rolled > 0 ? `, ${rolled} rolado${rolled === 1 ? '' : 's'}` : ''
+        })`,
       magic: 'Bônus mágico',
       trait: 'Traço ou talento',
       override: 'Ajuste manual',

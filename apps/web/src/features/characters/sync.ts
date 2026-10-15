@@ -1,6 +1,6 @@
 import {
   CharacterDocumentSchema,
-  LocalSheetSchema,
+  SheetInputSchema,
   SectionRevsSchema,
   type CharacterDocument,
   type LocalSheet,
@@ -82,8 +82,8 @@ export function readCache(id: string, userId: string): SyncSnapshot | null {
   try {
     const entry = JSON.parse(raw) as Partial<CacheEntry>;
     if (entry.v !== 1 || entry.userId !== userId) return null;
-    const local = LocalSheetSchema.safeParse(entry.local);
-    const base = LocalSheetSchema.safeParse(entry.base);
+    const local = SheetInputSchema.safeParse(entry.local);
+    const base = SheetInputSchema.safeParse(entry.base);
     const revs = SectionRevsSchema.safeParse(entry.revs);
     if (!local.success || !base.success || !revs.success) return null;
     return { local: local.data, base: base.data, revs: revs.data };

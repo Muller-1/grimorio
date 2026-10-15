@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "kind": "local-sheet",
+  "rulesEdition": "2024",
+  "identity": {
+    "name": "",
+    "className": "",
+    "playerName": "",
+    "origin": "",
+    "description": ""
+  },
+  "build": {
+    "level": 1,
+    "abilities": {
+      "str": 10,
+      "dex": 10,
+      "con": 10,
+      "int": 10,
+      "wis": 10,
+      "cha": 10
+    },
+    "saveProficiencies": [],
+    "skillProficiencies": {}
+  },
+  "combat": {
+    "hitDie": 8,
+    "speedFt": 30
+  },
+  "state": {
+    "hp": {
+      "current": 8,
+      "temp": 0
+    },
+    "deathSaves": {
+      "successes": 0,
+      "failures": 0
+    },
+    "hitDiceSpent": 0,
+    "inspiration": 0,
+    "hpLog": []
+  },
+  "weapons": [],
+  "features": []
+}

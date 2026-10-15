@@ -1,5 +1,5 @@
 import { createBlankSheet } from '@grimorio/shared';
-import { ArrowLeft, FilePlus2, HardDriveDownload, Sparkles } from 'lucide-react';
+import { ArrowLeft, FilePlus2, HardDriveDownload, Sparkles, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,52 @@ import { ActionsColumn } from './components/ActionsColumn';
 import { CharacterColumn } from './components/CharacterColumn';
 import { CombatColumn } from './components/CombatColumn';
 import { SyncIndicator } from '@/features/characters/SyncIndicator';
+import { safeStorage } from '@/ports/storage';
 import { exampleSheet } from './example';
 import { useSheetStore } from './store';
 
 type Column = 'character' | 'combat' | 'actions';
+
+/** O jogador disse que prefere preencher a ficha em branco à mão (não mostra mais a dica). */
+const WIZARD_HINT_KEY = 'grimorio.ficha.dica-assistente';
+
+/**
+ * Feedback dos testadores ("não soube onde clicar"): quem cai na ficha em branco vê o caminho
+ * para o assistente. Some quando a ficha ganha nome ou classe, ou se o jogador dispensar.
+ */
+function WizardHint() {
+  const blank = useSheetStore((s) => !s.sheet.identity.name && !s.sheet.identity.className);
+  const [dismissed, setDismissed] = useState(() => safeStorage.get(WIZARD_HINT_KEY) === '1');
+  if (!blank || dismissed) return null;
+  const h = t.sheet.wizardHint;
+  return (
+    <aside
+      className="mb-3 flex flex-col gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 sm:flex-row sm:items-center"
+      data-testid="sheet.wizard-hint"
+    >
+      <Wand2 className="size-6 shrink-0 text-accent" aria-hidden="true" />
+      <div className="flex-1 text-sm">
+        <p className="font-semibold">{h.title}</p>
+        <p className="mt-0.5">{h.text}</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button asChild size="sm" variant="primary">
+          <Link to="/criar">{h.cta}</Link>
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            safeStorage.set(WIZARD_HINT_KEY, '1');
+            setDismissed(true);
+          }}
+        >
+          {h.dismiss}
+        </Button>
+      </div>
+    </aside>
+  );
+}
 type Confirm = 'blank' | 'example' | null;
 
 /**
@@ -89,6 +131,8 @@ export default function SheetPage({ mode = 'local' }: { mode?: 'local' | 'accoun
           </div>
         ) : null}
       </div>
+
+      {mode === 'local' ? <WizardHint /> : null}
 
       {/* Abas só no celular */}
       <div

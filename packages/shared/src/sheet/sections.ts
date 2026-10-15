@@ -1,5 +1,6 @@
 import { z } from '../zod';
-import { LocalSheetSchema, type LocalSheet } from './local-sheet';
+import { type LocalSheet } from './local-sheet';
+import { SheetInputSchema } from './migrations';
 
 /**
  * Seções da ficha que o servidor salva separadamente (plano v2, 10.1 e 10.3). Mudar duas seções
@@ -16,6 +17,8 @@ export const SHEET_SECTIONS = [
   'weapons',
   'features',
   'creation',
+  'progression',
+  'spells',
 ] as const;
 export type SheetSection = (typeof SHEET_SECTIONS)[number];
 
@@ -26,7 +29,7 @@ export function initialSectionRevs(): SectionRevs {
   return Object.fromEntries(SHEET_SECTIONS.map((s) => [s, 1])) as SectionRevs;
 }
 
-/** Valor de uma seção numa ficha (`creation` pode não existir). */
+/** Valor de uma seção numa ficha (`creation` e `progression` podem não existir). */
 export function sectionOf(sheet: LocalSheet, section: SheetSection): unknown {
   return sheet[section] ?? null;
 }
@@ -81,7 +84,17 @@ const sectionRevsShape = Object.fromEntries(
   SHEET_SECTIONS.map((s) => [s, z.number().int().min(0)]),
 ) as Record<SheetSection, z.ZodNumber>;
 
-export const SectionRevsSchema = z.object(sectionRevsShape);
+/**
+ * Revisões por seção. Seções que surgiram depois (ex.: `spells`, na ficha v2) não existem nas
+ * revisões antigas: contam como 0, igual no servidor.
+ */
+export const SectionRevsSchema = z.preprocess(
+  (raw) =>
+    typeof raw === 'object' && raw !== null && !Array.isArray(raw)
+      ? { ...Object.fromEntries(SHEET_SECTIONS.map((s) => [s, 0])), ...raw }
+      : raw,
+  z.object(sectionRevsShape),
+);
 
 export const CharacterSummarySchema = z.object({
   id: z.uuid(),
@@ -100,7 +113,7 @@ export const CharacterDocumentSchema = z.object({
   id: z.uuid(),
   version: z.number().int(),
   sectionRevs: SectionRevsSchema,
-  sheet: LocalSheetSchema,
+  sheet: SheetInputSchema,
   updatedAt: z.string(),
 });
 export type CharacterDocument = z.infer<typeof CharacterDocumentSchema>;
@@ -108,7 +121,7 @@ export type CharacterDocument = z.infer<typeof CharacterDocumentSchema>;
 export const CreateCharacterBodySchema = z.object({
   /** Gerado no navegador (porta de ids): repetir o pedido não duplica. */
   id: z.uuid(),
-  sheet: LocalSheetSchema,
+  sheet: SheetInputSchema,
 });
 export type CreateCharacterBody = z.infer<typeof CreateCharacterBodySchema>;
 

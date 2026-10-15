@@ -5,7 +5,8 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./spells-data": "./src/spells/data/index.ts"
   },
   "dependencies": {
     "@grimorio/shared": "workspace:*"

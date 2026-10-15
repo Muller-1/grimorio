@@ -7,7 +7,7 @@
  * (Better Auth, ADR-008) espera. Os nomes das propriedades (`emailVerified`, `userId`...) são os
  * da biblioteca; os nomes das colunas seguem o nosso padrão (snake_case).
  */
-import type { LocalSheet, SectionRevs } from '@grimorio/shared';
+import type { SheetSection } from '@grimorio/shared';
 import { sql } from 'drizzle-orm';
 import {
   boolean,
@@ -134,9 +134,14 @@ export const characters = pgTable(
     rulesEdition: varchar('rules_edition', { length: 8 }).notNull(),
     level: smallint('level').notNull().default(1),
     classSummary: varchar('class_summary', { length: 120 }).notNull().default(''),
-    data: jsonb('data').$type<LocalSheet>().notNull(),
+    /**
+     * A ficha como foi salva, em qualquer versão do formato: o serviço migra para a atual ao ler
+     * (`migrateSheet`, ADR-010). Por isso o tipo é "desconhecido" aqui.
+     */
+    data: jsonb('data').$type<unknown>().notNull(),
     schemaVersion: smallint('schema_version').notNull(),
-    sectionRevs: jsonb('section_revs').$type<SectionRevs>().notNull(),
+    /** Seções criadas depois (ex.: `spells`) faltam nas linhas antigas: contam como 0. */
+    sectionRevs: jsonb('section_revs').$type<Partial<Record<SheetSection, number>>>().notNull(),
     version: integer('version').notNull().default(1),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

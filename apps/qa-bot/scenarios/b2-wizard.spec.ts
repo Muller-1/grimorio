@@ -16,13 +16,30 @@ test.describe('B2 — assistente de criação', { tag: '@B2' }, () => {
       const count = await options.count();
       if (count > 0) await options.nth(rng.int(0, count - 1)).click();
     };
+    /** Avançar/Criar ficam clicáveis mesmo com pendência (levam até ela): o estado está em data-ready. */
+    const ready = async (testId: string) =>
+      (await page.getByTestId(testId).getAttribute('data-ready')) === 'true';
     /** Marca perícias livres (não desabilitadas) até o limite. */
     const fillSkills = async () => {
       for (let guard = 0; guard < 20; guard++) {
         const free = page.locator('[data-testid^="wizard.skill."]:not(:checked):not([disabled])');
         if ((await free.count()) === 0) break;
-        if (await page.getByTestId('wizard.next').or(page.getByTestId('wizard.finish')).isEnabled())
-          break;
+        const step = (await page.getByTestId('wizard.finish').count())
+          ? 'wizard.finish'
+          : 'wizard.next';
+        if (await ready(step)) break;
+        await free.nth(rng.int(0, (await free.count()) - 1)).check();
+      }
+    };
+
+    /** Maestria em Arma (Bárbaro, Guerreiro, Paladino, Guardião, Ladino): armas ao acaso. */
+    const fillMasteries = async () => {
+      for (let guard = 0; guard < 6; guard++) {
+        if (await ready('wizard.next')) break;
+        const free = page.locator(
+          'input[data-testid^="wizard.mastery."]:not(:checked):not([disabled])',
+        );
+        if ((await free.count()) === 0) break;
         await free.nth(rng.int(0, (await free.count()) - 1)).check();
       }
     };
@@ -32,6 +49,7 @@ test.describe('B2 — assistente de criação', { tag: '@B2' }, () => {
     await pick('wizard.class-option.');
     await pick('wizard.fighting-style.');
     await fillSkills();
+    await fillMasteries();
     await page.getByTestId('wizard.next').click();
 
     // Origem: só as opções do SRD (o "Outro" pede texto).
@@ -50,10 +68,10 @@ test.describe('B2 — assistente de criação', { tag: '@B2' }, () => {
     for (const lang of await page
       .getByRole('checkbox', { name: /^(Anão|Élfico|Gigante|Orc)$/ })
       .all()) {
-      if (await page.getByTestId('wizard.next').isEnabled()) break;
+      if (await ready('wizard.next')) break;
       if (await lang.isEnabled()) await lang.check();
     }
-    await expect(page.getByTestId('wizard.next')).toBeEnabled();
+    await expect(page.getByTestId('wizard.next')).toHaveAttribute('data-ready', 'true');
     await page.getByTestId('wizard.next').click();
 
     await page.getByTestId('wizard.ability.suggest').click();
@@ -63,7 +81,7 @@ test.describe('B2 — assistente de criação', { tag: '@B2' }, () => {
 
     await page.getByTestId('wizard.name').fill('Bot Aventureiro');
     await fillSkills();
-    await expect(page.getByTestId('wizard.finish')).toBeEnabled();
+    await expect(page.getByTestId('wizard.finish')).toHaveAttribute('data-ready', 'true');
 
     // Oráculo: o rascunho salvo + o motor dizem quais números a ficha deve mostrar.
     const draft = await page.evaluate(

@@ -11,7 +11,6 @@
 import { normalizeSheet } from '@grimorio/rules';
 import {
   initialSectionRevs,
-  LocalSheetSchema,
   MAX_CHARACTERS_PER_ACCOUNT,
   sameSection,
   sectionOf,
@@ -24,6 +23,7 @@ import {
   type SectionConflict,
   type SectionRevs,
   type SheetSection,
+  SheetInputSchema,
 } from '@grimorio/shared';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { Orm } from '../../db/client';
@@ -52,12 +52,29 @@ function summaryColumns(sheet: LocalSheet) {
   };
 }
 
+/**
+ * A ficha da linha no formato atual. Linhas antigas são migradas na leitura (ADR-010); só são
+ * regravadas no formato novo quando o jogador salvar alguma mudança.
+ */
+function sheetOf(row: CharacterRow): LocalSheet {
+  const parsed = SheetInputSchema.safeParse(row.data);
+  // Só entra no banco ficha validada; se um dia falhar, é bug de migração (aparece no log).
+  if (!parsed.success) throw new Error(`ficha ${row.id} não pôde ser migrada`);
+  return parsed.data;
+}
+
+/** Revisões com todas as seções (as que não existiam quando a linha foi salva contam 0). */
+function revsOf(row: CharacterRow): SectionRevs {
+  const revs = Object.fromEntries(SHEET_SECTIONS.map((s) => [s, 0])) as SectionRevs;
+  return { ...revs, ...row.sectionRevs };
+}
+
 function toDocument(row: CharacterRow): CharacterDocument {
   return {
     id: row.id,
     version: row.version,
-    sectionRevs: row.sectionRevs,
-    sheet: row.data,
+    sectionRevs: revsOf(row),
+    sheet: sheetOf(row),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -143,25 +160,27 @@ export function characterService(orm: Orm, ports: Ports) {
         const [row] = await tx.select().from(characters).where(active(ownerId, id)).for('update');
         if (!row) return { kind: 'not-found' };
 
+        const current = sheetOf(row);
+        const currentRevs = revsOf(row);
         const sent = SHEET_SECTIONS.filter((s) => s in body.sections);
         const conflicts: SectionConflict[] = [];
         for (const section of sent) {
-          const serverRev = row.sectionRevs[section] ?? 0;
+          const serverRev = currentRevs[section];
           const base = body.baseRevs[section];
           if (base !== serverRev) {
-            conflicts.push({ section, serverRev, server: sectionOf(row.data, section) });
+            conflicts.push({ section, serverRev, server: sectionOf(current, section) });
           }
         }
         if (conflicts.length > 0) return { kind: 'conflict', conflicts };
 
-        const merged = LocalSheetSchema.safeParse(withSections(row.data, body.sections));
+        const merged = SheetInputSchema.safeParse(withSections(current, body.sections));
         if (!merged.success) return { kind: 'invalid', issues: merged.error.issues };
         const sheet = normalizeSheet(merged.data).sheet;
 
         // Sobe a revisão de toda seção que mudou de fato (inclusive as que a normalização mexeu).
-        const revs: SectionRevs = { ...initialSectionRevs(), ...row.sectionRevs };
+        const revs: SectionRevs = { ...currentRevs };
         const changed: SheetSection[] = SHEET_SECTIONS.filter(
-          (s) => !sameSection(sectionOf(row.data, s), sectionOf(sheet, s)),
+          (s) => !sameSection(sectionOf(current, s), sectionOf(sheet, s)),
         );
         if (changed.length === 0) return { kind: 'saved', document: toDocument(row) };
         for (const section of changed) revs[section] = (revs[section] ?? 0) + 1;

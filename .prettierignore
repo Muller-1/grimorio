@@ -12,3 +12,6 @@ test-results
 .wrangler
 apps/api/drizzle
 spikes
+# Fontes do gerador de magias (dados de entrada; a saída em src/spells/data é formatada)
+packages/rules/scripts/spells/*.json
+packages/rules/scripts/spells/tr

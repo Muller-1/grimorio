@@ -1,7 +1,8 @@
 import { CREATION_STEPS, type CreationStep } from '@grimorio/rules';
 import type { SkillKey } from '@grimorio/shared';
-import { Check } from 'lucide-react';
+import { Check, CircleHelp } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Popover } from '@/components/ui/popover';
 import { t } from '@/lib/i18n';
 import { tw } from '@/lib/i18n/wizard';
 import { cn } from '@/lib/utils';
@@ -154,11 +155,11 @@ export function BlockTitle({ children, aside }: { children: ReactNode; aside?: R
 }
 
 /** Lista "rótulo: valor" compacta. */
-export function Facts({ items }: { items: [string, ReactNode][] }) {
+export function Facts({ items }: { items: [ReactNode, ReactNode][] }) {
   return (
     <dl className="grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[max-content_1fr]">
-      {items.map(([label, value]) => (
-        <div key={label} className="contents">
+      {items.map(([label, value], i) => (
+        <div key={i} className="contents">
           <dt className="font-semibold text-muted">{label}</dt>
           <dd>{value}</dd>
         </div>
@@ -258,5 +259,34 @@ export function Segmented<T extends string>({
         </button>
       ))}
     </div>
+  );
+}
+
+export type GlossaryKey = keyof typeof t.glossary;
+
+/**
+ * Termo de regra com explicação ao tocar (feedback dos testadores: introdução para quem é
+ * novo). Não usar dentro de botões ou cartões clicáveis (botão dentro de botão).
+ */
+export function Term({ id, children }: { id: GlossaryKey; children?: ReactNode }) {
+  const entry = t.glossary[id];
+  return (
+    <Popover
+      align="start"
+      trigger={
+        <button
+          type="button"
+          className="inline-flex items-center gap-0.5 underline decoration-muted decoration-dotted underline-offset-4 hover:decoration-accent"
+          data-testid={`term.${id}`}
+        >
+          {children ?? entry.term}
+          <CircleHelp className="size-3.5 shrink-0 text-muted" aria-hidden="true" />
+          <span className="sr-only"> {tw.whatIsThis}</span>
+        </button>
+      }
+    >
+      <p className="font-semibold">{entry.term}</p>
+      <p className="mt-1 text-muted">{entry.text}</p>
+    </Popover>
   );
 }

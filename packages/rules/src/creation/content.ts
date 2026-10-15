@@ -33,7 +33,47 @@ export interface WeaponDef {
   light: boolean;
   /** Propriedades como aparecem na ficha (inclui a maestria). */
   properties: string;
+  /** Propriedade de maestria (Livro do Jogador 2024, cap. 6). */
+  mastery: MasteryId;
 }
+
+/** Propriedades de maestria de arma (SRD 5.2). Texto próprio, em linguagem simples. */
+export const MASTERY_PROPERTIES = {
+  vex: {
+    name: 'Afligir',
+    text: 'Acertou e causou dano: você tem Vantagem no próximo ataque contra essa criatura até o fim do seu próximo turno.',
+  },
+  nick: {
+    name: 'Ágil',
+    text: 'O ataque extra da propriedade Leve pode ser feito dentro da ação Atacar, sem gastar a Ação Bônus (uma vez por turno).',
+  },
+  topple: {
+    name: 'Derrubar',
+    text: 'Acertou: a criatura faz uma salvaguarda de Constituição (CD 8 + o modificador usado no ataque + Bônus de Proficiência) ou fica Caída.',
+  },
+  sap: {
+    name: 'Drenar',
+    text: 'Acertou: a criatura tem Desvantagem na próxima jogada de ataque dela antes do início do seu próximo turno.',
+  },
+  push: {
+    name: 'Empurrar',
+    text: 'Acertou: você pode empurrar a criatura até 3 m para longe de você, se ela for Grande ou menor.',
+  },
+  graze: {
+    name: 'Garantido',
+    text: 'Errou: a criatura sofre mesmo assim dano igual ao modificador de atributo usado no ataque.',
+  },
+  slow: {
+    name: 'Lentidão',
+    text: 'Acertou e causou dano: o Deslocamento da criatura cai 3 m até o início do seu próximo turno (não acumula).',
+  },
+  cleave: {
+    name: 'Trespassar',
+    text: 'Acertou um ataque corpo a corpo: você pode atacar uma segunda criatura a até 1,5 m da primeira; esse dano não soma o modificador de atributo (uma vez por turno).',
+  },
+} as const satisfies Record<string, { name: string; text: string }>;
+
+export type MasteryId = keyof typeof MASTERY_PROPERTIES;
 
 export const WEAPONS = {
   dagger: {
@@ -46,6 +86,7 @@ export const WEAPONS = {
     finesse: true,
     light: true,
     properties: 'Acuidade, Arremesso (6/18 m), Leve · Maestria: Ágil',
+    mastery: 'nick',
   },
   handaxe: {
     id: 'handaxe',
@@ -57,6 +98,7 @@ export const WEAPONS = {
     finesse: false,
     light: true,
     properties: 'Arremesso (6/18 m), Leve · Maestria: Afligir',
+    mastery: 'vex',
   },
   javelin: {
     id: 'javelin',
@@ -68,6 +110,7 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Arremesso (9/36 m) · Maestria: Lentidão',
+    mastery: 'slow',
   },
   mace: {
     id: 'mace',
@@ -79,6 +122,7 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Maestria: Drenar',
+    mastery: 'sap',
   },
   quarterstaff: {
     id: 'quarterstaff',
@@ -90,6 +134,7 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Versátil (1d8) · Maestria: Derrubar',
+    mastery: 'topple',
   },
   sickle: {
     id: 'sickle',
@@ -101,6 +146,7 @@ export const WEAPONS = {
     finesse: false,
     light: true,
     properties: 'Leve · Maestria: Ágil',
+    mastery: 'nick',
   },
   spear: {
     id: 'spear',
@@ -112,6 +158,7 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Arremesso (6/18 m), Versátil (1d8) · Maestria: Drenar',
+    mastery: 'sap',
   },
   shortbow: {
     id: 'shortbow',
@@ -123,6 +170,7 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Duas Mãos, Munição (24/96 m; Flecha) · Maestria: Afligir',
+    mastery: 'vex',
   },
   scimitar: {
     id: 'scimitar',
@@ -134,6 +182,7 @@ export const WEAPONS = {
     finesse: true,
     light: true,
     properties: 'Acuidade, Leve · Maestria: Ágil',
+    mastery: 'nick',
   },
   shortsword: {
     id: 'shortsword',
@@ -145,6 +194,7 @@ export const WEAPONS = {
     finesse: true,
     light: true,
     properties: 'Acuidade, Leve · Maestria: Afligir',
+    mastery: 'vex',
   },
   greatsword: {
     id: 'greatsword',
@@ -156,6 +206,7 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Duas Mãos, Pesada · Maestria: Garantido',
+    mastery: 'graze',
   },
   longsword: {
     id: 'longsword',
@@ -167,6 +218,7 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Versátil (1d10) · Maestria: Drenar',
+    mastery: 'sap',
   },
   greataxe: {
     id: 'greataxe',
@@ -178,6 +230,7 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Duas Mãos, Pesada · Maestria: Trespassar',
+    mastery: 'cleave',
   },
   flail: {
     id: 'flail',
@@ -189,6 +242,7 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Maestria: Drenar',
+    mastery: 'sap',
   },
   longbow: {
     id: 'longbow',
@@ -200,6 +254,283 @@ export const WEAPONS = {
     finesse: false,
     light: false,
     properties: 'Duas Mãos, Munição (45/180 m; Flecha), Pesada · Maestria: Lentidão',
+    mastery: 'slow',
+  },
+  club: {
+    id: 'club',
+    name: 'Clava',
+    dice: '1d4',
+    damageType: 'bludgeoning',
+    category: 'simple',
+    ranged: false,
+    finesse: false,
+    light: true,
+    properties: 'Leve · Maestria: Lentidão',
+    mastery: 'slow',
+  },
+  greatclub: {
+    id: 'greatclub',
+    name: 'Clava Grande',
+    dice: '1d8',
+    damageType: 'bludgeoning',
+    category: 'simple',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Duas Mãos · Maestria: Empurrar',
+    mastery: 'push',
+  },
+  'light-hammer': {
+    id: 'light-hammer',
+    name: 'Martelo Leve',
+    dice: '1d4',
+    damageType: 'bludgeoning',
+    category: 'simple',
+    ranged: false,
+    finesse: false,
+    light: true,
+    properties: 'Arremesso (6/18 m), Leve · Maestria: Ágil',
+    mastery: 'nick',
+  },
+  'light-crossbow': {
+    id: 'light-crossbow',
+    name: 'Besta Leve',
+    dice: '1d8',
+    damageType: 'piercing',
+    category: 'simple',
+    ranged: true,
+    finesse: false,
+    light: false,
+    properties: 'Duas Mãos, Munição (24/96 m; Virote), Recarga · Maestria: Lentidão',
+    mastery: 'slow',
+  },
+  dart: {
+    id: 'dart',
+    name: 'Dardo',
+    dice: '1d4',
+    damageType: 'piercing',
+    category: 'simple',
+    ranged: true,
+    finesse: true,
+    light: false,
+    properties: 'Acuidade, Arremesso (6/18 m) · Maestria: Afligir',
+    mastery: 'vex',
+  },
+  sling: {
+    id: 'sling',
+    name: 'Funda',
+    dice: '1d4',
+    damageType: 'bludgeoning',
+    category: 'simple',
+    ranged: true,
+    finesse: false,
+    light: false,
+    properties: 'Munição (9/36 m; Bala) · Maestria: Lentidão',
+    mastery: 'slow',
+  },
+  halberd: {
+    id: 'halberd',
+    name: 'Alabarda',
+    dice: '1d10',
+    damageType: 'slashing',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Duas Mãos, Extensão, Pesada · Maestria: Trespassar',
+    mastery: 'cleave',
+  },
+  whip: {
+    id: 'whip',
+    name: 'Chicote',
+    dice: '1d4',
+    damageType: 'slashing',
+    category: 'martial',
+    ranged: false,
+    finesse: true,
+    light: false,
+    properties: 'Acuidade, Extensão · Maestria: Lentidão',
+    mastery: 'slow',
+  },
+  glaive: {
+    id: 'glaive',
+    name: 'Glaive',
+    dice: '1d10',
+    damageType: 'slashing',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Duas Mãos, Extensão, Pesada · Maestria: Garantido',
+    mastery: 'graze',
+  },
+  lance: {
+    id: 'lance',
+    name: 'Lança de Montaria',
+    dice: '1d10',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Duas Mãos (a menos que montado), Extensão, Pesada · Maestria: Derrubar',
+    mastery: 'topple',
+  },
+  pike: {
+    id: 'pike',
+    name: 'Lança Longa',
+    dice: '1d10',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Duas Mãos, Extensão, Pesada · Maestria: Empurrar',
+    mastery: 'push',
+  },
+  morningstar: {
+    id: 'morningstar',
+    name: 'Maça Estrela',
+    dice: '1d8',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Maestria: Drenar',
+    mastery: 'sap',
+  },
+  battleaxe: {
+    id: 'battleaxe',
+    name: 'Machado de Batalha',
+    dice: '1d8',
+    damageType: 'slashing',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Versátil (1d10) · Maestria: Derrubar',
+    mastery: 'topple',
+  },
+  maul: {
+    id: 'maul',
+    name: 'Malho',
+    dice: '2d6',
+    damageType: 'bludgeoning',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Duas Mãos, Pesada · Maestria: Derrubar',
+    mastery: 'topple',
+  },
+  warhammer: {
+    id: 'warhammer',
+    name: 'Martelo de Guerra',
+    dice: '1d8',
+    damageType: 'bludgeoning',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Versátil (1d10) · Maestria: Empurrar',
+    mastery: 'push',
+  },
+  'war-pick': {
+    id: 'war-pick',
+    name: 'Picareta de Guerra',
+    dice: '1d8',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Versátil (1d10) · Maestria: Drenar',
+    mastery: 'sap',
+  },
+  rapier: {
+    id: 'rapier',
+    name: 'Rapieira',
+    dice: '1d8',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: false,
+    finesse: true,
+    light: false,
+    properties: 'Acuidade · Maestria: Afligir',
+    mastery: 'vex',
+  },
+  trident: {
+    id: 'trident',
+    name: 'Tridente',
+    dice: '1d8',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: false,
+    finesse: false,
+    light: false,
+    properties: 'Arremesso (6/18 m), Versátil (1d10) · Maestria: Derrubar',
+    mastery: 'topple',
+  },
+  'hand-crossbow': {
+    id: 'hand-crossbow',
+    name: 'Besta de Mão',
+    dice: '1d6',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: true,
+    finesse: false,
+    light: true,
+    properties: 'Leve, Munição (9/36 m; Virote), Recarga · Maestria: Afligir',
+    mastery: 'vex',
+  },
+  'heavy-crossbow': {
+    id: 'heavy-crossbow',
+    name: 'Besta Pesada',
+    dice: '1d10',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: true,
+    finesse: false,
+    light: false,
+    properties: 'Duas Mãos, Munição (30/120 m; Virote), Pesada, Recarga · Maestria: Empurrar',
+    mastery: 'push',
+  },
+  musket: {
+    id: 'musket',
+    name: 'Mosquete',
+    dice: '1d12',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: true,
+    finesse: false,
+    light: false,
+    properties: 'Duas Mãos, Munição (12/36 m; Bala), Recarga · Maestria: Lentidão',
+    mastery: 'slow',
+  },
+  pistol: {
+    id: 'pistol',
+    name: 'Pistola',
+    dice: '1d10',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: true,
+    finesse: false,
+    light: false,
+    properties: 'Munição (9/27 m; Bala), Recarga · Maestria: Afligir',
+    mastery: 'vex',
+  },
+  blowgun: {
+    id: 'blowgun',
+    name: 'Zarabatana',
+    dice: '1',
+    damageType: 'piercing',
+    category: 'martial',
+    ranged: true,
+    finesse: false,
+    light: false,
+    properties: 'Munição (7,5/30 m; Agulha), Recarga · Maestria: Afligir',
+    mastery: 'vex',
   },
 } as const satisfies Record<string, WeaponDef>;
 
@@ -379,13 +710,15 @@ export interface ClassDef {
   standardArray: Record<AbilityKey, number>;
   features: TextEntry[];
   spellcasting?: { ability: AbilityKey; cantrips: number; prepared: number; slots: number };
-  /** Escolha obrigatória no nível 1 (Ordem Divina, Ordem Primal, Estilo de Luta). */
+  /** Escolha obrigatória no nível 1 (Ordem Divina, Ordem Primal, Invocação Mística do Bruxo). */
   option?: { label: string; choices: ClassOption[] };
   fightingStyle?: boolean;
   /** Bárbaro (Con) e Monge (Sab): CA sem armadura = 10 + Des + este atributo. */
   unarmoredDefense?: AbilityKey;
   /** Ladino: perícias com Especialização. */
   expertise?: number;
+  /** Maestria em Arma (nível 1): quantos tipos de arma; `melee` = só corpo a corpo (Bárbaro). */
+  weaponMastery?: { count: number; melee?: boolean };
   /** Idiomas extras: fixos (Druídico, Gíria dos Ladrões) e à escolha. */
   languages?: { fixed: string[]; choose: number };
 }
@@ -423,6 +756,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     ],
     standardArray: { str: 15, dex: 13, con: 14, int: 10, wis: 12, cha: 8 },
     unarmoredDefense: 'con',
+    weaponMastery: { count: 2, melee: true },
     features: [
       {
         name: 'Fúria',
@@ -519,11 +853,41 @@ export const CLASSES: Record<ClassId, ClassDef> = {
       goldOnly('B', 100),
     ],
     standardArray: { str: 8, dex: 14, con: 13, int: 12, wis: 10, cha: 15 },
+    option: {
+      label: 'Invocação Mística',
+      choices: [
+        {
+          id: 'armor-of-shadows',
+          name: 'Armadura de Sombras',
+          text: 'Você pode conjurar Armadura Arcana em si mesmo sem gastar espaço de magia (CA 13 + Destreza sem armadura).',
+        },
+        {
+          id: 'eldritch-mind',
+          name: 'Mente Mística',
+          text: 'Vantagem nas salvaguardas de Constituição para manter a Concentração.',
+        },
+        {
+          id: 'pact-of-the-blade',
+          name: 'Pacto da Lâmina',
+          text: 'Ação Bônus: faz surgir uma arma de pacto corpo a corpo (ou se vincula a uma arma mágica). Você é proficiente com ela, pode usar Carisma no ataque e no dano e escolher dano Necrótico, Psíquico ou Radiante.',
+        },
+        {
+          id: 'pact-of-the-chain',
+          name: 'Pacto da Corrente',
+          text: 'Você aprende Convocar Familiar e pode conjurá-la sem espaço de magia, com formas especiais (ex.: Diabrete, Pseudodragão). Ao Atacar, pode trocar um ataque seu por um ataque do familiar.',
+        },
+        {
+          id: 'pact-of-the-tome',
+          name: 'Pacto do Tomo',
+          text: 'Um Livro das Sombras com 3 truques e 2 magias de 1º círculo com Ritual, de qualquer lista, sempre preparados. Escolha as magias na aba Magias da ficha (Outra magia, se vierem do livro).',
+        },
+      ],
+    },
     spellcasting: { ability: 'cha', cantrips: 2, prepared: 2, slots: 1 },
     features: [
       {
         name: 'Invocações Místicas',
-        text: 'Escolha 1 invocação (por exemplo, Pacto do Tomo). Ela dá uma habilidade mágica permanente.',
+        text: 'Você tem 1 invocação: uma habilidade mágica permanente escolhida abaixo. Ganha mais ao subir de nível.',
       },
       {
         name: 'Magia de Pacto',
@@ -741,6 +1105,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
       goldOnly('B', 150),
     ],
     standardArray: { str: 12, dex: 15, con: 13, int: 8, wis: 14, cha: 10 },
+    weaponMastery: { count: 2 },
     spellcasting: { ability: 'wis', cantrips: 0, prepared: 2, slots: 2 },
     features: [
       {
@@ -822,6 +1187,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
       goldOnly('C', 155),
     ],
     standardArray: { str: 15, dex: 14, con: 13, int: 8, wis: 10, cha: 12 },
+    weaponMastery: { count: 3 },
     fightingStyle: true,
     features: [
       {
@@ -885,6 +1251,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
       goldOnly('B', 100),
     ],
     standardArray: { str: 12, dex: 15, con: 13, int: 14, wis: 10, cha: 8 },
+    weaponMastery: { count: 2 },
     expertise: 2,
     languages: { fixed: ['Gíria dos Ladrões'], choose: 1 },
     features: [
@@ -1034,6 +1401,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
       goldOnly('B', 150),
     ],
     standardArray: { str: 15, dex: 10, con: 13, int: 8, wis: 12, cha: 14 },
+    weaponMastery: { count: 2 },
     spellcasting: { ability: 'cha', cantrips: 0, prepared: 2, slots: 2 },
     features: [
       {

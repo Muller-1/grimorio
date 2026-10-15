@@ -9,7 +9,8 @@
     "install-browser": "playwright install chromium"
   },
   "dependencies": {
-    "@grimorio/rules": "workspace:*"
+    "@grimorio/rules": "workspace:*",
+    "@grimorio/shared": "workspace:*"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

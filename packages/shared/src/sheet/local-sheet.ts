@@ -10,15 +10,16 @@ import {
 import { CreationRecordSchema } from './creation';
 
 /**
- * Ficha local — formato PROVISÓRIO (ver docs/adr/002-ficha-antecipada.md).
+ * Ficha do personagem (a mesma no navegador e na conta). Começou como formato provisório
+ * (ADR-002); a versão 2 (ADR-010) acrescenta a progressão de classe, as magias e o estado das
+ * habilidades (usos gastos, o que está ativo).
  *
- * Existe para a ficha editável funcionar antes do R2 (contas, conteúdo do SRD e o
- * `CharacterData` v2 do plano). Tudo é digitado pelo jogador e fica no navegador.
- * Os nomes seguem os do `CharacterData` v2 (identity, state.hp, hpLog...) para que a
- * migração no R2 seja uma função simples `localSheetToCharacterData`.
+ * - Guarda ESCOLHAS e o estado de jogo; os números derivados são recalculados (plano v2, 9.1).
+ * - Fichas de versões antigas são migradas ao abrir (`migrateSheet`, em ./migrations): no
+ *   navegador, no cache da conta e na API. Nada salvo antes deixa de abrir.
  */
 
-export const LOCAL_SHEET_SCHEMA_VERSION = 1;
+export const LOCAL_SHEET_SCHEMA_VERSION = 2;
 
 const int = () => z.number().int();
 
@@ -72,6 +73,84 @@ export const FeatureSchema = z.object({
   text: z.string().max(4000),
 });
 
+/** Id de conteúdo das regras (classe, subclasse, magia, talento…), ex.: "fireball". */
+const contentId = z
+  .string()
+  .min(1)
+  .max(60)
+  .regex(/^[a-z0-9-]+$/);
+
+/** Uma escolha feita ao subir de nível (para o histórico). O motor de regras dá o sentido. */
+export const LevelChoiceSchema = z.object({
+  /** Ex.: "subclass", "asi", "feat", "spell", "cantrip", "expertise", "invocation"… */
+  kind: z.string().min(1).max(40),
+  id: z.string().max(80).optional(),
+  /** Texto para escolhas "do livro" (fora do SRD) ou detalhes. */
+  text: z.string().max(200).optional(),
+  ability: z.enum(ABILITY_KEYS).optional(),
+  amount: int().min(-5).max(5).optional(),
+});
+
+export const LevelRecordSchema = z.object({
+  level: int().min(2).max(20),
+  /** Resultado do Dado de Vida (sem Constituição). Sem valor = usou a média do livro. */
+  hpRolled: int().min(1).max(12).optional(),
+  choices: z.array(LevelChoiceSchema).max(30),
+});
+
+/** Classe do personagem e o que foi escolhido em cada nível (ADR-010). Multiclasse: depois. */
+export const ProgressionSchema = z.object({
+  classId: contentId,
+  /** Subclasse do SRD, ou "custom" (do livro, com `subclassName`). */
+  subclassId: contentId.optional(),
+  subclassName: z.string().max(80).optional(),
+  levels: z.array(LevelRecordSchema).max(19),
+});
+
+/** Magia que o jogador digitou ("Outra magia (do livro)"), fora do SRD. */
+export const CustomSpellSchema = z.object({
+  id: z.string().min(1).max(60),
+  name: z.string().max(80),
+  /** 0 = truque. */
+  level: int().min(0).max(9),
+  prepared: z.boolean(),
+  concentration: z.boolean().optional(),
+  ritual: z.boolean().optional(),
+  castingTime: z.string().max(80).optional(),
+  range: z.string().max(80).optional(),
+  duration: z.string().max(80).optional(),
+  /** Automação opcional: jogada de ataque ou salvaguarda e dano/cura. */
+  attack: z.boolean().optional(),
+  save: z.enum(ABILITY_KEYS).optional(),
+  damageDice: z.string().max(40).optional(),
+  damageType: z.enum(DAMAGE_TYPES).optional(),
+  text: z.string().max(4000),
+});
+
+/** De onde vem uma magia concedida (sempre preparada, não conta no limite). */
+export const GRANTED_SPELL_SOURCES = ['subclass', 'feat', 'species', 'class', 'other'] as const;
+
+export const GrantedSpellSchema = z.object({
+  id: contentId,
+  source: z.enum(GRANTED_SPELL_SOURCES),
+  /** Atributo de conjuração dessa fonte (ex.: talento Iniciado em Magia). */
+  ability: z.enum(ABILITY_KEYS).optional(),
+  /** Conjurações sem espaço por descanso longo (ex.: magias de espécie, 1 vez). */
+  freePerLongRest: int().min(0).max(9).optional(),
+});
+
+/** Magias do personagem: só os ids (os textos ficam no conteúdo das regras). */
+export const SpellsSchema = z.object({
+  /** Atributo de conjuração escolhido à mão (fichas sem classe do assistente). */
+  ability: z.enum(ABILITY_KEYS).optional(),
+  cantrips: z.array(contentId).max(30),
+  prepared: z.array(contentId).max(60),
+  /** Grimório do Mago. */
+  spellbook: z.array(contentId).max(200),
+  granted: z.array(GrantedSpellSchema).max(60),
+  custom: z.array(CustomSpellSchema).max(60),
+});
+
 export const LocalSheetSchema = z.object({
   schemaVersion: z.literal(LOCAL_SHEET_SCHEMA_VERSION),
   kind: z.literal('local-sheet'),
@@ -109,23 +188,49 @@ export const LocalSheetSchema = z.object({
     hitDiceSpent: int().min(0).max(20),
     inspiration: int().min(0).max(99),
     hpLog: z.array(HpEventSchema).max(50),
+    /** Espaços de magia gastos por círculo (índice 0 = 1º círculo). */
+    slotsSpent: z.array(int().min(0).max(9)).length(9),
+    /** Espaços de Magia de Pacto gastos (Bruxo). */
+    pactSlotsSpent: int().min(0).max(9),
+    /** Usos gastos de cada recurso (ex.: { rage: 1 }). O máximo vem das regras. */
+    resources: z.record(z.string().min(1).max(60), int().min(0).max(99)),
+    /** Habilidades ligadas agora (ex.: ["rage", "reckless-attack"]). */
+    active: z.array(z.string().min(1).max(60)).max(30),
+    /** Magia em que o personagem está concentrado. */
+    concentration: z.string().max(60).optional(),
   }),
   weapons: z.array(WeaponSchema).max(50),
   features: z.array(FeatureSchema).max(100),
   /** Escolhas do assistente de criação, quando a ficha nasceu nele (opcional). */
   creation: CreationRecordSchema.optional(),
+  /** Classe e histórico de níveis. Fichas feitas à mão podem não ter. */
+  progression: ProgressionSchema.optional(),
+  spells: SpellsSchema,
 });
 
 export type LocalSheet = z.infer<typeof LocalSheetSchema>;
+export type Progression = z.infer<typeof ProgressionSchema>;
+export type LevelRecord = z.infer<typeof LevelRecordSchema>;
+export type LevelChoice = z.infer<typeof LevelChoiceSchema>;
+export type SheetSpells = z.infer<typeof SpellsSchema>;
+export type CustomSpell = z.infer<typeof CustomSpellSchema>;
+export type GrantedSpell = z.infer<typeof GrantedSpellSchema>;
 export type HpEvent = z.infer<typeof HpEventSchema>;
 export type Weapon = z.infer<typeof WeaponSchema>;
 export type Feature = z.infer<typeof FeatureSchema>;
 export type AbilityScores = Record<AbilityKey, number>;
 
-/** Lê dados salvos de forma segura: devolve `null` se o formato não for reconhecido. */
-export function parseLocalSheet(raw: unknown): LocalSheet | null {
-  const result = LocalSheetSchema.safeParse(raw);
-  return result.success ? result.data : null;
+/** Magias vazias (personagem que não conjura, ou ainda sem escolhas). */
+export function emptySpells(): SheetSpells {
+  return { cantrips: [], prepared: [], spellbook: [], granted: [], custom: [] };
+}
+
+/** Estado de jogo das habilidades e magias zerado (descanso longo, ficha nova). */
+export function freshAbilityState(): Pick<
+  LocalSheet['state'],
+  'slotsSpent' | 'pactSlotsSpent' | 'resources' | 'active'
+> {
+  return { slotsSpent: [0, 0, 0, 0, 0, 0, 0, 0, 0], pactSlotsSpent: 0, resources: {}, active: [] };
 }
 
 /** Ficha em branco: nível 1, atributos 10, dado de vida d8, 9 m de deslocamento. */
@@ -148,8 +253,10 @@ export function createBlankSheet(): LocalSheet {
       hitDiceSpent: 0,
       inspiration: 0,
       hpLog: [],
+      ...freshAbilityState(),
     },
     weapons: [],
     features: [],
+    spells: emptySpells(),
   };
 }

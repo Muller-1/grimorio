@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
 import HomePage from '@/pages/HomePage';
+import StartPage from '@/pages/StartPage';
 import {
   CreditsPage,
   NotFoundPage,
@@ -47,6 +48,7 @@ interface PageRoute {
 /** Rotas do R1 (plano de início, Etapa 5) + fichas e contas. Fonte única para o roteador e o build. */
 const PAGES: readonly PageRoute[] = [
   { path: '/', element: <HomePage />, prerender: 'full' },
+  { path: '/comecar', element: <StartPage />, prerender: 'full' },
   {
     path: '/ficha',
     element: (

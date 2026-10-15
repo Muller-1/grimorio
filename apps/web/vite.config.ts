@@ -35,7 +35,28 @@ export default defineConfig({
   },
   // O manifesto diz quais arquivos cada página carregada sob demanda precisa; o
   // scripts/prerender.mjs usa isso para já pedir esses arquivos no HTML de /ficha e /dados.
-  build: { manifest: true },
+  build: {
+    manifest: true,
+    rolldownOptions: {
+      output: {
+        // As regras em dois pedaços: o rolador de dados (que /dados usa sozinho) e o resto (classes,
+        // motor das habilidades, subida de nível), que só a ficha e o assistente baixam. A lista
+        // de magias (spells/data) fica fora: vai junto com a aba Magias.
+        codeSplitting: {
+          includeDependenciesRecursively: false,
+          groups: [
+            { name: 'rules-dice', test: /packages[\\/]rules[\\/]src[\\/]dice[\\/]/ },
+            {
+              name: 'rules',
+              // Fora: o index.ts da raiz (só reexporta; ficando aqui, puxaria o pedaço para
+              // /dados), a criação e a subida de nível (vão com o assistente e com o diálogo).
+              test: /packages[\\/]rules[\\/]src[\\/](?!dice[\\/]|spells[\\/]data[\\/]|creation[\\/]|levelup[\\/]|index\.ts$)/,
+            },
+          ],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     // A API fica "por baixo" do site (ADR-008): o navegador fala só com :5173 e o Vite repassa

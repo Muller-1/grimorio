@@ -1,7 +1,8 @@
 import { withModifier } from '@grimorio/rules';
 import { ABILITY_KEYS, type AbilityKey } from '@grimorio/shared';
-import { UserRound } from 'lucide-react';
-import { useId, useState } from 'react';
+import { TrendingUp, UserRound } from 'lucide-react';
+import { lazy, Suspense, useId, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Input, Label, Textarea } from '@/components/ui/input';
 import { Panel } from '@/components/ui/panel';
 import { Popover } from '@/components/ui/popover';
@@ -11,10 +12,41 @@ import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
 import { ExplainButton } from './Explain';
 import { NumberField, Stepper } from '@/components/ui/number-field';
+import { AdvantageBadge, d20 } from './AdvantageBadge';
 import { ProficiencyToggle } from './ProficiencyToggle';
 import { RollButton } from './RollButton';
 
 type TextField = 'name' | 'className' | 'playerName' | 'origin';
+
+// O diálogo de subir de nível (com a lista de magias) só carrega quando o jogador abre.
+const LevelUpDialog = lazy(() => import('@/features/levelup/LevelUpDialog'));
+
+function LevelUpButton() {
+  const level = useSheetStore((s) => s.sheet.build.level);
+  const [open, setOpen] = useState(false);
+  const l = t.sheet.levelUp;
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="primary"
+        className="w-full px-1 text-xs"
+        onClick={() => setOpen(true)}
+        disabled={level >= 20}
+        title={level >= 20 ? l.max : l.hint}
+        data-testid="levelup.open"
+      >
+        <TrendingUp className="size-3.5" />
+        {l.button}
+      </Button>
+      {open ? (
+        <Suspense fallback={null}>
+          <LevelUpDialog onClose={() => setOpen(false)} />
+        </Suspense>
+      ) : null}
+    </>
+  );
+}
 
 function InlineField({ field, label }: { field: TextField; label: string }) {
   const value = useSheetStore((s) => s.sheet.identity[field]);
@@ -139,6 +171,7 @@ function IdentityPanel() {
               testId="stat.level"
             />
           </div>
+          <LevelUpButton />
           <div className="rounded-lg border border-border px-1 py-1 text-center">
             <p className="text-xs font-semibold text-muted">{t.sheet.identity.proficiency}</p>
             <ExplainButton
@@ -255,6 +288,7 @@ function SavesPanel() {
                 testId={`save.${ability}.prof`}
               />
               <span className="flex-1 truncate text-sm">{name}</span>
+              {save.advantage ? <AdvantageBadge /> : null}
               <ExplainButton
                 explained={save.bonus}
                 title={t.sheet.saveLabel(name)}
@@ -262,7 +296,9 @@ function SavesPanel() {
               />
               <RollButton
                 rollLabel={t.sheet.saveLabel(name)}
-                expression={withModifier('1d20', bonus)}
+                expression={`${withModifier(d20(save.advantage), bonus)}${save.bonusDice
+                  .map((d) => `+${d}`)
+                  .join('')}`}
                 ariaLabel={t.sheet.rollSave(name)}
                 className="size-7"
               />

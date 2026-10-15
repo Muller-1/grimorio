@@ -17,13 +17,16 @@ export function partLabel(source: PartSource): string {
     case 'level':
       return t.sheet.explain.level;
     case 'hit-die':
-      return t.sheet.explain.hitDie(source.die, source.levels);
+      return t.sheet.explain.hitDie(source.die, source.levels, source.rolled);
     case 'magic':
       return t.sheet.explain.magic;
     case 'trait':
       return t.sheet.explain.trait;
     case 'override':
       return t.sheet.explain.override;
+    case 'effect':
+      // Nome da característica ou magia (vem do conteúdo das regras, já em português).
+      return source.name;
   }
 }
 

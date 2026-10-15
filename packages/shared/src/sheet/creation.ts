@@ -29,6 +29,10 @@ export const CreationRecordSchema = z.object({
   /** Linhagem, ancestral ou legado (elfo, draconato, golias, tiferino, gnomo). */
   speciesOptionId: contentId.optional(),
   backgroundId: contentId,
+  /** Escolha obrigatória da classe no nível 1 (Ordem Divina/Primal, Invocação do Bruxo). */
+  classOptionId: contentId.optional(),
+  /** Maestria em Arma: tipos de arma escolhidos (ids do conteúdo, ex.: "greataxe"). */
+  weaponMasteries: z.array(contentId).max(6).optional(),
   /** Atributos ANTES do bônus do antecedente. */
   abilityMethod: z.enum(ABILITY_METHODS),
   baseAbilities: z.object({

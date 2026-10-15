@@ -3,10 +3,18 @@
 @import '@fontsource/cinzel/700.css';
 
 /*
- * Tokens de cor. Tema claro = pergaminho; tema escuro = taverna à noite.
- * Segue a preferência do sistema; `data-theme` no <html> força um dos dois.
+ * Tokens de cor (temas). Pergaminho (claro) é o padrão; Taverna (escuro) vem da preferência do
+ * sistema quando o jogador deixa em "Automático". `data-theme` no <html> força um tema; o
+ * public/theme.js aplica a escolha salva antes de desenhar a página.
+ *
+ * - Cada tema define TODAS as variáveis (o teste src/lib/theme.test.ts confere, e também o
+ *   contraste AA dos pares de cor que o site usa).
+ * - O seletor é `[data-theme=…]` (não só `:root`) para a amostra do seletor de tema poder
+ *   mostrar as cores de verdade dentro de um <span data-theme="…">.
+ * - O bloco escuro aparece duas vezes (preferência do sistema e escolha explícita): mude os dois.
  */
-:root {
+:root,
+[data-theme='light'] {
   --bg: #f4eee2;
   --surface: #fffcf6;
   --surface-2: #efe6d5;
@@ -24,13 +32,13 @@
   --success-soft: #dcefdc;
   --danger: #a3261f;
   --danger-soft: #f7dcd9;
-  --focus: #c08a1e;
+  --focus: #a5720f;
   --shadow: 0 1px 2px rgb(60 40 20 / 0.08), 0 2px 8px rgb(60 40 20 / 0.06);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root:not([data-theme]) {
     --bg: #15120e;
     --surface: #1f1a15;
     --surface-2: #29231c;
@@ -54,7 +62,8 @@
   }
 }
 
-:root[data-theme='dark'] {
+/* Taverna (escuro) */
+[data-theme='dark'] {
   --bg: #15120e;
   --surface: #1f1a15;
   --surface-2: #29231c;
@@ -75,6 +84,78 @@
   --focus: #e0b252;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
   color-scheme: dark;
+}
+
+/* Arcano (escuro, azul-noite e violeta) */
+[data-theme='arcane'] {
+  --bg: #11121f;
+  --surface: #1a1b2e;
+  --surface-2: #24253c;
+  --border: #34365a;
+  --border-strong: #4c4f7d;
+  --text: #e8e6f6;
+  --muted: #a6a4c8;
+  --accent: #a78bfa;
+  --accent-hover: #b9a3fb;
+  --accent-soft: #2c2350;
+  --accent-contrast: #120c24;
+  --gold: #f0c674;
+  --gold-soft: #3a3020;
+  --success: #7dd3a0;
+  --success-soft: #19322a;
+  --danger: #f58b8b;
+  --danger-soft: #3d1f2a;
+  --focus: #f0c674;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+  color-scheme: dark;
+}
+
+/* Floresta (claro, verde-musgo) */
+[data-theme='forest'] {
+  --bg: #edf1e6;
+  --surface: #fbfcf7;
+  --surface-2: #e2e9d6;
+  --border: #c3d0ae;
+  --border-strong: #9cae80;
+  --text: #1d2617;
+  --muted: #556149;
+  --accent: #34622f;
+  --accent-hover: #2a5126;
+  --accent-soft: #dbe8d2;
+  --accent-contrast: #f7fbf2;
+  --gold: #7a5a12;
+  --gold-soft: #f1e6c4;
+  --success: #1f6b5a;
+  --success-soft: #d5ece5;
+  --danger: #a3261f;
+  --danger-soft: #f6dcd8;
+  --focus: #8a6510;
+  --shadow: 0 1px 2px rgb(30 45 20 / 0.08), 0 2px 8px rgb(30 45 20 / 0.06);
+  color-scheme: light;
+}
+
+/* Alto contraste (claro, preto no branco) */
+[data-theme='contrast'] {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f0f0f0;
+  --border: #595959;
+  --border-strong: #000000;
+  --text: #000000;
+  --muted: #333333;
+  --accent: #8a0000;
+  --accent-hover: #6a0000;
+  --accent-soft: #ffe3e3;
+  --accent-contrast: #ffffff;
+  --gold: #5c4000;
+  --gold-soft: #fff0c2;
+  --success: #0b5a1c;
+  --success-soft: #ddf5e1;
+  --danger: #9a0000;
+  --danger-soft: #ffe3e3;
+  --focus: #0050c8;
+  --shadow: none;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -175,4 +256,21 @@
 
 .animate-roll-chip {
   animation: roll-chip 0.3s ease-out both;
+}
+
+/* Assistente: destaca o bloco que falta preencher quando o jogador toca na pendência. */
+@keyframes wizard-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  30%,
+  70% {
+    box-shadow: 0 0 0 4px var(--focus);
+  }
+}
+
+.wizard-flash {
+  border-radius: 0.75rem;
+  animation: wizard-flash 1.4s ease-in-out;
 }

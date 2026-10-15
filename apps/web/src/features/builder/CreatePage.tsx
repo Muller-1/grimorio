@@ -1,12 +1,13 @@
 import {
   buildCharacterSheet,
+  CLASSES,
   CREATION_STEPS,
   stepIssues,
   type CreationStep,
 } from '@grimorio/rules';
-import { ArrowLeft, ArrowRight, Check, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Check, Info, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { useAuthStore } from '@/features/auth/store';
@@ -16,7 +17,10 @@ import { useToastStore } from '@/features/toast/store';
 import { t } from '@/lib/i18n';
 import { tw } from '@/lib/i18n/wizard';
 import { newId } from '@/ports/ids';
+import { safeStorage } from '@/ports/storage';
+import { cn } from '@/lib/utils';
 import { StepBar } from './components/parts';
+import { goToIssue } from './guide';
 import { AbilitiesStep } from './steps/AbilitiesStep';
 import { ClassStep } from './steps/ClassStep';
 import { DetailsStep } from './steps/DetailsStep';
@@ -24,6 +28,9 @@ import { OriginStep } from './steps/OriginStep';
 import { useBuilderStore } from './store';
 
 const w = tw;
+
+/** O jogador já viu (e fechou) a explicação de como o assistente funciona. */
+export const WIZARD_INTRO_KEY = 'grimorio.criacao.intro-visto';
 
 /**
  * Assistente de criação (RF-20): Classe → Origem → Atributos → Toques Finais, na ordem do
@@ -42,6 +49,7 @@ export default function CreatePage() {
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [confirmReplace, setConfirmReplace] = useState(false);
   const [accountFailed, setAccountFailed] = useState(false);
+  const [introSeen, setIntroSeen] = useState(() => safeStorage.get(WIZARD_INTRO_KEY) === '1');
   const topRef = useRef<HTMLDivElement>(null);
 
   const index = CREATION_STEPS.indexOf(step);
@@ -64,6 +72,28 @@ export default function CreatePage() {
       (s) => stepIssues(draft, s).length === 0,
     );
   const done = (s: CreationStep) => stepIssues(draft, s).length === 0;
+
+  const closeIntro = () => {
+    safeStorage.set(WIZARD_INTRO_KEY, '1');
+    setIntroSeen(true);
+  };
+
+  /** Texto da pendência; a escolha da classe usa o nome dela (Ordem Divina, Invocação Mística…). */
+  const issueText = (issue: (typeof issues)[number]) => {
+    const label = draft.classId ? CLASSES[draft.classId].option?.label : undefined;
+    return issue === 'class-option-missing' && label ? w.chooseOption(label) : w.issues[issue];
+  };
+
+  /** Avançar/Criar nunca "não faz nada": com pendência, leva até ela. */
+  const ready = issues.length === 0;
+  const onPrimary = () => {
+    if (!ready) {
+      goToIssue(issues[0]!);
+      return;
+    }
+    if (isLast) void create();
+    else go(CREATION_STEPS[index + 1]!);
+  };
 
   const finishLocal = () => {
     const sheet = buildCharacterSheet(draft, { newId });
@@ -117,6 +147,29 @@ export default function CreatePage() {
         </Button>
       </div>
 
+      {introSeen ? null : (
+        <aside
+          className="mb-6 flex flex-col gap-3 rounded-xl border border-gold/40 bg-gold-soft p-4 sm:flex-row sm:items-center"
+          data-testid="wizard.intro"
+        >
+          <Info className="size-6 shrink-0 text-gold" aria-hidden="true" />
+          <div className="flex-1 text-sm">
+            <p className="font-semibold">{w.intro.title}</p>
+            <p className="mt-0.5">{w.intro.text}</p>
+            <Link
+              to="/comecar"
+              className="mt-1 inline-flex items-center gap-1 font-semibold text-gold underline underline-offset-4 hover:no-underline"
+            >
+              <BookOpen className="size-4" aria-hidden="true" />
+              {w.intro.basics}
+            </Link>
+          </div>
+          <Button size="sm" variant="outline" onClick={closeIntro} data-testid="wizard.intro.ok">
+            {w.intro.ok}
+          </Button>
+        </aside>
+      )}
+
       <p className="sr-only" aria-live="polite">
         {w.stepOf(index + 1, CREATION_STEPS.length)}
       </p>
@@ -140,10 +193,23 @@ export default function CreatePage() {
           </Button>
           <div className="min-w-0 flex-1 text-sm" aria-live="polite">
             {issues.length ? (
-              <p className="truncate text-muted" data-testid="wizard.issues">
-                <span className="font-semibold">{w.pending} </span>
-                {issues.map((i) => w.issues[i]).join(' ')}
-              </p>
+              <div id="wizard-pending" data-testid="wizard.issues" title={w.pendingHint}>
+                <span className="mr-1 font-semibold">{w.pending}</span>
+                {issues.map((issue, i) => (
+                  <button
+                    key={issue}
+                    type="button"
+                    onClick={() => goToIssue(issue)}
+                    className={cn(
+                      'mr-2 underline underline-offset-4 hover:text-accent',
+                      i === 0 ? 'font-semibold text-text' : 'text-muted max-sm:hidden',
+                    )}
+                    data-testid={`wizard.issue.${issue}`}
+                  >
+                    {issueText(issue)}
+                  </button>
+                ))}
+              </div>
             ) : accountFailed ? (
               <p className="text-danger">{w.result.failed}</p>
             ) : (
@@ -158,27 +224,28 @@ export default function CreatePage() {
               {w.result.saveLocalInstead}
             </Button>
           ) : null}
-          {isLast ? (
-            <Button
-              variant="primary"
-              disabled={issues.length > 0 || busy}
-              onClick={() => void create()}
-              data-testid="wizard.finish"
-            >
-              <Check className="size-4" aria-hidden="true" />
-              {busy ? w.creating : w.create}
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              disabled={issues.length > 0}
-              onClick={() => go(CREATION_STEPS[index + 1]!)}
-              data-testid="wizard.next"
-            >
-              {w.next}
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Button>
-          )}
+          {/* Com pendência o botão fica em contorno (menos destaque) mas continua clicável: leva até o que falta
+              (por isso não é `disabled` nem `aria-disabled`; o leitor de tela ouve a pendência). */}
+          <Button
+            variant={ready ? 'primary' : 'outline'}
+            disabled={busy}
+            onClick={onPrimary}
+            aria-describedby={ready ? undefined : 'wizard-pending'}
+            data-testid={isLast ? 'wizard.finish' : 'wizard.next'}
+            data-ready={ready}
+          >
+            {isLast ? (
+              <>
+                <Check className="size-4" aria-hidden="true" />
+                {busy ? w.creating : w.create}
+              </>
+            ) : (
+              <>
+                {w.next}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </>
+            )}
+          </Button>
         </div>
       </div>
 

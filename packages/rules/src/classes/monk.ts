@@ -1,0 +1,235 @@
+import { asiFeatures, byLevel, epicBoon, extraAttack, subclassFeature } from './common';
+import type { ClassProgression } from './types';
+
+export const MONK: ClassProgression = {
+  classId: 'monk',
+  columns: {
+    martialArts: byLevel([
+      [1, 6],
+      [5, 8],
+      [11, 10],
+      [17, 12],
+    ]),
+    focusPoints: byLevel(
+      Array.from({ length: 20 }, (_, i) => [i + 1, i === 0 ? 0 : i + 1] as [number, number]),
+    ),
+    unarmoredMovement: byLevel([
+      [1, 0],
+      [2, 10],
+      [6, 15],
+      [10, 20],
+      [14, 25],
+      [18, 30],
+    ]),
+  },
+  columnNames: {
+    martialArts: 'Artes Marciais',
+    focusPoints: 'Pontos de Foco',
+    unarmoredMovement: 'Movimento sem Armadura',
+  },
+  subclassLevels: [3, 6, 11, 17],
+  features: [
+    {
+      id: 'martial-arts',
+      level: 1,
+      name: 'Artes Marciais',
+      text: 'Desarmado ou só com armas de Monge (Simples corpo a corpo e Marciais corpo a corpo Leves), sem armadura nem Escudo: Ataque Desarmado como Ação Bônus; use o dado de Artes Marciais (d6, d8 no 5, d10 no 11, d12 no 17) no lugar do dano normal; e Destreza no lugar de Força no ataque, no dano e na CD de Agarrar e Empurrar.',
+    },
+    {
+      id: 'unarmored-defense',
+      level: 1,
+      name: 'Defesa sem Armadura',
+      text: 'Sem armadura nem Escudo, sua CA base é 10 + Destreza + Sabedoria.',
+    },
+    {
+      id: 'monks-focus',
+      level: 2,
+      name: 'Foco do Monge',
+      text: 'Pontos de Foco iguais ao seu nível de Monge, recuperados num Descanso Curto ou Longo (CD das características: 8 + Sabedoria + Bônus de Proficiência). Rajada de Golpes: 1 ponto, dois Ataques Desarmados como Ação Bônus. Defesa Paciente: Desengajar como Ação Bônus, ou 1 ponto para Desengajar e Esquivar. Passo do Vento: Disparada como Ação Bônus, ou 1 ponto para Desengajar e Disparada com o dobro do salto.',
+      resource: {
+        id: 'focus-points',
+        name: 'Pontos de Foco',
+        max: { column: 'focusPoints' },
+        recharge: 'short',
+        pool: true,
+      },
+    },
+    {
+      id: 'unarmored-movement',
+      level: 2,
+      name: 'Movimento sem Armadura',
+      text: 'Sem armadura nem Escudo, seu Deslocamento aumenta em 3 m (4,5 m no nível 6, 6 m no 10, 7,5 m no 14 e 9 m no 18).',
+      passive: [{ type: 'speed-bonus', ft: { column: 'unarmoredMovement' } }],
+    },
+    {
+      id: 'uncanny-metabolism',
+      level: 2,
+      name: 'Metabolismo Incomum',
+      text: 'Ao rolar Iniciativa, recupere todos os Pontos de Foco e PV iguais ao seu nível de Monge + o dado de Artes Marciais. Uma vez por Descanso Longo.',
+      resource: { id: 'uncanny-metabolism', name: 'Metabolismo Incomum', max: 1, recharge: 'long' },
+    },
+    {
+      id: 'deflect-attacks',
+      level: 3,
+      name: 'Defletir Ataques',
+      text: 'Reação ao ser atingido por ataque com dano Contundente, Cortante ou Perfurante: reduza o dano em 1d10 + Destreza + seu nível de Monge. Se zerar, gaste 1 Foco para redirecionar: uma criatura a até 1,5 m (corpo a corpo) ou 18 m (à distância) faz salvaguarda de Destreza ou sofre dois dados de Artes Marciais + Destreza.',
+    },
+    subclassFeature(3, 'Monge'),
+    ...asiFeatures([4, 8, 12, 16]),
+    {
+      id: 'slow-fall',
+      level: 4,
+      name: 'Queda Lenta',
+      text: 'Reação ao cair: reduza o dano da queda em 5 × seu nível de Monge.',
+    },
+    extraAttack(5),
+    {
+      id: 'stunning-strike',
+      level: 5,
+      name: 'Golpe Atordoante',
+      text: 'Uma vez por turno, ao acertar com arma de Monge ou Ataque Desarmado, gaste 1 Foco: o alvo faz salvaguarda de Constituição ou fica Atordoado até o início do seu próximo turno. No sucesso, o Deslocamento dele cai à metade e o próximo ataque contra ele tem Vantagem.',
+    },
+    {
+      id: 'empowered-strikes',
+      level: 6,
+      name: 'Golpes Potencializados',
+      text: 'Seu Ataque Desarmado pode causar dano Energético em vez do tipo normal.',
+    },
+    {
+      id: 'evasion',
+      level: 7,
+      name: 'Evasão',
+      text: 'Em salvaguardas de Destreza para sofrer metade do dano: nenhum dano no sucesso e metade na falha (não vale Incapacitado).',
+    },
+    {
+      id: 'acrobatic-movement',
+      level: 9,
+      name: 'Movimento Acrobático',
+      text: 'Sem armadura nem Escudo, você se move por superfícies verticais e sobre líquidos no seu turno sem cair.',
+    },
+    {
+      id: 'heightened-focus',
+      level: 10,
+      name: 'Foco Aprimorado',
+      text: 'Rajada de Golpes faz três ataques; Defesa Paciente com Foco dá PV temporários iguais a dois dados de Artes Marciais; Passo do Vento com Foco leva junto uma criatura voluntária Grande ou menor a até 1,5 m.',
+    },
+    {
+      id: 'self-restoration',
+      level: 10,
+      name: 'Restauro Pessoal',
+      text: 'No fim de cada turno, remova de si Enfeitiçado, Amedrontado ou Envenenado. Ficar sem comer e beber não causa Exaustão.',
+    },
+    {
+      id: 'deflect-energy',
+      level: 13,
+      name: 'Defletir Energia',
+      text: 'Defletir Ataques passa a valer contra qualquer tipo de dano.',
+    },
+    {
+      id: 'disciplined-survivor',
+      level: 14,
+      name: 'Sobrevivente Disciplinado',
+      text: 'Proficiência em todas as salvaguardas. Ao falhar numa salvaguarda, gaste 1 Foco para rolar de novo (use o novo resultado).',
+      passive: [{ type: 'save-proficiency', on: ['str', 'dex', 'con', 'int', 'wis', 'cha'] }],
+    },
+    {
+      id: 'perfect-focus',
+      level: 15,
+      name: 'Foco Perfeito',
+      text: 'Ao rolar Iniciativa sem usar Metabolismo Incomum, se tiver 3 Pontos de Foco ou menos, recupere até ficar com 4.',
+    },
+    {
+      id: 'superior-defense',
+      level: 18,
+      name: 'Defesa Superior',
+      text: 'No início do turno, gaste 3 Pontos de Foco: por 1 minuto (ou até ficar Incapacitado), Resistência a todo dano menos Energético.',
+      activation: [
+        {
+          id: 'superior-defense',
+          name: 'Defesa Superior',
+          mode: 'toggle',
+          cost: { resource: 'focus-points', amount: 3 },
+          effects: [
+            {
+              type: 'resistance',
+              damage: [
+                'acid',
+                'bludgeoning',
+                'cold',
+                'fire',
+                'lightning',
+                'necrotic',
+                'piercing',
+                'poison',
+                'psychic',
+                'radiant',
+                'slashing',
+                'thunder',
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    epicBoon('Dádiva do Ataque Irresistível'),
+    {
+      id: 'body-and-mind',
+      level: 20,
+      name: 'Corpo e Mente',
+      text: 'Destreza e Sabedoria aumentam em 4, até o máximo de 25.',
+      abilityIncrease: { abilities: { dex: 4, wis: 4 }, max: 25 },
+    },
+  ],
+  subclasses: [
+    {
+      id: 'open-hand',
+      name: 'Combatente da Mão Espalmada',
+      tagline: 'Mestre do combate desarmado: empurra, derruba e se cura.',
+      features: [
+        {
+          id: 'open-hand-technique',
+          level: 3,
+          name: 'Técnica da Mão Espalmada',
+          text: 'Ao acertar um ataque da Rajada de Golpes, imponha um efeito: Desnortear (o alvo não faz Ataques de Oportunidade até o início do próximo turno dele), Empurrar (salvaguarda de Força ou é empurrado até 4,5 m) ou Derrubar (salvaguarda de Destreza ou fica Caído).',
+        },
+        {
+          id: 'wholeness-of-body',
+          level: 6,
+          name: 'Integridade Corporal',
+          text: 'Ação Bônus: role o dado de Artes Marciais e recupere esse valor + Sabedoria em PV (mínimo 1). Usos: Sabedoria (mínimo 1) por Descanso Longo.',
+          resource: {
+            id: 'wholeness-of-body',
+            name: 'Integridade Corporal',
+            max: { ability: 'wis', min: 1 },
+            recharge: 'long',
+          },
+          activation: [
+            {
+              id: 'wholeness-of-body',
+              name: 'Integridade Corporal',
+              mode: 'use',
+              cost: { resource: 'wholeness-of-body', amount: 1 },
+              effects: [],
+              heal: {
+                dice: { count: 1, die: { column: 'martialArts' } },
+                plus: { ability: 'wis', min: 1 },
+              },
+            },
+          ],
+        },
+        {
+          id: 'fleet-step',
+          level: 11,
+          name: 'Passo Veloz',
+          text: 'Ao fazer uma Ação Bônus que não seja Passo do Vento, pode usar Passo do Vento logo em seguida.',
+        },
+        {
+          id: 'quivering-palm',
+          level: 17,
+          name: 'Palma Vibrante',
+          text: 'Ao acertar um Ataque Desarmado, gaste 4 Pontos de Foco para iniciar vibrações que duram dias iguais ao seu nível de Monge. Com uma ação (ou abrindo mão de um ataque da ação Atacar), termine-as: o alvo faz salvaguarda de Constituição e sofre 10d12 de dano Energético (metade no sucesso). Só uma criatura por vez.',
+        },
+      ],
+    },
+  ],
+};

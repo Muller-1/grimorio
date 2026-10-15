@@ -85,6 +85,14 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
 
+  // Scripts clássicos servidos como estão (sem Vite), ex.: public/theme.js.
+  {
+    files: ['apps/web/public/**/*.js'],
+    languageOptions: { globals: globals.browser, sourceType: 'script', ecmaVersion: 5 },
+    // ES5 não tem `catch {}` sem variável.
+    rules: { '@typescript-eslint/no-unused-vars': ['error', { caughtErrors: 'none' }] },
+  },
+
   // ---- packages/rules e packages/shared: puros ----
   {
     files: ['packages/rules/src/**/*.ts', 'packages/shared/src/**/*.ts'],

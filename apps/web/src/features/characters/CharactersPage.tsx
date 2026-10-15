@@ -162,6 +162,12 @@ export default function CharactersPage() {
           <ScrollText className="mx-auto size-10 text-muted" aria-hidden="true" />
           <p className="mt-3 font-semibold">{c.empty}</p>
           <p className="mt-1 text-sm text-muted">{c.emptyHint}</p>
+          <Button asChild variant="primary" className="mt-4">
+            <Link to="/criar">
+              <Plus className="size-4" aria-hidden="true" />
+              {c.emptyCta}
+            </Link>
+          </Button>
         </div>
       );
     } else {

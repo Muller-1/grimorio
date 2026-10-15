@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { createBlankSheet, parseLocalSheet } from './local-sheet';
+import v1Barbarian from './fixtures/v1-barbarian.json';
+import v1Blank from './fixtures/v1-blank.json';
+import { createBlankSheet, LOCAL_SHEET_SCHEMA_VERSION } from './local-sheet';
+import { migrateSheet, parseLocalSheet } from './migrations';
 
 describe('LocalSheet', () => {
   it('a ficha em branco é válida', () => {
@@ -13,5 +16,35 @@ describe('LocalSheet', () => {
     const broken = createBlankSheet() as unknown as { build: { level: number } };
     broken.build.level = 42;
     expect(parseLocalSheet(broken)).toBeNull();
+  });
+});
+
+// Fichas salvas por versões antigas do site (ADR-010): precisam continuar abrindo.
+describe('migrações da ficha', () => {
+  it('v1 em branco vira a ficha em branco atual', () => {
+    expect(parseLocalSheet(v1Blank)).toEqual(createBlankSheet());
+  });
+
+  it('v1 do assistente: guarda tudo e ganha a progressão da classe', () => {
+    const sheet = parseLocalSheet(v1Barbarian);
+    expect(sheet).not.toBeNull();
+    expect(sheet!.schemaVersion).toBe(LOCAL_SHEET_SCHEMA_VERSION);
+    expect(sheet!.progression).toEqual({ classId: 'barbarian', levels: [] });
+    expect(sheet!.spells.cantrips).toEqual([]);
+    expect(sheet!.state.slotsSpent).toHaveLength(9);
+    // Nada do que existia muda.
+    const { schemaVersion: _a, ...before } = v1Barbarian as Record<string, unknown>;
+    const { schemaVersion: _b, progression: _p, spells: _s, ...after } = sheet!;
+    expect({ ...after, state: { ...after.state } }).toMatchObject(before);
+  });
+
+  it('migrar de novo não muda nada (idempotente)', () => {
+    const once = migrateSheet(v1Barbarian);
+    expect(migrateSheet(once)).toEqual(once);
+  });
+
+  it('não mexe no que não reconhece', () => {
+    expect(migrateSheet('texto')).toBe('texto');
+    expect(migrateSheet({ schemaVersion: 99, x: 1 })).toEqual({ schemaVersion: 99, x: 1 });
   });
 });

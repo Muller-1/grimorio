@@ -40,6 +40,8 @@ interface PanelProps {
   children: ReactNode;
   as?: 'section' | 'div';
   labelledBy?: string;
+  /** Âncora (ex.: o assistente leva o jogador até o bloco que falta). */
+  id?: string;
 }
 
 export function Panel({
@@ -49,10 +51,17 @@ export function Panel({
   bodyClassName,
   children,
   as = 'section',
+  id,
 }: PanelProps) {
   const Tag = as;
   return (
-    <Tag className={cn('rounded-xl border border-border bg-surface shadow-card', className)}>
+    <Tag
+      id={id}
+      className={cn(
+        'scroll-mt-24 rounded-xl border border-border bg-surface shadow-card',
+        className,
+      )}
+    >
       {title || actions ? (
         <header className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
           {title ? (

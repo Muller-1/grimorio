@@ -23,9 +23,16 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 | API (Fastify + Postgres/Drizzle): portas, `/health` `/ready` `/version`, API de teste    | `apps/api` + `docker-compose.yml`                                  | Etapa 9 ✔ (falta staging e decisões do R2)      |
 | Login com Google (Better Auth) e fichas salvas na conta, com salvamento por seção        | `apps/api/src/modules` + `apps/web/src/features/{auth,characters}` | ✔ (ADR-008; contas em fase de testes)           |
 | Assistente de criação: Classe → Origem → Atributos → Toques Finais (regras de 2024)      | `apps/web/src/features/builder` + `packages/rules/src/creation`    | ✔ (ADR-008)                                     |
+| Primeiros passos (`/comecar`), glossário e pendências clicáveis no assistente            | `apps/web/src/pages/StartPage.tsx` + `features/builder/guide.ts`   | ✔ (feedback dos testadores)                     |
+| Maestria em Arma e Invocação Mística no nível 1                                          | `packages/rules/src/creation/mastery.ts` + `content.ts`            | ✔                                               |
+| Temas de cor (Automático, Pergaminho, Taverna, Arcano, Floresta, Alto contraste)         | `apps/web/src/lib/theme.ts` + `public/theme.js` + `index.css`      | ✔ (contraste AA testado)                        |
+| Subida de nível (quantos níveis → uma tela por nível → resumo), classes do 1 ao 20       | `features/levelup` + `packages/rules/src/{classes,levelup}`        | ✔ (ADR-010)                                     |
+| Magias: 339 do SRD, aba Magias (CD, espaços, conjurar, Concentração, Outra magia)        | `features/spells` + `packages/rules/src/spells`                    | ✔ (ADR-010)                                     |
+| Habilidades que o site calcula (Fúria, Frenesi, Ataque Furtivo, Bênção…)                 | `sheet/components/PowersPanel.tsx` + `packages/rules/src/engine`   | ✔ (ADR-010)                                     |
 
-Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas só para os **usuários de
-teste** do Google, com a API no Render, o banco no Neon e o `/api` repassado pelo Worker do site na Cloudflare
+Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas para quem tiver o link
+(qualquer conta Google entra, ver ADR-009, decisão 5), com a API no Render, o banco no Neon e o
+`/api` repassado pelo Worker do site na Cloudflare
 ([ADR-009](docs/adr/009-publicacao-com-contas.md), passo a passo em
 [docs/publicar-com-contas.md](docs/publicar-com-contas.md)). Abrir ao público depende da revisão
 jurídica (decisão #4 do [ADR-007](docs/adr/007-decisoes-do-r2.md)). Login local:
@@ -124,7 +131,7 @@ grimorio/
 │  │     ├─ plugins/       # test-api (/__test__/*, nunca em produção)
 │  │     ├─ app.ts         # buildApp: monta a API (usado também nos testes)
 │  │     └─ server.ts
-│  ├─ qa-bot/              # bot de testes (Playwright): cenários B1, B11, B12, B14
+│  ├─ qa-bot/              # bot de testes (Playwright): cenários B1, B2, B11, B12, B14, B15
 │  └─ web/                 # site (React + Vite + Tailwind)
 │     ├─ build/            # ajudantes do build: cabeçalhos, preview igual à Cloudflare, marca
 │     ├─ public/_headers   # cabeçalhos HTTP de produção (CSP, cache)
@@ -135,7 +142,9 @@ grimorio/
 │        │  ├─ auth/       # entrar/sair, menu da conta, página /entrar
 │        │  ├─ builder/    # assistente de criação (/criar)
 │        │  ├─ characters/ # lista, ficha da conta e salvamento automático
-│        │  ├─ sheet/      # a ficha do protótipo
+│        │  ├─ sheet/      # a ficha (com o painel Habilidades)
+│        │  ├─ spells/     # aba Magias (carregada sob demanda)
+│        │  ├─ levelup/    # subir de nível (carregado sob demanda)
 │        │  ├─ dice/       # rolagem, histórico, resultado
 │        │  └─ toast/      # avisos curtos
 │        ├─ components/ui/ # botões, diálogos, painéis (estilo shadcn/ui)
@@ -143,7 +152,8 @@ grimorio/
 │        └─ lib/i18n/      # TODOS os textos em português
 ├─ packages/
 │  ├─ shared/              # tipos e schemas Zod (ficha local)
-│  ├─ rules/               # motor puro: dados, cálculos da ficha e criação (conteúdo SRD 5.2)
+│  ├─ rules/               # motor puro: dados, ficha, criação, classes 1–20, magias, subida
+│  │  └─ scripts/spells/   # gerador das 339 magias (SRD 5.2 + textos do site), ver README
 │  └─ testkit/             # utilidades só para testes
 ├─ docker/                 # script que cria o app_test no Postgres do Docker
 ├─ docker-compose.yml      # Postgres local
@@ -165,7 +175,8 @@ grimorio/
 - `docs/adr/` — decisões registradas (001: ajustes do plano de início; 002: ficha antecipada;
   003: pré-renderização; 004: terminologia e edição; 005: publicação na Cloudflare; 006: base
   do back-end; 007: decisões do R2; 008: login com Google, fichas na conta e assistente;
-  009: publicação com contas para um grupo de teste).
+  009: publicação com contas para um grupo de teste; 010: magias, subida de nível e
+  habilidades que o site calcula).
 - `docs/publicacao.md` — passo a passo para colocar o site no ar e ligar o monitor B14.
 - `docs/publicar-com-contas.md` — site + API (Render) + banco (Neon) com login, para testar com
   amigos.

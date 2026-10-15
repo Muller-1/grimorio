@@ -37,4 +37,23 @@ test.describe('B12 — acessibilidade', { tag: '@B12' }, () => {
     await expect(page.getByRole('dialog')).toBeVisible();
     expect(await seriousA11yViolations(page)).toEqual([]);
   });
+
+  // Temas de cor (14/10): o contraste vale em todos, não só no padrão.
+  for (const theme of ['dark', 'arcane', 'forest', 'contrast']) {
+    test(`axe no tema ${theme} (início, assistente e ficha de exemplo)`, async ({ page }) => {
+      await page.addInitScript((id) => localStorage.setItem('grimorio.tema', id), theme);
+      await openPage(page, '/');
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      expect(await seriousA11yViolations(page)).toEqual([]);
+      await openPage(page, '/criar');
+      await page.getByTestId('wizard.option.class.fighter').click();
+      expect(await seriousA11yViolations(page)).toEqual([]);
+      await openPage(page, '/ficha');
+      await loadExampleSheet(page);
+      expect(await seriousA11yViolations(page)).toEqual([]);
+      await page.getByTestId('theme.trigger').click();
+      await expect(page.getByTestId('theme.picker')).toBeVisible();
+      expect(await seriousA11yViolations(page)).toEqual([]);
+    });
+  }
 });

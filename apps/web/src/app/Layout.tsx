@@ -1,8 +1,9 @@
-import { Dices, House, ScrollText, Swords } from 'lucide-react';
+import { CircleHelp, Dices, House, ScrollText, Swords } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { D20Icon } from '@/components/ui/d20-icon';
 import { AccountMenu } from '@/features/auth/AccountMenu';
+import { ThemePicker } from '@/features/theme/ThemePicker';
 import { Toaster } from '@/features/toast/Toaster';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -81,6 +82,16 @@ function Header() {
           </NavTab>
         </nav>
 
+        <Link
+          to="/comecar"
+          className="grid size-9 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-text"
+          aria-label={t.nav.help}
+          title={t.nav.help}
+          data-testid="nav.help"
+        >
+          <CircleHelp className="size-5" aria-hidden="true" />
+        </Link>
+        <ThemePicker />
         <AccountMenu />
       </div>
     </header>
@@ -104,6 +115,9 @@ function Footer() {
               {t.footer.report}
             </span>
           )}
+          <Link to="/comecar" className={link}>
+            {t.footer.start}
+          </Link>
           <Link to="/apoie" className={link}>
             {t.footer.support}
           </Link>

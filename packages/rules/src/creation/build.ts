@@ -21,12 +21,14 @@ import {
 } from '@grimorio/shared';
 import { abilityModifier, deriveSheet } from '../sheet/derive';
 import { finalScores } from './abilities';
+import { weaponProficient } from './mastery';
 import {
   ARMOR,
   CREATION_CONTENT_VERSION,
   CUSTOM_BACKGROUND_GOLD,
   CUSTOM_ID,
   FIGHTING_STYLES,
+  MASTERY_PROPERTIES,
   ORIGIN_FEATS,
   WEAPONS,
   type ArmorDef,
@@ -36,6 +38,7 @@ import {
   type WeaponDef,
   type WeaponId,
 } from './content';
+import { speciesSpellsAt } from './species-spells';
 import {
   draftBackground,
   draftClass,
@@ -68,22 +71,6 @@ function classPack(cls: ClassDef, option: CreationDraft['classEquipment']): Equi
   return cls.equipment.find((p) => p.option === option) ?? cls.equipment[cls.equipment.length - 1]!;
 }
 
-/** Proficiência com uma arma, conforme o treinamento da classe (e a Ordem escolhida). */
-function weaponProficient(cls: ClassDef, weapon: WeaponDef, martialFromOption: boolean): boolean {
-  if (weapon.category === 'simple') return true;
-  if (martialFromOption) return true;
-  switch (cls.weaponTraining) {
-    case 'simple':
-      return false;
-    case 'simple-martial':
-      return true;
-    case 'rogue':
-      return weapon.finesse || weapon.light;
-    case 'monk':
-      return weapon.light;
-  }
-}
-
 /** Arma de Monge: corpo a corpo Simples ou Marcial com Leve (Artes Marciais usa Destreza). */
 function isMonkWeapon(weapon: WeaponDef): boolean {
   return !weapon.ranged && (weapon.category === 'simple' || weapon.light);
@@ -94,9 +81,14 @@ function toSheetWeapon(
   weapon: WeaponDef,
   quantity: number,
   martialFromOption: boolean,
+  usesMastery: boolean,
   newId: () => string,
 ): Weapon {
   const monk = cls.id === 'monk' && isMonkWeapon(weapon);
+  // Só quem tem Maestria em Arma com este tipo de arma usa a propriedade de maestria.
+  const properties = usesMastery
+    ? weapon.properties.replace(/Maestria: (.+)$/, 'Maestria: $1 (você usa)')
+    : weapon.properties;
   return {
     id: newId(),
     name: quantity > 1 ? `${weapon.name} (×${quantity})` : weapon.name,
@@ -106,7 +98,7 @@ function toSheetWeapon(
     damageType: weapon.damageType,
     magicBonus: 0,
     critRange: 20,
-    properties: weapon.properties,
+    properties,
   };
 }
 
@@ -196,8 +188,9 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     weaponCounts.set(id, (weaponCounts.get(id) ?? 0) + quantity);
   }
   const martialFromOption = Boolean(classOption?.martialWeapons);
+  const masteries = new Set(cls.weaponMastery ? draft.weaponMasteries : []);
   const weapons: Weapon[] = [...weaponCounts].map(([id, qty]) =>
-    toSheetWeapon(cls, WEAPONS[id], qty, martialFromOption, ctx.newId),
+    toSheetWeapon(cls, WEAPONS[id], qty, martialFromOption, masteries.has(id), ctx.newId),
   );
   if (cls.id === 'monk') {
     weapons.unshift({
@@ -231,7 +224,15 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
   const add = (name: string, text: string) =>
     features.push({ id: ctx.newId(), name: name.slice(0, 80), text: text.slice(0, 4000) });
 
-  for (const f of cls.features) add(f.name, f.text);
+  for (const f of cls.features) {
+    if (f.name === 'Maestria em Arma' && masteries.size) {
+      const chosen = [...masteries].map((id) => {
+        const property = MASTERY_PROPERTIES[WEAPONS[id].mastery];
+        return `${WEAPONS[id].name} — ${property.name}: ${property.text}`;
+      });
+      add(f.name, `${f.text} Escolhidas: ${chosen.join(' ')}`);
+    } else add(f.name, f.text);
+  }
   if (classOption && cls.option) add(`${cls.option.label}: ${classOption.name}`, classOption.text);
   if (draft.fightingStyleId) {
     const style = FIGHTING_STYLES[draft.fightingStyleId];
@@ -319,6 +320,8 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     ) as CreationRecord['baseAbilities'],
     ...(draft.abilityMethod === 'rolled' && draft.rolled ? { rolledScores: draft.rolled } : {}),
     backgroundBonus: draft.backgroundBonus,
+    ...(classOption ? { classOptionId: classOption.id } : {}),
+    ...(masteries.size ? { weaponMasteries: [...masteries] } : {}),
     classSkills: draft.classSkills,
     extraSkills: [...draft.speciesSkills, ...draft.featSkills],
     originFeatId: feats[0] ?? 'skilled',
@@ -352,6 +355,20 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
   sheet.weapons = weapons;
   sheet.features = features;
   sheet.creation = record;
+  sheet.progression = { classId: cls.id, levels: [] };
+  // Magias da espécie (truques e, no Gnomo do Bosque, Falar com Animais): sempre preparadas.
+  // As da classe e do Iniciado em Magia o jogador escolhe na aba Magias da ficha.
+  for (const id of speciesSpellsAt(
+    draft.speciesId ?? undefined,
+    draft.speciesOptionId ?? undefined,
+    1,
+  )) {
+    sheet.spells.granted.push({
+      id,
+      source: 'species',
+      ...(id === 'speak-with-animals' ? { freePerLongRest: 2 } : {}),
+    });
+  }
   sheet.state.hp.current = deriveSheet(sheet).hpMax.value;
 
   // Garantia: a ficha montada respeita o formato (se não, é bug do assistente).

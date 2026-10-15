@@ -12,7 +12,7 @@ import {
   WandSparkles,
 } from 'lucide-react';
 import { Tabs } from 'radix-ui';
-import { useId, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useId, useMemo, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { D20Icon } from '@/components/ui/d20-icon';
 import { Dialog } from '@/components/ui/dialog';
@@ -24,10 +24,14 @@ import { cn } from '@/lib/utils';
 import { newId } from '@/ports/ids';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
+import { AdvantageBadge } from './AdvantageBadge';
 import { ExplainButton } from './Explain';
 import { RollButton } from './RollButton';
 
 type TabKey = 'weapons' | 'spells' | 'inventory' | 'features';
+
+// A aba Magias traz a lista das 339 magias: só carrega quando o jogador abre a aba.
+const SpellsTab = lazy(() => import('@/features/spells/SpellsTab'));
 const a = t.sheet.actions;
 
 /** Normaliza para busca: sem acentos e sem maiúsculas ("Rapiéira" acha "rapieira"). */
@@ -57,7 +61,14 @@ function WeaponCard({
   const toHit = attack.toHit.value;
   const dmg = attack.damageExpression;
   const critDmg = dmg ? critExpression(dmg) : null;
+  const first = attack.firstHitExpression;
   const typeLabel = weapon.damageType ? t.damageTypes[weapon.damageType] : null;
+  // A jogada já vem com os dados extras (Bênção: +1d4); Vantagem troca o d20 por 2d20.
+  const withD20 = (d20: string) => attack.attackExpression.replace(/^1d20/, d20);
+  const mainRoll = withD20(attack.advantage ? '2d20kh1' : '1d20');
+  const extras = attack.extraDamage
+    .map((x) => `${x.name} ${x.dice}${x.oncePerTurn ? ` (${a.oncePerTurn})` : ''}`)
+    .join(', ');
 
   return (
     <li className="rounded-lg border border-border bg-surface" data-testid={`attack.${weapon.id}`}>
@@ -89,9 +100,10 @@ function WeaponCard({
             {a.crit(attack.critRange)}
           </p>
         </div>
+        {attack.advantage ? <AdvantageBadge /> : null}
         <RollButton
           rollLabel={a.attackRollLabel(weapon.name)}
-          expression={withModifier('1d20', toHit)}
+          expression={mainRoll}
           critRange={attack.critRange}
           ariaLabel={a.rollAttack(weapon.name)}
           testId={`attack.${weapon.id}.roll`}
@@ -118,12 +130,17 @@ function WeaponCard({
               </>
             ) : null}
           </dl>
+          {extras ? (
+            <p className="text-accent" data-testid={`attack.${weapon.id}.extras`}>
+              {a.extraDamage(extras)}
+            </p>
+          ) : null}
           {weapon.notes ? <p className="whitespace-pre-line text-muted">{weapon.notes}</p> : null}
 
           <div className="flex flex-wrap gap-1.5">
             <RollButton
               rollLabel={a.advantageLabel(weapon.name)}
-              expression={withModifier('2d20kh1', toHit)}
+              expression={withD20('2d20kh1')}
               critRange={attack.critRange}
               ariaLabel={a.advantageLabel(weapon.name)}
               className="h-8 w-auto gap-1 border border-border px-2 text-xs text-text"
@@ -132,7 +149,7 @@ function WeaponCard({
             </RollButton>
             <RollButton
               rollLabel={a.disadvantageLabel(weapon.name)}
-              expression={withModifier('2d20kl1', toHit)}
+              expression={withD20('2d20kl1')}
               critRange={attack.critRange}
               ariaLabel={a.disadvantageLabel(weapon.name)}
               className="h-8 w-auto gap-1 border border-border px-2 text-xs text-text"
@@ -148,6 +165,17 @@ function WeaponCard({
                 className="h-8 w-auto gap-1 border border-border px-2 text-xs text-text"
               >
                 {a.rollDamage}
+              </RollButton>
+            ) : null}
+            {first ? (
+              <RollButton
+                rollLabel={a.firstHitLabel(weapon.name, extras)}
+                expression={first}
+                ariaLabel={a.firstHitLabel(weapon.name, extras)}
+                testId={`attack.${weapon.id}.first-hit`}
+                className="h-8 w-auto gap-1 border border-accent/60 px-2 text-xs text-accent"
+              >
+                {a.firstHit}
               </RollButton>
             ) : null}
             {critDmg ? (
@@ -617,7 +645,17 @@ export function ActionsColumn() {
           )}
         </Tabs.Content>
 
-        {(['spells', 'inventory'] as const).map((k) => (
+        <Tabs.Content value="spells" className="px-3 pb-3">
+          {tab === 'spells' ? (
+            <Suspense
+              fallback={<p className="py-4 text-center text-sm text-muted">{t.common.loading}</p>}
+            >
+              <SpellsTab query={query} />
+            </Suspense>
+          ) : null}
+        </Tabs.Content>
+
+        {(['inventory'] as const).map((k) => (
           <Tabs.Content key={k} value={k} className="px-3 pb-6">
             <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
               <D20Icon className="size-8 opacity-50" />

@@ -21,7 +21,7 @@ import {
   type AbilityKey,
   type AbilityMethod,
 } from '@grimorio/shared';
-import { Dices, Minus, Plus, Sparkles, Wand2 } from 'lucide-react';
+import { ArrowDown, Dices, Minus, Plus, Sparkles, Wand2 } from 'lucide-react';
 import { useState, type CSSProperties } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -32,7 +32,8 @@ import { t } from '@/lib/i18n';
 import { tw } from '@/lib/i18n/wizard';
 import { cn } from '@/lib/utils';
 import { getRng } from '@/ports/rng';
-import { Badge, Segmented } from '../components/parts';
+import { Badge, Segmented, Term } from '../components/parts';
+import { goToIssue } from '../guide';
 import { useBuilderStore } from '../store';
 
 const a = tw.abilities;
@@ -271,13 +272,14 @@ function BackgroundBonus() {
   const cls = draftClass(draft);
   if (!bg) {
     return (
-      <Panel title={a.bonusTitle('—')}>
+      <Panel id="wizard-background-bonus" title={a.bonusTitle('—')}>
         <p className="text-sm text-muted">{a.bonusNeedsBackground}</p>
       </Panel>
     );
   }
   return (
     <Panel
+      id="wizard-background-bonus"
       title={a.bonusTitle(bg.name)}
       actions={
         cls ? (
@@ -433,12 +435,19 @@ export function AbilitiesStep() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
+      <div
+        id="wizard-abilities"
+        className="grid scroll-mt-24 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center"
+      >
         <div className="space-y-4 text-[15px] leading-relaxed">
           <h1 className="font-display text-2xl font-bold">{a.title}</h1>
           {a.intro.map((p) => (
             <p key={p}>{p}</p>
           ))}
+          <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            <Term id="attribute" />
+            <Term id="modifier" />
+          </p>
           <Segmented
             label={a.title}
             value={method}
@@ -458,6 +467,14 @@ export function AbilitiesStep() {
             </Button>
           ) : null}
           {method === 'rolled' ? <RollPanel /> : null}
+          <button
+            type="button"
+            onClick={() => goToIssue('bonus-wrong-shape')}
+            className="flex items-center gap-1.5 text-sm font-semibold text-accent underline-offset-4 hover:underline"
+          >
+            <ArrowDown className="size-4" aria-hidden="true" />
+            {a.bonusJump}
+          </button>
         </div>
         <AbilityWheel method={method} />
       </div>

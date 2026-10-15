@@ -23,7 +23,16 @@ import { feetToMeters, metersToFeet } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { tw } from '@/lib/i18n/wizard';
 import { cn } from '@/lib/utils';
-import { Badge, BlockTitle, ChoiceCard, Facts, Segmented, SkillPicker } from '../components/parts';
+import {
+  Badge,
+  BlockTitle,
+  ChoiceCard,
+  Facts,
+  Segmented,
+  SkillPicker,
+  Term,
+} from '../components/parts';
+import { goToIssue } from '../guide';
 import { useBuilderStore } from '../store';
 
 const o = tw.origin;
@@ -43,7 +52,7 @@ function BackgroundDetails() {
   if (draft.backgroundId === CUSTOM_ID) {
     const c = draft.customBackground;
     return (
-      <Panel title={o.custom}>
+      <Panel id="wizard-background-details" title={o.custom}>
         <p className="mb-3 text-sm text-muted">{o.customHint}</p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
@@ -136,12 +145,17 @@ function BackgroundDetails() {
   if (!bg) return null;
   const feat = ORIGIN_FEATS[bg.feat];
   return (
-    <Panel title={bg.name}>
+    <Panel id="wizard-background-details" title={bg.name}>
       <p className="mb-3 text-sm">{bg.summary}</p>
       <Facts
         items={[
           [o.abilities, bg.abilities.map((a) => t.abilities[a]).join(', ')],
-          [o.feat, bg.featNote ? `${feat.name} (${o.featNote(bg.featNote)})` : feat.name],
+          [
+            <Term key="feat" id="feat">
+              {o.feat}
+            </Term>,
+            bg.featNote ? `${feat.name} (${o.featNote(bg.featNote)})` : feat.name,
+          ],
           [o.skills, skillNames(bg.skills)],
           [o.tool, bg.tool],
         ]}
@@ -187,7 +201,7 @@ function SpeciesDetails() {
   if (draft.speciesId === CUSTOM_ID) {
     const c = draft.customSpecies;
     return (
-      <Panel title={o.custom}>
+      <Panel id="wizard-species-details" title={o.custom}>
         <p className="mb-3 text-sm text-muted">{o.customHint}</p>
         <div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
           <div>
@@ -246,7 +260,7 @@ function SpeciesDetails() {
   ];
 
   return (
-    <Panel title={species.name}>
+    <Panel id="wizard-species-details" title={species.name}>
       <p className="mb-3 text-sm">{species.summary}</p>
       <Facts
         items={[
@@ -355,6 +369,7 @@ function FeatSkills() {
   const locked = [...draft.classSkills, ...bgSkills, ...draft.speciesSkills];
   return (
     <Panel
+      id="wizard-feat-skills"
       title={o.featSkills(count)}
       actions={<Badge tone="accent">{`${draft.featSkills.length}/${count}`}</Badge>}
     >
@@ -377,6 +392,7 @@ function Languages() {
   const fixed = draftClass(draft)?.languages?.fixed ?? [];
   return (
     <Panel
+      id="wizard-languages"
       title={o.languages}
       actions={<Badge tone="accent">{`${draft.languages.length}/${count}`}</Badge>}
     >
@@ -423,6 +439,7 @@ function Languages() {
 export function OriginStep() {
   const draft = useBuilderStore((s) => s.draft);
   const update = useBuilderStore((s) => s.update);
+  const setStep = useBuilderStore((s) => s.setStep);
   const overlap = overlappingSkills(draft);
 
   return (
@@ -436,9 +453,12 @@ export function OriginStep() {
 
       <section aria-labelledby="origem-antecedente" className="space-y-3">
         <h2 id="origem-antecedente" className="font-display text-xl font-bold">
-          {o.background}
+          <Term id="background">{o.background}</Term>
         </h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div
+          id="wizard-background"
+          className="grid scroll-mt-24 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5"
+        >
           {Object.values(BACKGROUNDS).map((bg) => (
             <ChoiceCard
               key={bg.id}
@@ -466,7 +486,21 @@ export function OriginStep() {
             className="flex items-start gap-2 rounded-md bg-gold-soft px-3 py-2 text-sm text-gold"
           >
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            {o.overlap(skillNames(overlap))}
+            <span className="flex-1">
+              {o.overlap(skillNames(overlap))}{' '}
+              <button
+                type="button"
+                className="font-semibold underline underline-offset-4"
+                onClick={() => {
+                  setStep('class');
+                  // Espera a etapa Classe aparecer para levar o jogador até as perícias.
+                  window.setTimeout(() => goToIssue('class-skills-count'), 60);
+                }}
+                data-testid="wizard.overlap.fix"
+              >
+                {o.overlapFix}
+              </button>
+            </span>
           </p>
         ) : null}
         <BackgroundDetails />
@@ -474,9 +508,12 @@ export function OriginStep() {
 
       <section aria-labelledby="origem-especie" className="space-y-3">
         <h2 id="origem-especie" className="font-display text-xl font-bold">
-          {o.species}
+          <Term id="species">{o.species}</Term>
         </h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div
+          id="wizard-species"
+          className="grid scroll-mt-24 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5"
+        >
           {SPECIES_ORDER.map((id) => {
             const species = SPECIES[id]!;
             return (

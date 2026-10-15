@@ -31,6 +31,8 @@ export function exampleSheet(): LocalSheet {
   s.combat = { hitDie: 8, speedFt: 30, armorClassOverride: 15 };
   s.state.hp = { current: 24, temp: 0 };
   s.state.inspiration = 1;
+  // ADR-010: com a classe, a ficha mostra Ataque Furtivo e o resto em Habilidades.
+  s.progression = { classId: 'rogue', subclassId: 'thief', levels: [] };
   s.weapons = [
     {
       id: 'ex-rapieira',

@@ -1,6 +1,15 @@
 import { withModifier, type SheetNotice } from '@grimorio/rules';
 import { HIT_DIE_SIDES, SKILL_KEYS, type HitDieSides, type SkillKey } from '@grimorio/shared';
-import { HeartMinus, HeartPlus, Moon, ScrollText, Shield, ShieldPlus, Undo2 } from 'lucide-react';
+import {
+  Coffee,
+  HeartMinus,
+  HeartPlus,
+  Moon,
+  ScrollText,
+  Shield,
+  ShieldPlus,
+  Undo2,
+} from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { D20Icon } from '@/components/ui/d20-icon';
@@ -17,6 +26,8 @@ import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
 import { ExplainButton } from './Explain';
 import { NumberField } from '@/components/ui/number-field';
+import { AdvantageBadge, d20 } from './AdvantageBadge';
+import { PowersPanel } from './PowersPanel';
 import { ProficiencyToggle } from './ProficiencyToggle';
 import { RollButton } from './RollButton';
 
@@ -96,9 +107,10 @@ function CombatStats() {
           testId="stat.initiative"
           className="font-display text-2xl font-bold"
         />
+        {derived.initiativeAdvantage ? <AdvantageBadge /> : null}
         <RollButton
           rollLabel={t.sheet.combat.initiative}
-          expression={withModifier('1d20', derived.initiative.value)}
+          expression={withModifier(d20(derived.initiativeAdvantage), derived.initiative.value)}
           ariaLabel={t.sheet.combat.rollInitiative}
           className="size-7"
         />
@@ -214,15 +226,28 @@ function HpPanel() {
     <Panel
       title={t.sheet.hp.title}
       actions={
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => notify(dispatch({ type: 'long-rest' }))}
-          title={t.sheet.hp.longRestHint}
-        >
-          <Moon className="size-4" />
-          {t.sheet.hp.longRest}
-        </Button>
+        <div className="flex gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => notify(dispatch({ type: 'short-rest' }))}
+            title={t.sheet.hp.shortRestHint}
+            data-testid="rest.short"
+          >
+            <Coffee className="size-4" />
+            {t.sheet.hp.shortRest}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => notify(dispatch({ type: 'long-rest' }))}
+            title={t.sheet.hp.longRestHint}
+            data-testid="rest.long"
+          >
+            <Moon className="size-4" />
+            {t.sheet.hp.longRest}
+          </Button>
+        </div>
       }
       bodyClassName="space-y-3"
     >
@@ -542,6 +567,7 @@ function SkillRow({ skill }: { skill: SkillKey }) {
         testId={`skill.${skill}.prof`}
       />
       <span className="min-w-0 flex-1 truncate text-sm">{name}</span>
+      {s.advantage ? <AdvantageBadge /> : null}
       <ExplainButton
         explained={s.bonus}
         title={name}
@@ -550,7 +576,7 @@ function SkillRow({ skill }: { skill: SkillKey }) {
       />
       <RollButton
         rollLabel={name}
-        expression={withModifier('1d20', s.bonus.value)}
+        expression={withModifier(d20(s.advantage), s.bonus.value)}
         ariaLabel={t.sheet.rollSkill(name)}
         className="size-7 max-xl:size-8"
       />
@@ -590,6 +616,7 @@ export function CombatColumn() {
         <HitDicePanel />
         <DeathSavesPanel />
       </div>
+      <PowersPanel />
       <SkillsPanel />
     </div>
   );

@@ -56,9 +56,14 @@ contas seguem **em fase de testes**.
    fixa plano, região, verificação em `/health`, deploy a cada commit (só quando muda algo da
    API) e as variáveis. Os segredos ficam marcados `sync: false` e são pedidos uma vez.
 
-5. **Grupo de teste pelo próprio Google:** o app OAuth continua em **Teste**, e só entra quem
-   está em **Usuários de teste** (até 100 contas). É o jeito de abrir para os amigos sem abrir ao
-   público antes da revisão jurídica (#4).
+5. **Quem consegue entrar: qualquer conta Google.** Corrigido em 13/10/2026, depois do primeiro
+   teste publicado. A ideia inicial era usar a lista de **Usuários de teste** do app OAuth como
+   grupo fechado, mas o Google abre uma exceção para apps que só pedem nome, e-mail e foto (o
+   nosso caso): nesses, quem não está na lista também entra, mesmo com o app em **Teste**
+   ([ajuda do Google](https://support.google.com/cloud/answer/15549945)). Publicar o app não
+   muda nada para nós. Na prática, as contas estão abertas a quem tiver o link. Restringir a um
+   grupo exigiria uma lista de e-mails permitidos na própria API (ainda não feito). A revisão
+   jurídica (#4) continua pendente.
 
 6. **`VITE_ACCOUNTS` é variável do build** (Settings → Build), e `API_ORIGIN`/`API_PROXY_SECRET`
    são variáveis do Worker no ar (Settings → Variables and Secrets). O retorno do Google aponta

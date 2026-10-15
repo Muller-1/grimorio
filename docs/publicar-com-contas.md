@@ -1,8 +1,8 @@
 # Publicar com contas (para um grupo de teste)
 
 Resultado: o site em `https://grimorio.SUA-CONTA.workers.dev`, com **Entrar com Google** e
-fichas salvas na conta, para as pessoas que você colocar na lista de teste do Google. Tudo no
-plano grátis. Por que foi feito assim: [ADR-009](adr/009-publicacao-com-contas.md).
+fichas salvas na conta. Qualquer pessoa com uma conta Google e o link consegue entrar (ver o
+passo 5). Tudo no plano grátis. Por que foi feito assim: [ADR-009](adr/009-publicacao-com-contas.md).
 
 ## Como as peças se encaixam
 
@@ -114,8 +114,9 @@ No <https://console.cloud.google.com>, no mesmo projeto do login local:
    - **Origens JavaScript autorizadas:** `https://grimorio.SUA-CONTA.workers.dev`
    - **URIs de redirecionamento autorizados:**
      `https://grimorio.SUA-CONTA.workers.dev/api/auth/callback/google`
-2. **Público-alvo (Audience) → Usuários de teste → Add users**: o Gmail de cada amigo (até
-   100). Deixe o app em **Teste**: só entra quem está nessa lista.
+2. Não precisa colocar ninguém em **Usuários de teste** nem publicar o app. Como o site só pede
+   nome, e-mail e foto, o Google deixa **qualquer conta Google** entrar mesmo com o app em
+   **Teste**.
 
 O Google pode levar alguns minutos para aplicar.
 
@@ -125,7 +126,7 @@ O Google pode levar alguns minutos para aplicar.
    estava dormindo, o primeiro acesso demora até 1 minuto.
 2. Em **Fichas**, clique em **Criar personagem** e siga o assistente. O personagem deve aparecer
    em **Meus personagens** e também abrir em outro aparelho, com a mesma conta.
-3. Mande o link para os amigos. Eles precisam usar exatamente o Gmail que você colocou na lista.
+3. Mande o link para os amigos. Qualquer conta Google entra (ver o passo 5).
 
 ### Ver os dados com o pgAdmin (opcional)
 
@@ -141,7 +142,7 @@ Em **Register → Server**: aba _Connection_ com o host do Neon (o trecho depois
 | Ícone de nuvem riscada no canto do site | API dormindo (espere 1 min e recarregue) ou `API_ORIGIN`/`API_PROXY_SECRET` errados na Cloudflare |
 | Não aparece o botão **Entrar** | `VITE_ACCOUNTS=true` não está nas variáveis do **Build**, ou o site não foi publicado depois de colocá-la (faça um `git push`; sem nada para enviar: `git commit --allow-empty -m "publicar de novo"` e `git push`) |
 | Google mostra `redirect_uri_mismatch` | o URI no Google não é exatamente `https://SEU-SITE/api/auth/callback/google` |
-| Google mostra "acesso bloqueado" | o Gmail não está em **Usuários de teste** |
+| Google mostra "acesso bloqueado" | o app passou a pedir algo além de nome, e-mail e foto (aí só entra quem está em **Usuários de teste**) |
 | `/ready` da API mostra `"database":"down"` | `DATABASE_URL` errado no Render (copie de novo do Neon) |
 | A API não sobe no Render: "Variáveis de ambiente inválidas" | `SITE_URL` sem `https://` ou com barra no fim |
 | Abrir a API direto mostra `FORBIDDEN` | normal: ela só atende pelo endereço do site (menos `/health`, `/ready`, `/version`) |

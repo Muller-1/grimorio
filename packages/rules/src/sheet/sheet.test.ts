@@ -102,6 +102,30 @@ describe('deriveSheet — ficha de referência', () => {
   });
 });
 
+describe('PV máximo com dados rolados ao subir de nível', () => {
+  it('usa o dado rolado nos níveis que guardaram a rolagem e a média nos outros', () => {
+    const s = thalia(); // nível 3, d10, Con +2: média = 10+2 + 2×(6+2) = 28
+    s.progression = { classId: 'fighter', levels: [{ level: 2, hpRolled: 9, choices: [] }] };
+    const hp = deriveSheet(s).hpMax;
+    // 10 + 9 + 6 = 25 nos dados, +2 × 3 da Constituição
+    expect(hp.value).toBe(31);
+    expect(hp.parts[0]).toEqual({
+      source: { kind: 'hit-die', die: 10, levels: 3, rolled: 1 },
+      value: 25,
+    });
+  });
+
+  it('rolagem baixa com Constituição negativa ainda dá pelo menos 1 PV no nível', () => {
+    const s = createBlankSheet();
+    s.build.level = 2;
+    s.build.abilities.con = 6; // -2
+    s.combat.hitDie = 6;
+    s.progression = { classId: 'wizard', levels: [{ level: 2, hpRolled: 1, choices: [] }] };
+    // nível 1: 6 - 2 = 4; nível 2: max(1, 1 - 2) = 1
+    expect(deriveSheet(s).hpMax.value).toBe(5);
+  });
+});
+
 describe('deriveSheet — ajustes manuais', () => {
   it('CA manual substitui 10 + Destreza', () => {
     const s = thalia();
@@ -347,6 +371,21 @@ describe('dados de vida e descanso longo', () => {
     r = act(r, { type: 'undo-hp', targetActionId: r.state.hpLog.at(-1)!.actionId }).sheet;
     expect(r.state.hp.current).toBe(10);
     expect(r.state.hitDiceSpent).toBe(0);
+  });
+
+  it('descanso longo também devolve espaços de magia e usos, e encerra o que estava ativo', () => {
+    const s = thalia();
+    s.state.slotsSpent = [2, 1, 0, 0, 0, 0, 0, 0, 0];
+    s.state.pactSlotsSpent = 1;
+    s.state.resources = { rage: 2 };
+    s.state.active = ['rage'];
+    s.state.concentration = 'bless';
+    const r = act(s, { type: 'long-rest' }).sheet;
+    expect(r.state.slotsSpent).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(r.state.pactSlotsSpent).toBe(0);
+    expect(r.state.resources).toEqual({});
+    expect(r.state.active).toEqual([]);
+    expect(r.state.concentration).toBeUndefined();
   });
 
   it('descanso longo (2024): PV cheio, temporários zerados, todos os dados de vida de volta', () => {

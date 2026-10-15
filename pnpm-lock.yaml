@@ -87,6 +87,9 @@ importers:
       '@grimorio/rules':
         specifier: workspace:*
         version: link:../../packages/rules
+      '@grimorio/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
     devDependencies:
       '@axe-core/playwright':
         specifier: ^4.13.0
