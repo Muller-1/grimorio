@@ -5,3 +5,4 @@ export * from './classes';
 export * from './engine';
 export * from './spells';
 export * from './levelup';
+export * from './inventory';

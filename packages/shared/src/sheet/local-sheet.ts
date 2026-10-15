@@ -12,14 +12,18 @@ import { CreationRecordSchema } from './creation';
 /**
  * Ficha do personagem (a mesma no navegador e na conta). Começou como formato provisório
  * (ADR-002); a versão 2 (ADR-010) acrescenta a progressão de classe, as magias e o estado das
- * habilidades (usos gastos, o que está ativo).
+ * habilidades (usos gastos, o que está ativo); a versão 3 (pedido de 15/10) acrescenta o
+ * inventário (moedas e itens), arma equipada ou guardada, peso e a origem das características.
  *
  * - Guarda ESCOLHAS e o estado de jogo; os números derivados são recalculados (plano v2, 9.1).
  * - Fichas de versões antigas são migradas ao abrir (`migrateSheet`, em ./migrations): no
  *   navegador, no cache da conta e na API. Nada salvo antes deixa de abrir.
  */
 
-export const LOCAL_SHEET_SCHEMA_VERSION = 2;
+export const LOCAL_SHEET_SCHEMA_VERSION = 3;
+
+/** Tamanho máximo da foto guardada na ficha (caracteres do data URL, ≈ 110 kB de imagem). */
+export const PORTRAIT_DATA_MAX = 150_000;
 
 const int = () => z.number().int();
 
@@ -65,12 +69,55 @@ export const WeaponSchema = z.object({
   critRange: int().min(2).max(20),
   properties: z.string().max(120).optional(),
   notes: z.string().max(2000).optional(),
+  /** Equipada = carregada pelo personagem (conta no peso e aparece nos ataques). Ausente = sim. */
+  equipped: z.boolean().optional(),
+  /** Peso em kg. Ausente: o site usa o peso do livro, se conhecer a arma pelo nome. */
+  weightKg: z.number().min(0).max(1000).optional(),
 });
+
+/** De onde vem cada característica (a aba Características agrupa por isso). */
+export const FEATURE_SOURCES = [
+  'class',
+  'subclass',
+  'species',
+  'background',
+  'feat',
+  'training',
+  'other',
+] as const;
+export type FeatureSource = (typeof FEATURE_SOURCES)[number];
 
 export const FeatureSchema = z.object({
   id: z.string().min(1),
   name: z.string().max(80),
   text: z.string().max(4000),
+  /** Ausente nas fichas antigas: o site descobre pela regra e grava (ver rules/inventory). */
+  source: z.enum(FEATURE_SOURCES).optional(),
+});
+
+/** Moedas (cap. 6): Peça de Cobre, Prata, Electro, Ouro e Platina. */
+export const COIN_KEYS = ['cp', 'sp', 'ep', 'gp', 'pp'] as const;
+export type CoinKey = (typeof COIN_KEYS)[number];
+
+export const ItemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().max(80),
+  quantity: int().min(0).max(9999),
+  /** Peso de UMA unidade, em kg. Ausente: o site usa o do livro, se conhecer o item pelo nome. */
+  weightKg: z.number().min(0).max(1000).optional(),
+  /** Com o personagem (conta no peso). Ausente = sim. Armadura e escudo: vestidos. */
+  equipped: z.boolean().optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export const InventorySchema = z.object({
+  coins: z.object(
+    Object.fromEntries(COIN_KEYS.map((k) => [k, int().min(0).max(9_999_999)])) as Record<
+      CoinKey,
+      z.ZodNumber
+    >,
+  ),
+  items: z.array(ItemSchema).max(200),
 });
 
 /** Id de conteúdo das regras (classe, subclasse, magia, talento…), ex.: "fireball". */
@@ -162,6 +209,12 @@ export const LocalSheetSchema = z.object({
     origin: z.string().max(120),
     description: z.string().max(4000),
     portraitUrl: z.url().max(2000).optional(),
+    /** Foto enviada do computador, já reduzida no navegador (data URL; vale mais que o link). */
+    portraitData: z
+      .string()
+      .max(PORTRAIT_DATA_MAX)
+      .regex(/^data:image\/(webp|jpeg|png);base64,[A-Za-z0-9+/]+=*$/)
+      .optional(),
   }),
   build: z.object({
     level: int().min(1).max(20),
@@ -201,6 +254,7 @@ export const LocalSheetSchema = z.object({
   }),
   weapons: z.array(WeaponSchema).max(50),
   features: z.array(FeatureSchema).max(100),
+  inventory: InventorySchema,
   /** Escolhas do assistente de criação, quando a ficha nasceu nele (opcional). */
   creation: CreationRecordSchema.optional(),
   /** Classe e histórico de níveis. Fichas feitas à mão podem não ter. */
@@ -218,11 +272,18 @@ export type GrantedSpell = z.infer<typeof GrantedSpellSchema>;
 export type HpEvent = z.infer<typeof HpEventSchema>;
 export type Weapon = z.infer<typeof WeaponSchema>;
 export type Feature = z.infer<typeof FeatureSchema>;
+export type Item = z.infer<typeof ItemSchema>;
+export type Inventory = z.infer<typeof InventorySchema>;
 export type AbilityScores = Record<AbilityKey, number>;
 
 /** Magias vazias (personagem que não conjura, ou ainda sem escolhas). */
 export function emptySpells(): SheetSpells {
   return { cantrips: [], prepared: [], spellbook: [], granted: [], custom: [] };
+}
+
+/** Inventário vazio: sem moedas e sem itens. */
+export function emptyInventory(): Inventory {
+  return { coins: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 }, items: [] };
 }
 
 /** Estado de jogo das habilidades e magias zerado (descanso longo, ficha nova). */
@@ -257,6 +318,7 @@ export function createBlankSheet(): LocalSheet {
     },
     weapons: [],
     features: [],
+    inventory: emptyInventory(),
     spells: emptySpells(),
   };
 }

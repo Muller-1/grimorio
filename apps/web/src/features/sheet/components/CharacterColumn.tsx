@@ -1,11 +1,13 @@
 import { withModifier } from '@grimorio/rules';
 import { ABILITY_KEYS, type AbilityKey } from '@grimorio/shared';
-import { TrendingUp, UserRound } from 'lucide-react';
-import { lazy, Suspense, useId, useState } from 'react';
+import { ImageUp, TrendingUp, UserRound } from 'lucide-react';
+import { lazy, Suspense, useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input, Label, Textarea } from '@/components/ui/input';
 import { Panel } from '@/components/ui/panel';
 import { Popover } from '@/components/ui/popover';
+import { useToastStore } from '@/features/toast/store';
+import type { ImageError } from '@/lib/image';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { useSheet } from '../hooks';
@@ -71,9 +73,16 @@ function InlineField({ field, label }: { field: TextField; label: string }) {
 
 function Portrait() {
   const url = useSheetStore((s) => s.sheet.identity.portraitUrl);
+  const data = useSheetStore((s) => s.sheet.identity.portraitData);
   const edit = useSheetStore((s) => s.edit);
+  const toast = useToastStore((s) => s.push);
   const [draft, setDraft] = useState(url ?? '');
+  const [busy, setBusy] = useState(false);
   const id = useId();
+  const fileId = useId();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const shown = data ?? url;
+  const i = t.sheet.identity;
 
   const commit = (text: string) => {
     setDraft(text);
@@ -90,6 +99,26 @@ function Portrait() {
     }
   };
 
+  const upload = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      // A compressão só carrega quando o jogador escolhe uma foto.
+      const { compressPortrait } = await import('@/lib/image');
+      const compressed = await compressPortrait(file);
+      edit((d) => void (d.identity.portraitData = compressed));
+    } catch (err) {
+      const code: ImageError =
+        err instanceof Error && ['not-image', 'too-big'].includes(err.message)
+          ? (err.message as ImageError)
+          : 'unreadable';
+      toast(i.portraitErrors[code], 'danger');
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
   return (
     <Popover
       align="start"
@@ -97,14 +126,16 @@ function Portrait() {
         <button
           type="button"
           className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border border-border-strong bg-surface-2 text-muted hover:border-accent sm:size-24"
-          aria-label={t.sheet.identity.portrait}
+          aria-label={i.portrait}
+          data-testid="portrait.trigger"
         >
-          {url ? (
+          {shown ? (
             <img
-              src={url}
-              alt={t.sheet.identity.portrait}
+              src={shown}
+              alt={i.portrait}
               className="size-full object-cover"
               referrerPolicy="no-referrer"
+              data-testid="portrait.image"
             />
           ) : (
             <UserRound className="size-10" />
@@ -112,17 +143,54 @@ function Portrait() {
         </button>
       }
     >
-      <Label htmlFor={id}>{t.sheet.identity.portraitUrl}</Label>
-      <Input
-        id={id}
-        type="url"
-        inputMode="url"
-        placeholder={t.sheet.identity.portraitPlaceholder}
-        value={draft}
-        onChange={(e) => commit(e.target.value)}
-        className="mt-1"
-      />
-      <p className="mt-1.5 text-xs text-muted">{t.sheet.identity.portraitHint}</p>
+      <div className="space-y-3">
+        <div>
+          <input
+            ref={fileRef}
+            id={fileId}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => void upload(e.target.files?.[0])}
+            data-testid="portrait.file"
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="primary"
+              disabled={busy}
+              onClick={() => fileRef.current?.click()}
+            >
+              <ImageUp className="size-4" />
+              {busy ? i.portraitBusy : i.portraitUpload}
+            </Button>
+            {data ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => edit((d) => void delete d.identity.portraitData)}
+                data-testid="portrait.remove"
+              >
+                {i.portraitRemove}
+              </Button>
+            ) : null}
+          </div>
+          <p className="mt-1.5 text-xs text-muted">{i.portraitUploadHint}</p>
+        </div>
+        <div className="border-t border-border pt-3">
+          <Label htmlFor={id}>{i.portraitUrl}</Label>
+          <Input
+            id={id}
+            type="url"
+            inputMode="url"
+            placeholder={i.portraitPlaceholder}
+            value={draft}
+            onChange={(e) => commit(e.target.value)}
+            className="mt-1"
+          />
+          <p className="mt-1.5 text-xs text-muted">{i.portraitHint}</p>
+        </div>
+      </div>
     </Popover>
   );
 }
@@ -161,15 +229,14 @@ function IdentityPanel() {
         <div className="flex w-28 shrink-0 flex-col gap-2">
           <div className="rounded-lg border border-border-strong bg-surface-2 px-1 pt-1 pb-1.5 text-center">
             <p className="text-xs font-semibold text-muted">{t.sheet.identity.level}</p>
-            <Stepper
-              value={sheet.build.level}
-              min={1}
-              max={20}
-              onChange={(v) => edit((d) => void (d.build.level = v))}
-              label={t.sheet.identity.level}
-              inputClassName="font-display text-3xl font-bold"
-              testId="stat.level"
-            />
+            {/* Sem − e +: o nível muda pelo "Subir de nível", que mostra o que se ganha. */}
+            <p
+              className="tabular font-display text-3xl font-bold"
+              data-testid="stat.level"
+              data-value={sheet.build.level}
+            >
+              {sheet.build.level}
+            </p>
           </div>
           <LevelUpButton />
           <div className="rounded-lg border border-border px-1 py-1 text-center">
@@ -288,7 +355,7 @@ function SavesPanel() {
                 testId={`save.${ability}.prof`}
               />
               <span className="flex-1 truncate text-sm">{name}</span>
-              {save.advantage ? <AdvantageBadge /> : null}
+              <AdvantageBadge advantage={save.advantage} disadvantage={save.disadvantage} />
               <ExplainButton
                 explained={save.bonus}
                 title={t.sheet.saveLabel(name)}
@@ -296,9 +363,7 @@ function SavesPanel() {
               />
               <RollButton
                 rollLabel={t.sheet.saveLabel(name)}
-                expression={`${withModifier(d20(save.advantage), bonus)}${save.bonusDice
-                  .map((d) => `+${d}`)
-                  .join('')}`}
+                expression={`${withModifier(d20(save.advantage, save.disadvantage), bonus)}${save.bonusDice.join('')}`}
                 ariaLabel={t.sheet.rollSave(name)}
                 className="size-7"
               />

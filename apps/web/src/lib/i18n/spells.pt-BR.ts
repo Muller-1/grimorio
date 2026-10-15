@@ -48,8 +48,13 @@ export const spellsPtBR = {
     `${circle(c)}, espaço ${i} de ${max}: ${spent ? 'gasto' : 'disponível'}`,
   noSlots: 'Sem espaços de magia.',
   counts: {
-    cantrips: (n: number, max?: number) => `Truques: ${n}${max !== undefined ? `/${max}` : ''}`,
-    prepared: (n: number, max?: number) => `Preparadas: ${n}${max !== undefined ? `/${max}` : ''}`,
+    // "Truques: 1 de 4" = quantos o personagem já escolheu × quantos a classe deixa ter no nível.
+    cantrips: (n: number, max?: number) =>
+      max === undefined ? `Truques: ${n}` : `Truques conhecidos: ${n} de ${max}`,
+    prepared: (n: number, max?: number) =>
+      max === undefined ? `Preparadas: ${n}` : `Magias preparadas: ${n} de ${max}`,
+    missing:
+      'Ainda dá para escolher mais: use "Adicionar magia" para completar o que a classe permite.',
     spellbook: (n: number, min?: number) =>
       `Grimório: ${n}${min !== undefined ? ` (mínimo ${min} neste nível)` : ''}`,
     over: 'acima do limite da classe',
@@ -110,8 +115,8 @@ export const spellsPtBR = {
   heal: 'Cura',
   healLabel: (name: string) => `Cura de ${name}`,
   beams: (n: number) => `${n} raio${n === 1 ? '' : 's'}: role o ataque e o dano de cada um`,
-  onMe: 'Valendo em mim',
-  onMeLabel: (name: string, on: boolean) => `${name} ${on ? 'está' : 'não está'} valendo em você`,
+  castOnSelf: 'Em mim',
+  onMeNow: 'Valendo em você agora (veja em Habilidades → Magias em você).',
   prepare: 'Preparar',
   unprepare: 'Despreparar',
   remove: 'Tirar da ficha',

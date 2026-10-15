@@ -1,5 +1,6 @@
 import { z } from '../zod';
 import {
+  emptyInventory,
   emptySpells,
   freshAbilityState,
   LOCAL_SHEET_SCHEMA_VERSION,
@@ -36,6 +37,12 @@ const STEPS: Record<number, (sheet: Json) => Json> = {
       ...(classId && /^[a-z0-9-]+$/.test(classId) ? { progression: { classId, levels: [] } } : {}),
     };
   },
+  /**
+   * v2 → v3: inventário vazio. As armas continuam equipadas (campo ausente = sim). Passar o
+   * texto "Equipamento inicial" para o inventário e descobrir a origem das características
+   * precisa das regras: o site faz isso ao abrir a ficha (rules: `upgradeSheetContent`).
+   */
+  2: (sheet) => ({ ...sheet, schemaVersion: 3, inventory: emptyInventory() }),
 };
 
 /** Leva dados salvos de qualquer versão conhecida para a atual. O resto passa como veio. */

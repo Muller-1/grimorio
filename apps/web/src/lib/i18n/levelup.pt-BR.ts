@@ -9,7 +9,7 @@ export const levelUpPtBR = {
   // ---------- quantos níveis ----------
   howMany: 'Quantos níveis você subiu?',
   howManyHint:
-    'Depois de confirmar, você passa por uma tela para cada nível novo, com o que ganhou e o que escolher.',
+    'Depois de confirmar, cada nível novo vem em telas curtas: primeiro o que você ganhou, depois uma escolha por vez.',
   levels: (n: number) => `+${n} ${n === 1 ? 'nível' : 'níveis'}`,
   fromTo: (from: number, to: number) => `Nível ${from} → ${to}`,
   chooseClass: 'Classe do personagem',
@@ -20,9 +20,22 @@ export const levelUpPtBR = {
   cancel: 'Cancelar',
   // ---------- um nível ----------
   levelTitle: (n: number) => `Nível ${n}`,
-  stepOf: (i: number, total: number) => `${i} de ${total}`,
+  stepOf: (i: number, total: number) => `Passo ${i} de ${total}`,
+  progressLabel: 'Progresso da subida de nível',
+  choiceOf: (i: number, total: number) => `Escolha ${i} de ${total} deste nível`,
+  choicesNext: (n: number) =>
+    n === 1
+      ? 'Na próxima tela, você faz a escolha deste nível.'
+      : `Nas próximas telas, você faz as ${n} escolhas deste nível, uma por vez.`,
+  allChosen: 'Escolhas deste nível feitas. Avance quando quiser.',
+  numbersTitle: 'Números que mudaram',
+  featuresTitle: 'Características novas',
+  proficiencyLabel: 'Bônus de Proficiência',
+  cantripsLabel: 'Truques conhecidos',
+  preparedLabel: 'Magias preparadas',
+  slotLabel: (circle: number) => `Espaços de ${circle}º círculo`,
+  pactLabel: 'Magia de Pacto',
   gainsTitle: 'O que você ganhou',
-  choicesTitle: 'O que escolher',
   nothingToChoose: 'Nada para escolher neste nível. Confira o que você ganhou e avance.',
   hp: 'Pontos de Vida',
   hpAverage: (avg: number, con: number) =>
@@ -32,15 +45,7 @@ export const levelUpPtBR = {
     `Rolou ${roll} ${signed(con)} (Constituição) = ${Math.max(1, roll + con)}`,
   hpRollLabel: (level: number) => `PV do nível ${level}`,
   hpUseAverage: 'Voltar para a média',
-  proficiency: (from: number, to: number) =>
-    `Bônus de Proficiência: ${signed(from)} → ${signed(to)}`,
-  column: (name: string, from: string, to: string) => `${name}: ${from} → ${to}`,
-  slots: 'Espaços de magia',
-  slot: (circle: number, from: number, to: number) => `${circle}º círculo: ${from} → ${to}`,
-  pact: (from: string, to: string) => `Magia de Pacto: ${from} → ${to}`,
   pactValue: (count: number, circle: number) => `${count} de ${circle}º círculo`,
-  cantrips: (from: number, to: number) => `Truques conhecidos: ${from} → ${to}`,
-  prepared: (from: number, to: number) => `Magias preparadas: ${from} → ${to}`,
   granted: 'Magias sempre preparadas',
   grantedSource: { class: 'classe', subclass: 'subclasse', species: 'espécie' } as Record<
     string,
@@ -52,7 +57,7 @@ export const levelUpPtBR = {
   pending: (n: number) =>
     n === 1 ? 'Falta 1 escolha obrigatória.' : `Faltam ${n} escolhas obrigatórias.`,
   back: 'Voltar',
-  next: 'Próximo nível',
+  next: 'Próximo',
   toSummary: 'Ver resumo',
   // ---------- escolhas ----------
   pickCount: (picked: number, count: number) => `${picked}/${count} escolhidas`,

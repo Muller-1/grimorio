@@ -29,7 +29,7 @@ export const LEVEL_FEATS: LevelFeatDef[] = [
     minLevel: 4,
     requiresAbility: ['str', 'dex'],
     abilityIncrease: { from: ['str', 'dex'], max: 20 },
-    text: '+1 em Força ou Destreza (máximo 20). Uma vez por turno, ao acertar um Ataque Desarmado na ação Atacar, use o Dano e o Agarrar juntos. Vantagem nos ataques contra criaturas que você está agarrando, e não gasta movimento extra para arrastar quem é do seu tamanho ou menor.',
+    text: '+1 em Força ou Destreza (máximo 20). Uma vez por turno, ao acertar um Ataque Desarmado na ação Atacar, use as opções Dano e Imobilizar juntas. Vantagem nos ataques contra criaturas que você está imobilizando, e não gasta movimento extra para arrastar quem é do seu tamanho ou menor.',
   },
   {
     id: 'boon-of-combat-prowess',

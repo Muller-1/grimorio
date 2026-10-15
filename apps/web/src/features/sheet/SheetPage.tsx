@@ -10,7 +10,7 @@ import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ActionsColumn } from './components/ActionsColumn';
 import { CharacterColumn } from './components/CharacterColumn';
-import { CombatColumn } from './components/CombatColumn';
+import { CombatColumn, SkillsPanel } from './components/CombatColumn';
 import { SyncIndicator } from '@/features/characters/SyncIndicator';
 import { safeStorage } from '@/ports/storage';
 import { exampleSheet } from './example';
@@ -89,6 +89,19 @@ export default function SheetPage({ mode = 'local' }: { mode?: 'local' | 'accoun
     if (mode === 'local') openLocal();
   }, [mode, openLocal]);
 
+  // Ficha de antes do inventário: organiza as características e o equipamento (uma vez).
+  const needsUpgrade = useSheetStore((s) => s.sheet.features.some((f) => !f.source));
+  useEffect(() => {
+    if (!needsUpgrade) return;
+    let cancelled = false;
+    void import('./upgrade').then((m) => {
+      if (!cancelled) m.upgradeOpenSheet();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [needsUpgrade]);
+
   const columns: { key: Column; label: string }[] = [
     { key: 'character', label: t.sheet.mobileTabs.character },
     { key: 'combat', label: t.sheet.mobileTabs.combat },
@@ -96,7 +109,7 @@ export default function SheetPage({ mode = 'local' }: { mode?: 'local' | 'accoun
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-3 pt-3 pb-40 sm:px-4">
+    <div className="mx-auto w-full max-w-[1400px] px-3 pt-3 pb-24 sm:px-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           {mode === 'account' ? (
@@ -178,7 +191,11 @@ export default function SheetPage({ mode = 'local' }: { mode?: 'local' | 'accoun
           aria-label={t.sheet.columns.actions}
           className={cn('md:col-span-2 xl:col-span-1', column !== 'actions' && 'max-md:hidden')}
         >
-          <ActionsColumn />
+          {/* Pedido de 15/10: perícias em cima das armas, magias, inventário e características. */}
+          <div className="space-y-3">
+            <SkillsPanel />
+            <ActionsColumn />
+          </div>
         </section>
       </div>
 

@@ -101,12 +101,8 @@ export const ptBR = {
           text: 'Classe, origem e atributos em passos curtos, com as regras abertas do jogo e explicações para iniciantes.',
         },
         {
-          title: 'Contas automáticas',
-          text: 'Mudou a Destreza? Iniciativa, CA, perícias e ataques se ajustam sozinhos.',
-        },
-        {
-          title: 'Cada número explicado',
-          text: 'Toque em qualquer valor para ver de onde ele vem. Ótimo para quem está começando.',
+          title: 'Contas automáticas e explicadas',
+          text: 'Mudou a Destreza? Iniciativa, CA, perícias e ataques se ajustam sozinhos. Toque num número para ver de onde ele vem.',
         },
         {
           title: 'Dados de verdade',
@@ -115,6 +111,22 @@ export const ptBR = {
         {
           title: 'Vida em jogo',
           text: 'Dano, cura, PV temporários, desfazer, dados de vida e salvaguardas contra morte com as regras certas.',
+        },
+        {
+          title: 'Magias',
+          text: 'As 339 magias das regras abertas em português: CD, espaços para marcar, conjurar rolando o dano e Concentração.',
+        },
+        {
+          title: 'Subida de nível guiada',
+          text: 'Diga quantos níveis subiu e veja, nível por nível, o que ganhou e o que escolher, do 1 ao 20.',
+        },
+        {
+          title: 'Habilidades que fazem as contas',
+          text: 'Ligou a Fúria? Ficou Envenenado? A ficha muda o dano, a CA, a Vantagem e a Desvantagem sozinha.',
+        },
+        {
+          title: 'Inventário',
+          text: 'Ouro e moedas, itens com peso e a Capacidade de Carga calculada. Arma equipada ataca; a guardada fica na mochila.',
         },
       ],
       accounts: {
@@ -125,9 +137,9 @@ export const ptBR = {
     next: {
       title: 'O que vem por aí',
       items: [
-        'Magias na criação e na ficha',
-        'Subida de nível mostrando o que você ganhou',
-        'Temas de cores para o site',
+        'Escolher as magias já no assistente de criação',
+        'Multiclasse',
+        '"Regras da mesa": ajustes opcionais para quem joga diferente',
         'Campanhas com o mestre e o grupo',
       ],
     },
@@ -158,6 +170,7 @@ export const ptBR = {
         title: 'A ficha do personagem',
         body: [
           'É o "documento" do seu herói: quem ele é, o que sabe fazer e quanto aguenta. Os números mais usados são os atributos, os Pontos de Vida, a Classe de Armadura e os bônus das perícias. No Grimório, toque em qualquer número para ver de onde ele vem.',
+          'Quando o Mestre disser que o grupo subiu de nível, toque em "Subir de nível" na ficha: o site mostra, nível por nível, o que você ganhou e o que precisa escolher. Habilidades como a Fúria e as magias ficam na ficha e fazem as contas sozinhas.',
         ],
       },
       {
@@ -182,7 +195,9 @@ export const ptBR = {
         ],
       },
     ],
+    tapToOpen: 'Toque num assunto para abrir.',
     glossaryTitle: 'Palavras que você vai ouvir',
+    glossaryHint: 'Toque numa palavra para ver o que ela quer dizer.',
     ctaCreate: 'Criar meu personagem',
     ctaDice: 'Testar o rolador de dados',
   },
@@ -486,7 +501,8 @@ export const ptBR = {
         {
           title: 'Imagem do retrato',
           body: [
-            'Se você colocar o link de uma imagem como retrato, o seu navegador busca essa imagem direto no site onde ela está. Esse site recebe os dados técnicos da conexão, como em qualquer página que você visita. Nós não guardamos nem vemos esse link.',
+            'Se você colocar o link de uma imagem como retrato, o seu navegador busca essa imagem direto no site onde ela está. Esse site recebe os dados técnicos da conexão, como em qualquer página que você visita.',
+            'Se você enviar uma foto do computador, ela é reduzida no seu próprio navegador e guardada dentro da ficha, como o resto dela: neste navegador ou, se a ficha estiver na sua conta, junto com a conta. Use imagens que você tem o direito de usar e evite fotos pessoais de outras pessoas.',
           ],
         },
         {
@@ -650,15 +666,25 @@ export const ptBR = {
     mobileTabs: { character: 'Personagem', combat: 'Combate', actions: 'Ações' },
     columns: {
       character: 'Personagem',
-      combat: 'Combate e perícias',
-      actions: 'Armas e características',
+      combat: 'Combate e habilidades',
+      actions: 'Perícias, armas, magias e inventário',
     },
 
     identity: {
       portrait: 'Retrato',
       portraitUrl: 'Link da imagem do retrato',
       portraitPlaceholder: 'https://…',
-      portraitHint: 'Cole o endereço de uma imagem (https://…). Deixe vazio para remover.',
+      portraitHint: 'Ou cole o endereço de uma imagem (https://…). Deixe vazio para remover.',
+      portraitUpload: 'Enviar foto do computador',
+      portraitBusy: 'Preparando a foto…',
+      portraitUploadHint:
+        'A foto é reduzida no seu navegador (cerca de 30 kB) e salva junto com a ficha.',
+      portraitRemove: 'Remover foto',
+      portraitErrors: {
+        'not-image': 'Esse arquivo não é uma imagem.',
+        'too-big': 'A imagem é grande demais (máximo 20 MB).',
+        unreadable: 'Não foi possível abrir essa imagem. Tente outra (JPG, PNG ou WebP).',
+      },
       name: 'Nome',
       className: 'Classe',
       player: 'Jogador',
@@ -708,6 +734,10 @@ export const ptBR = {
       speedEdit: 'Deslocamento em metros',
       speedUnit: 'm',
       speedValue: (m: string) => `${m} m`,
+      speedNow: (m: string) =>
+        `Agora: ${m} m (magias ou condições). O campo acima é o seu deslocamento normal.`,
+      speedLoaded: (m: string) =>
+        `Agora: ${m} m. Você está carregando mais do que a sua Capacidade de Carga (veja o Inventário).`,
     },
 
     hp: {
@@ -795,7 +825,21 @@ export const ptBR = {
       emptyFeatures:
         'Nenhuma característica ainda. Use o + para anotar habilidades de classe, talentos e traços.',
       noResults: 'Nada encontrado.',
-      comingSoon: 'Chega numa próxima versão. Por enquanto, anote em Características.',
+      storedWeapons: (n: number) =>
+        n === 1
+          ? '1 arma guardada (não equipada) não aparece aqui.'
+          : `${n} armas guardadas (não equipadas) não aparecem aqui.`,
+      seeInventory: 'Ver no Inventário',
+      /** Pedido de 15/10: as características separadas pela origem. */
+      featureGroups: {
+        class: 'Classe',
+        subclass: 'Subclasse',
+        species: 'Espécie (raça)',
+        background: 'Antecedente',
+        feat: 'Talentos',
+        training: 'Treinamentos, idiomas e armadura',
+        other: 'Outras',
+      },
       toHit: (v: string) => `Ataque ${v}`,
       damage: (v: string) => `Dano ${v}`,
       crit: (n: number) => (n >= 20 ? 'Crítico 20' : `Crítico ${n}–20`),
@@ -841,6 +885,11 @@ export const ptBR = {
       properties: 'Propriedades',
       propertiesPlaceholder: 'Ex.: Acuidade, Leve, Arremesso',
       notes: 'Anotações',
+      equipped: 'Equipada (o personagem está carregando)',
+      equippedHint: 'Arma guardada não aparece nos ataques e não conta no peso.',
+      weight: 'Peso (kg)',
+      weightAuto: (kg: string) => `Vazio: usa o peso do livro (${kg} kg).`,
+      weightNone: 'Vazio: sem peso.',
       save: 'Salvar',
       cancel: 'Cancelar',
       nameRequired: 'Dê um nome à arma.',
@@ -855,9 +904,75 @@ export const ptBR = {
       namePlaceholder: 'Ex.: Retomar o Fôlego',
       text: 'Descrição',
       textPlaceholder: 'O que ela faz, quantos usos, quando recarrega…',
+      source: 'De onde vem',
       save: 'Salvar',
       cancel: 'Cancelar',
       nameRequired: 'Dê um nome à característica.',
+    },
+
+    /** Aba Inventário (pedido de 15/10): moedas, peso e itens. */
+    inventory: {
+      gold: 'Peças de Ouro',
+      goldEdit: 'Peças de Ouro (PO)',
+      coins: {
+        cp: 'Cobre (PC)',
+        sp: 'Prata (PP)',
+        ep: 'Electro (PE)',
+        gp: 'Ouro (PO)',
+        pp: 'Platina (PL)',
+      },
+      otherCoins: 'Outras moedas',
+      coinsHint: '1 PO = 10 PP = 100 PC · 1 PE = 5 PP · 1 PL = 10 PO · 50 moedas pesam 0,5 kg.',
+      load: 'Peso carregado',
+      loadValue: (carried: string, capacity: string) => `${carried} / ${capacity}`,
+      kg: 'kg',
+      loadHint: (mult: string) =>
+        `Capacidade de Carga: Força × ${mult} kg. Arrastar, levantar ou empurrar: até o dobro.`,
+      loadOver:
+        'Acima da Capacidade de Carga: você só consegue arrastar ou empurrar, com Deslocamento de até 1,5 m.',
+      loadOverDrag: 'Acima do dobro da Capacidade de Carga: você não consegue sair do lugar.',
+      unknownWeights: (n: number) =>
+        n === 1
+          ? '1 coisa sem peso: edite para incluir na conta.'
+          : `${n} coisas sem peso: edite para incluir na conta.`,
+      weapons: 'Armas',
+      weaponsHint: 'Equipada = carregando. A guardada sai dos ataques e do peso.',
+      items: 'Itens',
+      equipped: 'Equipada',
+      stored: 'Guardada',
+      carried: 'Com você',
+      storedItem: 'Guardado',
+      toggleWeapon: (name: string, on: boolean) =>
+        on ? `${name}: equipada (toque para guardar)` : `${name}: guardada (toque para equipar)`,
+      toggleItem: (name: string, on: boolean) =>
+        on ? `${name}: com você (toque para guardar)` : `${name}: guardado (toque para levar)`,
+      each: (kg: string) => `${kg} kg cada`,
+      total: (kg: string) => `${kg} kg`,
+      noWeight: 'sem peso',
+      qty: (name: string) => `Quantidade de ${name}`,
+      more: (name: string) => `Mais um: ${name}`,
+      less: (name: string) => `Menos um: ${name}`,
+      editItem: (name: string) => `Editar ${name}`,
+      add: 'Adicionar item',
+      empty: 'Nenhum item ainda. Use “Adicionar item”.',
+      emptyWeapons: 'Nenhuma arma. Adicione na aba Armas.',
+      editor: {
+        titleNew: 'Novo item',
+        titleEdit: 'Editar item',
+        name: 'Item',
+        namePlaceholder: 'Ex.: Corda, Tocha, Poção de Cura',
+        quantity: 'Quantidade',
+        weight: 'Peso de cada um (kg)',
+        weightAuto: (kg: string) => `Vazio: usa o peso do livro (${kg} kg).`,
+        weightNone: 'Vazio: sem peso (não entra na conta).',
+        carried: 'Com você (conta no peso)',
+        notes: 'Anotações',
+        save: 'Salvar',
+        cancel: 'Cancelar',
+        remove: 'Remover',
+        nameRequired: 'Dê um nome ao item.',
+      },
+      moved: 'O equipamento inicial agora fica no Inventário, com o ouro nas moedas.',
     },
 
     levelUp: {
@@ -895,15 +1010,44 @@ export const ptBR = {
       tempRoll: (name: string) => `PV temporários: ${name}`,
       activeTitle: 'Valendo agora',
       resistances: (types: string) => `Resistência: ${types}`,
-      spellsOnYou: 'Magias em você',
-      spellsOnYouHint: 'Alguém conjurou Bênção, Escudo da Fé…? Marque e a ficha soma sozinha.',
-      addSpell: 'Marcar magia em você',
-      addSpellNone: 'Escolha a magia',
-      removeSpell: (name: string) => `Tirar ${name}`,
+      onYou: {
+        title: 'Efeitos em você',
+        hint: 'Magias de aliados ou de inimigos e condições (Envenenado, Caído…). A ficha soma sozinha.',
+        none: 'Nada afetando você agora.',
+        add: 'Adicionar efeito',
+        dialogHint:
+          'Toque para ligar ou desligar. Fica valendo até você tirar: as condições continuam depois do Descanso Longo e a Exaustão perde 1 nível.',
+        buffs: 'Magias que ajudam',
+        debuffs: 'Magias que atrapalham',
+        conditions: 'Condições',
+        exhaustion: 'Exaustão',
+        exhaustionLevel: (n: number) => (n === 0 ? 'Sem Exaustão' : `Nível ${n}`),
+        exhaustionHint:
+          '−2 por nível nos Testes de D20 e −1,5 m de Deslocamento por nível. No nível 6, o personagem morre.',
+        exhaustionChip: (n: number) => `Exaustão ${n}`,
+        remove: (name: string) => `Tirar ${name}`,
+        toggle: (name: string, on: boolean) => `${name}: ${on ? 'valendo' : 'desligado'}`,
+        done: 'Pronto',
+        on: { attack: 'ataques', save: 'salvaguardas', damage: 'dano' } as Record<string, string>,
+        bonusDice: (dice: string, on: string) => `+${dice} em ${on}`,
+        ac: (v: string) => `${v} na CA`,
+        acFormula: (base: number) => `CA ${base} + Destreza`,
+        acMinimum: (v: number) => `CA mínima ${v}`,
+        speed: (m: string) => `${m} m de Deslocamento`,
+        extraDamage: (dice: string) => `+${dice} de dano`,
+        attackBonus: (v: string) => `${v} no ataque`,
+        damageBonus: (v: string) => `${v} no dano`,
+        advantage: 'Vantagem em algumas jogadas',
+        resistance: 'Resistência a dano',
+        hpMax: (v: string) => `${v} PV máximo`,
+        saveBonus: (v: string) => `${v} nas salvaguardas`,
+      },
       concentration: (name: string) => `Concentrado em: ${name}`,
       endConcentration: 'Encerrar',
       advantageShort: 'V',
-      advantage: 'Vantagem por habilidade ativa',
+      advantage: 'Vantagem por habilidade, magia ou condição',
+      disadvantageShort: 'D',
+      disadvantage: 'Desvantagem por magia ou condição',
     },
 
     explain: {
@@ -939,6 +1083,7 @@ export const ptBR = {
     natural1: '1 natural',
     critHit: 'Crítico!',
     showHistory: 'Ver histórico de rolagens',
+    hideResult: 'Esconder o resultado',
     close: 'Fechar',
     free: 'Rolagem livre',
     saveAsShortcut: 'Salvar como atalho',

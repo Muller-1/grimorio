@@ -1,12 +1,15 @@
 import {
   ArrowRight,
+  Backpack,
   BookOpen,
   Calculator,
   Cloud,
   Dices,
   HeartPulse,
-  Lightbulb,
+  Sparkles,
+  TrendingUp,
   Wand2,
+  Zap,
 } from 'lucide-react';
 import { Link } from 'react-router';
 import { siteConfig } from '@/app/config';
@@ -15,7 +18,17 @@ import { D20Icon } from '@/components/ui/d20-icon';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
-const FEATURE_ICONS = [Wand2, Calculator, Lightbulb, Dices, HeartPulse, Cloud];
+const FEATURE_ICONS = [
+  Wand2,
+  Calculator,
+  Dices,
+  HeartPulse,
+  Sparkles,
+  TrendingUp,
+  Zap,
+  Backpack,
+  Cloud,
+];
 
 /** Cartão ilustrativo: como a ficha explica um número (valores do personagem de exemplo). */
 function PreviewCard() {
@@ -78,7 +91,7 @@ function PreviewCard() {
 
 export default function HomePage() {
   const h = t.home;
-  // Com contas, um 6º item explica onde a ficha fica salva.
+  // Com contas, um último item explica onde a ficha fica salva.
   const features = siteConfig.accountsEnabled
     ? [...h.features.items, h.features.accounts]
     : h.features.items;

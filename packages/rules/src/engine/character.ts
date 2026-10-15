@@ -10,6 +10,7 @@ import type {
 } from '../classes/types';
 import type { ClassId } from '../creation/content';
 import { SPELL_EFFECTS } from '../spells/effects';
+import { CONDITION_PREFIX, DEBUFF_PREFIX, onYouEntry } from './on-you';
 import { evalDice, evalScaling, type ScalingContext } from './scaling';
 
 /**
@@ -142,7 +143,9 @@ export type EffectSource =
   | { kind: 'feature'; name: string }
   | { kind: 'activation'; name: string }
   | { kind: 'spell'; name: string }
-  | { kind: 'fighting-style'; name: string };
+  | { kind: 'fighting-style'; name: string }
+  /** Condição ou magia de outra criatura que atrapalha (Envenenado, Perdição…). */
+  | { kind: 'condition'; name: string };
 
 export interface SourcedEffect {
   effect: Effect;
@@ -287,6 +290,14 @@ export function characterEngine(
     const spell = SPELL_EFFECTS[id.slice(SPELL_ACTIVE_PREFIX.length)];
     for (const effect of spell?.effects ?? []) {
       effects.push({ effect, source: { kind: 'spell', name: spell!.name } });
+    }
+  }
+
+  for (const id of active) {
+    if (!id.startsWith(CONDITION_PREFIX) && !id.startsWith(DEBUFF_PREFIX)) continue;
+    const entry = onYouEntry(id);
+    for (const effect of entry?.effects ?? []) {
+      effects.push({ effect, source: { kind: 'condition', name: entry!.name } });
     }
   }
 

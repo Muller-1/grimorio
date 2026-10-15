@@ -16,6 +16,7 @@ export const SHEET_SECTIONS = [
   'state',
   'weapons',
   'features',
+  'inventory',
   'creation',
   'progression',
   'spells',

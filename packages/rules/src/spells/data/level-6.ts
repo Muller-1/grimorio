@@ -224,7 +224,7 @@ export const LEVEL_6: SpellDef[] = [
     },
     duration: 'Concentração, até 1 minuto',
     concentration: true,
-    text: 'Você tenta transformar em pedra uma criatura que vê ao alcance. Ela faz uma salvaguarda de Constituição: na falha, fica Impedida pela duração; no sucesso, fica com Deslocamento 0 até o início do seu próximo turno. Constructos passam automaticamente. Impedida, repete a salvaguarda no fim de cada turno: com três sucessos (não precisam ser seguidos), a magia termina; com três falhas, vira pedra e fica Petrificada pela duração. Mantendo a Concentração pela duração inteira, ela fica Petrificada até Restauração Maior ou magia parecida acabar com a condição.',
+    text: 'Você tenta transformar em pedra uma criatura que vê ao alcance. Ela faz uma salvaguarda de Constituição: na falha, fica Contida pela duração; no sucesso, fica com Deslocamento 0 até o início do seu próximo turno. Constructos passam automaticamente. Contida, repete a salvaguarda no fim de cada turno: com três sucessos (não precisam ser seguidos), a magia termina; com três falhas, vira pedra e fica Petrificada pela duração. Mantendo a Concentração pela duração inteira, ela fica Petrificada até Restauração Maior ou magia parecida acabar com a condição.',
     save: 'con',
   },
   {
@@ -267,7 +267,7 @@ export const LEVEL_6: SpellDef[] = [
     },
     duration: 'Instantânea',
     concentration: false,
-    text: 'Um globo gelado voa de você até um ponto ao alcance e explode numa Esfera de 18 m de raio. Cada criatura na área faz uma salvaguarda de Constituição: 10d6 de dano Gélido na falha, ou metade no sucesso. Se o globo cair numa massa de água, congela 15 cm de profundidade numa área quadrada de 9 m por 1 minuto; quem nadava na superfície fica preso no gelo, Impedido, e pode usar uma ação para um teste de Força (Atletismo) contra a sua CD para se soltar. Você pode não disparar o globo ao terminar a conjuração: uma esfera fria do tamanho de uma bala de funda aparece na sua mão, e você (ou quem a receber) pode arremessá-la (12 m) ou dispará-la com uma funda; ela se quebra no impacto com o efeito normal. Também pode ser deixada no chão sem quebrar; depois de 1 minuto, explode.',
+    text: 'Um globo gelado voa de você até um ponto ao alcance e explode numa Esfera de 18 m de raio. Cada criatura na área faz uma salvaguarda de Constituição: 10d6 de dano Gélido na falha, ou metade no sucesso. Se o globo cair numa massa de água, congela 15 cm de profundidade numa área quadrada de 9 m por 1 minuto; quem nadava na superfície fica preso no gelo, Contido, e pode usar uma ação para um teste de Força (Atletismo) contra a sua CD para se soltar. Você pode não disparar o globo ao terminar a conjuração: uma esfera fria do tamanho de uma bala de funda aparece na sua mão, e você (ou quem a receber) pode arremessá-la (12 m) ou dispará-la com uma funda; ela se quebra no impacto com o efeito normal. Também pode ser deixada no chão sem quebrar; depois de 1 minuto, explode.',
     higher: 'O dano aumenta em 1d6 para cada círculo acima do 6º.',
     save: 'con',
     damage: [

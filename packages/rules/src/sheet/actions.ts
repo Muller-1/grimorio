@@ -1,5 +1,6 @@
 import { freshAbilityState, type HpEvent, type LocalSheet } from '@grimorio/shared';
 import { SPELL_ACTIVE_PREFIX } from '../engine/character';
+import { CONDITION_PREFIX, EXHAUSTION_ID, exhaustionLevel, isOnYouKey } from '../engine/on-you';
 import { SPELL_EFFECTS } from '../spells/effects';
 import { deriveSheet } from './derive';
 
@@ -34,7 +35,11 @@ export type SheetAction =
   /** Começa (ou troca) a Concentração; `null` encerra. */
   | { type: 'set-concentration'; spellId: string | null }
   /** Marca que o efeito de uma magia está valendo em você (Bênção, Escudo da Fé…). */
-  | { type: 'toggle-spell-effect'; spellId: string };
+  | { type: 'toggle-spell-effect'; spellId: string }
+  /** Liga/desliga uma condição ("cond:poisoned") ou magia que atrapalha ("debuff:bane"). */
+  | { type: 'toggle-on-you'; key: string }
+  /** Nível de Exaustão (0 a 6). */
+  | { type: 'set-exhaustion'; level: number };
 
 /** Avisos para a interface mostrar (códigos; a interface traduz). */
 export type SheetNotice =
@@ -376,6 +381,27 @@ export function applySheetAction(
       };
     }
 
+    case 'toggle-on-you': {
+      if (!isOnYouKey(action.key) || action.key.startsWith(`${CONDITION_PREFIX}${EXHAUSTION_ID}`)) {
+        return { sheet, notices: ['unknown-ability'] };
+      }
+      const on = sheet.state.active.includes(action.key);
+      return {
+        sheet: withState({
+          active: on
+            ? sheet.state.active.filter((id) => id !== action.key)
+            : [...sheet.state.active, action.key],
+        }),
+        notices,
+      };
+    }
+
+    case 'set-exhaustion':
+      return {
+        sheet: withState({ active: withExhaustion(sheet.state.active, action.level) }),
+        notices,
+      };
+
     case 'long-rest':
       // Regras de 2024: precisa de pelo menos 1 PV para começar; ao terminar,
       // recupera todos os PV, todos os Dados de Vida, os espaços de magia e os usos das
@@ -383,12 +409,20 @@ export function applySheetAction(
       if (hp.current < 1) return { sheet, notices: ['needs-1-hp'] };
       {
         const { concentration: _ended, ...rest } = sheet.state;
+        // Condições continuam (o Mestre diz quando acabam); a Exaustão perde 1 nível.
+        const conditions = sheet.state.active.filter(
+          (id) =>
+            id.startsWith(CONDITION_PREFIX) &&
+            !id.startsWith(`${CONDITION_PREFIX}${EXHAUSTION_ID}`),
+        );
+        const active = withExhaustion(conditions, exhaustionLevel(sheet.state.active) - 1);
         return {
           sheet: {
             ...sheet,
             state: {
               ...rest,
               ...freshAbilityState(),
+              active,
               hp: { current: hpMax, temp: 0 },
               deathSaves: { successes: 0, failures: 0 },
               hitDiceSpent: 0,
@@ -426,4 +460,11 @@ function withoutConcentration(state: LocalSheet['state']): LocalSheet['state'] {
   if (!concentration) return state;
   const key = `${SPELL_ACTIVE_PREFIX}${concentration}`;
   return { ...rest, active: rest.active.filter((id) => id !== key) };
+}
+
+/** Troca o nível de Exaustão em `state.active` (0 tira). */
+function withExhaustion(active: string[], level: number): string[] {
+  const rest = active.filter((id) => !id.startsWith(`${CONDITION_PREFIX}${EXHAUSTION_ID}`));
+  const l = Math.min(6, Math.max(0, Math.floor(level)));
+  return l > 0 ? [...rest, `${CONDITION_PREFIX}${EXHAUSTION_ID}:${l}`] : rest;
 }

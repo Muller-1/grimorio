@@ -74,7 +74,7 @@ export const LEVEL_4: SpellDef[] = [
     },
     duration: 'Concentração, até 1 minuto',
     concentration: true,
-    text: 'Tentáculos negros se contorcem num quadrado de 6 m no chão que você vê ao alcance, tornando a área Terreno Difícil pela duração. Cada criatura na área faz uma salvaguarda de Força: na falha, sofre 3d6 de dano Contundente e fica Impedida até a magia terminar. Também faz a salvaguarda quem entra na área ou termina o turno lá (uma vez por turno). Impedida, pode usar uma ação para um teste de Força (Atletismo) contra a sua CD e se soltar no sucesso.',
+    text: 'Tentáculos negros se contorcem num quadrado de 6 m no chão que você vê ao alcance, tornando a área Terreno Difícil pela duração. Cada criatura na área faz uma salvaguarda de Força: na falha, sofre 3d6 de dano Contundente e fica Contida até a magia terminar. Também faz a salvaguarda quem entra na área ou termina o turno lá (uma vez por turno). Contida, pode usar uma ação para um teste de Força (Atletismo) contra a sua CD e se soltar no sucesso.',
     save: 'str',
     damage: [
       {
@@ -400,12 +400,12 @@ export const LEVEL_4: SpellDef[] = [
     },
     duration: '1 hora',
     concentration: false,
-    text: 'Você toca uma criatura voluntária. Pela duração, Terreno Difícil não atrapalha o movimento dela, e magias e efeitos mágicos não reduzem o Deslocamento dela nem a deixam Paralisada ou Impedida. Ela ganha Deslocamento de Natação igual ao Deslocamento e pode gastar 1,5 m de movimento para escapar automaticamente de amarras não mágicas, como algemas ou uma criatura que a esteja agarrando.',
+    text: 'Você toca uma criatura voluntária. Pela duração, Terreno Difícil não atrapalha o movimento dela, e magias e efeitos mágicos não reduzem o Deslocamento dela nem a deixam Paralisada ou Contida. Ela ganha Deslocamento de Natação igual ao Deslocamento e pode gastar 1,5 m de movimento para escapar automaticamente de amarras não mágicas, como algemas ou uma criatura que a esteja agarrando.',
     higher: 'Uma criatura a mais para cada círculo acima do 4º.',
     effects: [
       {
         type: 'note',
-        text: 'Movimentação Livre: terreno difícil não reduz seu movimento; magias não reduzem seu Deslocamento nem deixam você Paralisado ou Impedido.',
+        text: 'Movimentação Livre: terreno difícil não reduz seu movimento; magias não reduzem seu Deslocamento nem deixam você Paralisado ou Contido.',
       },
     ],
   },

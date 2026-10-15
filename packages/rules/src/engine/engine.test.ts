@@ -207,7 +207,7 @@ describe('magias ativas em você', () => {
     ).sheet;
     const d = deriveSheet(s);
     expect(d.attacks[0]!.attackExpression).toBe('1d20+2+1d4');
-    expect(d.saves.con.bonusDice).toEqual(['1d4']);
+    expect(d.saves.con.bonusDice).toEqual(['+1d4']);
     expect(d.armorClass.value).toBe(12);
     expect(d.armorClass.parts.at(-1)).toEqual({
       source: { kind: 'effect', name: 'Escudo da Fé' },
@@ -278,5 +278,67 @@ describe('espaços de magia', () => {
     expect(deriveSheet(s).spellcasting).toBeNull();
     s.spells.ability = 'wis';
     expect(deriveSheet(s).spellcasting).toMatchObject({ source: 'manual', dc: 10, slots: [] });
+  });
+});
+
+describe('condições e magias que atrapalham', () => {
+  const weaponSheet = () => {
+    const s = sheetOf('fighter', 5, { abilities: { str: 16 } });
+    s.weapons = [axe];
+    return s;
+  };
+
+  it('Envenenado: Desvantagem nos ataques e testes; com Vantagem junto, se anulam', () => {
+    const s = act(weaponSheet(), { type: 'toggle-on-you', key: 'cond:poisoned' }).sheet;
+    const d = deriveSheet(s);
+    expect(d.attacks[0]).toMatchObject({ advantage: false, disadvantage: true });
+    expect(d.skills.athletics.disadvantage).toBe(true);
+    expect(d.saves.str.disadvantage).toBe(false);
+    const both = act(s, { type: 'toggle-on-you', key: 'cond:invisible' }).sheet;
+    expect(deriveSheet(both).attacks[0]).toMatchObject({ advantage: true, disadvantage: true });
+  });
+
+  it('Perdição tira 1d4 do ataque e das salvaguardas; Raio do Enfraquecimento tira 1d8 do dano', () => {
+    let s = act(weaponSheet(), { type: 'toggle-on-you', key: 'debuff:bane' }).sheet;
+    let d = deriveSheet(s);
+    expect(d.attacks[0]!.attackExpression).toBe('1d20+6-1d4');
+    expect(d.saves.wis.bonusDice).toEqual(['-1d4']);
+    s = act(s, { type: 'toggle-on-you', key: 'debuff:ray-of-enfeeblement' }).sheet;
+    d = deriveSheet(s);
+    expect(d.attacks[0]!.damageExpression).toBe('1d12+3-1d8');
+    expect(d.attacks[0]!.disadvantage).toBe(true);
+  });
+
+  it('Lentidão: metade do Deslocamento, −2 na CA e nas salvaguardas de Destreza', () => {
+    const s = act(weaponSheet(), { type: 'toggle-on-you', key: 'debuff:slow' }).sheet;
+    const d = deriveSheet(s);
+    expect(d.speedFt).toBe(15);
+    expect(d.armorClass.value).toBe(8);
+    expect(d.saves.dex.bonus.value).toBe(-2);
+  });
+
+  it('Contido zera o Deslocamento; Exaustão tira 2 por nível e 1,5 m por nível', () => {
+    expect(
+      deriveSheet(act(weaponSheet(), { type: 'toggle-on-you', key: 'cond:restrained' }).sheet)
+        .speedFt,
+    ).toBe(0);
+    const tired = act(weaponSheet(), { type: 'set-exhaustion', level: 2 }).sheet;
+    expect(tired.state.active).toEqual(['cond:exhaustion:2']);
+    const d = deriveSheet(tired);
+    expect(d.speedFt).toBe(20);
+    expect(d.attacks[0]!.toHit.value).toBe(6 - 4);
+    expect(d.saves.str.bonus.value).toBe(3 - 4);
+    expect(d.passivePerception.value).toBe(10);
+    // Descanso longo: Exaustão −1 e as condições ficam.
+    const rested = act(act(tired, { type: 'toggle-on-you', key: 'cond:prone' }).sheet, {
+      type: 'long-rest',
+    }).sheet;
+    expect(rested.state.active.sort()).toEqual(['cond:exhaustion:1', 'cond:prone']);
+  });
+
+  it('chave desconhecida não entra na ficha', () => {
+    expect(act(weaponSheet(), { type: 'toggle-on-you', key: 'cond:nada' }).notices).toEqual([
+      'unknown-ability',
+    ]);
   });
 });

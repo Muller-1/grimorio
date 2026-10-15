@@ -3,6 +3,7 @@ import {
   LocalSheetSchema,
   SKILL_KEYS,
   type AbilityKey,
+  type FeatureSource,
   type GrantedSpell,
   type LevelChoice,
   type LocalSheet,
@@ -46,17 +47,24 @@ const isSkill = (id: string | undefined): id is SkillKey =>
 const isAbility = (a: string | undefined): a is AbilityKey =>
   Boolean(a) && (ABILITY_KEYS as readonly string[]).includes(a!);
 
-/** Nome legível de uma escolha (para a lista de características da ficha). */
+/** Nome legível de uma escolha (para a lista de características da ficha) e de onde vem. */
 function choiceFeature(
   c: LevelChoice,
   def: ChoiceDef | undefined,
-): { name: string; text: string } | null {
+  subclassFeatureIds: ReadonlySet<string>,
+): { name: string; text: string; source: FeatureSource } | null {
+  const fromClass = (x: { name: string; text: string } | null) =>
+    x ? { ...x, source: 'class' as const } : null;
   switch (c.kind) {
     case 'feat': {
       const feat = LEVEL_FEATS.find((f) => f.id === c.id);
-      if (feat) return { name: `Talento: ${feat.name}`, text: feat.text };
+      if (feat) return { name: `Talento: ${feat.name}`, text: feat.text, source: 'feat' };
       return c.text
-        ? { name: `Talento: ${c.text}`, text: 'Talento do livro (anote os detalhes).' }
+        ? {
+            name: `Talento: ${c.text}`,
+            text: 'Talento do livro (anote os detalhes).',
+            source: 'feat',
+          }
         : null;
     }
     case 'fighting-style': {
@@ -64,23 +72,31 @@ function choiceFeature(
       const alt =
         def?.kind === 'fighting-style' ? def.alternatives?.find((a) => a.id === c.id) : undefined;
       const entry = style ?? alt;
-      return entry ? { name: `Estilo de Luta: ${entry.name}`, text: entry.text } : null;
+      return fromClass(entry ? { name: `Estilo de Luta: ${entry.name}`, text: entry.text } : null);
     }
     case 'option': {
       if (def?.kind !== 'option') return null;
-      const option = def.options.find((o) => o.id === c.id?.split(':')[1]);
-      return option ? { name: `${def.label}: ${option.name}`, text: option.text } : null;
+      const [featureId, optionId] = c.id?.split(':') ?? [];
+      const option = def.options.find((o) => o.id === optionId);
+      if (!option) return null;
+      return {
+        name: `${def.label}: ${option.name}`,
+        text: option.text,
+        source: featureId && subclassFeatureIds.has(featureId) ? 'subclass' : 'class',
+      };
     }
     case 'metamagic': {
       const m = METAMAGIC.find((x) => x.id === c.id);
-      return m ? { name: `Metamagia: ${m.name}`, text: m.text } : null;
+      return fromClass(m ? { name: `Metamagia: ${m.name}`, text: m.text } : null);
     }
     case 'invocation': {
       const inv = INVOCATIONS.find((x) => x.id === c.id);
-      return inv ? { name: `Invocação: ${inv.name}`, text: inv.text } : null;
+      return fromClass(inv ? { name: `Invocação: ${inv.name}`, text: inv.text } : null);
     }
     case 'language':
-      return c.text ? { name: `Idioma: ${c.text}`, text: 'Aprendido ao subir de nível.' } : null;
+      return c.text
+        ? { name: `Idioma: ${c.text}`, text: 'Aprendido ao subir de nível.', source: 'training' }
+        : null;
     default:
       return null;
   }
@@ -125,8 +141,13 @@ export function applyLevelUp(
   const grant = (id: string, source: GrantedSpell['source'], extra: Partial<GrantedSpell> = {}) => {
     if (!spells.granted.some((g) => g.id === id)) spells.granted.push({ id, source, ...extra });
   };
-  const addFeature = (name: string, text: string) =>
-    next.features.push({ id: ctx.newId(), name: name.slice(0, 80), text: text.slice(0, 4000) });
+  const addFeature = (name: string, text: string, source: FeatureSource) =>
+    next.features.push({
+      id: ctx.newId(),
+      name: name.slice(0, 80),
+      text: text.slice(0, 4000),
+      source,
+    });
   const raise = (ability: AbilityKey, amount: number, max: number) => {
     const current = next.build.abilities[ability];
     next.build.abilities[ability] = Math.max(current, Math.min(max, current + amount));
@@ -137,7 +158,7 @@ export function applyLevelUp(
     if (!step) return null;
     const defs = new Map(step.choices.map((c) => [c.featureId ?? c.key, c.def]));
 
-    for (const f of step.gains.features) addFeature(f.name, f.text);
+    for (const f of step.gains.features) addFeature(f.name, f.text, f.source);
     for (const g of step.gains.grantedSpells) {
       grant(g.id, g.source, g.source === 'species' ? { freePerLongRest: 1 } : {});
     }
@@ -159,12 +180,13 @@ export function applyLevelUp(
             addFeature(
               `Subclasse: ${c.text ?? ''}`.trim(),
               'Subclasse do livro: anote aqui as características dela.',
+              'subclass',
             );
           } else if (c.id && subclassOf(p, c.id)) {
             next.progression.subclassId = c.id;
             delete next.progression.subclassName;
             const sub = subclassOf(p, c.id)!;
-            addFeature(`Subclasse: ${sub.name}`, sub.tagline);
+            addFeature(`Subclasse: ${sub.name}`, sub.tagline, 'subclass');
           }
           break;
         case 'asi':
@@ -207,8 +229,15 @@ export function applyLevelUp(
           break;
         }
       }
-      const feature = choiceFeature(c, (def as ChoiceDef | undefined) ?? findDef(step.choices, c));
-      if (feature) addFeature(feature.name, feature.text);
+      const subIds = new Set(
+        subclassOf(p, next.progression.subclassId)?.features.map((f) => f.id) ?? [],
+      );
+      const feature = choiceFeature(
+        c,
+        (def as ChoiceDef | undefined) ?? findDef(step.choices, c),
+        subIds,
+      );
+      if (feature) addFeature(feature.name, feature.text, feature.source);
     }
 
     next.progression.levels = [

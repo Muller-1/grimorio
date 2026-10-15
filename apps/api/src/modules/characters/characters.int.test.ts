@@ -1,6 +1,11 @@
 // Personagens na conta (plano v2, 10.3, 11 e 13) contra um Postgres de verdade.
 import { readFileSync } from 'node:fs';
-import { createBlankSheet, MAX_CHARACTERS_PER_ACCOUNT, type LocalSheet } from '@grimorio/shared';
+import {
+  createBlankSheet,
+  LOCAL_SHEET_SCHEMA_VERSION,
+  MAX_CHARACTERS_PER_ACCOUNT,
+  type LocalSheet,
+} from '@grimorio/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { characters } from '../../db/schema';
@@ -140,7 +145,14 @@ const v1Barbarian: unknown = JSON.parse(
   ),
 );
 
-describe('fichas salvas antes da ficha v2', () => {
+const v2Barbarian: unknown = JSON.parse(
+  readFileSync(
+    new URL('../../../../../packages/shared/src/sheet/fixtures/v2-barbarian.json', import.meta.url),
+    'utf8',
+  ),
+);
+
+describe('fichas salvas em formatos antigos', () => {
   it('abre migrada, com as seções novas em 0, e salva já no formato novo', async () => {
     const { cookie, userId } = await loginAs(app, { email: 'ana@x.com' });
     const id = ids.uuid();
@@ -165,12 +177,18 @@ describe('fichas salvas antes da ficha v2', () => {
     expect(opened.statusCode).toBe(200);
     const doc = opened.json();
     expect(doc.sheet).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: LOCAL_SHEET_SCHEMA_VERSION,
       identity: { name: 'Grum' },
       progression: { classId: 'barbarian', levels: [] },
       spells: { cantrips: [], prepared: [] },
     });
-    expect(doc.sectionRevs).toMatchObject({ identity: 3, state: 5, progression: 0, spells: 0 });
+    expect(doc.sectionRevs).toMatchObject({
+      identity: 3,
+      state: 5,
+      progression: 0,
+      spells: 0,
+      inventory: 0,
+    });
 
     const saved = await app.inject({
       method: 'PATCH',
@@ -184,15 +202,66 @@ describe('fichas salvas antes da ficha v2', () => {
     expect(saved.statusCode).toBe(200);
     expect(saved.json().sectionRevs).toMatchObject({ spells: 1, identity: 3 });
     const [row] = await db.orm.select().from(characters);
-    expect(row!.schemaVersion).toBe(2);
-    expect(row!.data).toMatchObject({ schemaVersion: 2, spells: { cantrips: ['light'] } });
+    expect(row!.schemaVersion).toBe(LOCAL_SHEET_SCHEMA_VERSION);
+    expect(row!.data).toMatchObject({
+      schemaVersion: LOCAL_SHEET_SCHEMA_VERSION,
+      spells: { cantrips: ['light'] },
+    });
   });
 
-  it('o navegador ainda com a versão antiga do site consegue criar (v1 vira v2)', async () => {
+  it('v2 (antes do inventário) abre com o inventário vazio e salva moedas e itens', async () => {
+    const { cookie, userId } = await loginAs(app, { email: 'ana@x.com' });
+    const id = ids.uuid();
+    await db.orm.insert(characters).values({
+      id,
+      ownerId: userId,
+      name: 'Grum',
+      rulesEdition: '2024',
+      data: v2Barbarian,
+      schemaVersion: 2,
+      sectionRevs: {
+        identity: 1,
+        build: 1,
+        combat: 1,
+        state: 1,
+        weapons: 1,
+        features: 1,
+        creation: 1,
+        progression: 1,
+        spells: 1,
+      },
+    });
+    const opened = await app.inject({ url: `/api/v1/characters/${id}`, headers: { cookie } });
+    const doc = opened.json();
+    expect(doc.sheet.inventory).toEqual({
+      coins: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+      items: [],
+    });
+    expect(doc.sectionRevs.inventory).toBe(0);
+
+    const inventory = {
+      coins: { cp: 0, sp: 0, ep: 0, gp: 29, pp: 0 },
+      items: [{ id: 'kit', name: 'Kit de Aventureiro', quantity: 1, weightKg: 27.5 }],
+    };
+    const features = doc.sheet.features.map((f: { name: string }) => ({ ...f, source: 'other' }));
+    const saved = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/characters/${id}`,
+      headers: { cookie },
+      payload: { sections: { inventory, features }, baseRevs: { inventory: 0, features: 1 } },
+    });
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json().sectionRevs).toMatchObject({ inventory: 1, features: 2 });
+    const [row] = await db.orm.select().from(characters);
+    expect(row!.schemaVersion).toBe(LOCAL_SHEET_SCHEMA_VERSION);
+    expect(row!.data).toMatchObject({ inventory });
+  });
+
+  it('o navegador ainda com a versão antiga do site consegue criar (v1 vira a atual)', async () => {
     const { cookie } = await loginAs(app, { email: 'ana@x.com' });
     const res = await create(cookie, { id: ids.uuid(), sheet: v1Barbarian as never });
     expect(res.statusCode).toBe(201);
-    expect(res.json().sheet.schemaVersion).toBe(2);
+    expect(res.json().sheet.schemaVersion).toBe(LOCAL_SHEET_SCHEMA_VERSION);
   });
 });
 

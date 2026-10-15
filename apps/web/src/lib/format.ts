@@ -27,3 +27,8 @@ export function formatDateTime(iso: string): string {
   if (Number.isNaN(date.getTime())) return '';
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
 }
+
+/** Peso em kg como nos livros em português: 3.5 → "3,5"; 0.025 → "0,025"; 42 → "42". */
+export function formatKg(kg: number): string {
+  return kg.toLocaleString('pt-BR', { maximumFractionDigits: 3 });
+}

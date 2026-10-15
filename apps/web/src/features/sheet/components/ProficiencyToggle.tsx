@@ -2,7 +2,13 @@ import type { ProficiencyLevel } from '@grimorio/shared';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-const NEXT: Record<ProficiencyLevel, ProficiencyLevel> = { 0: 1, 1: 2, 2: 0.5, 0.5: 0 };
+/**
+ * Livro do Jogador 2024 (glossário, "Especialização"): proficiência dobrada numa perícia em que
+ * você já é proficiente. "Metade da proficiência" não é um estado da perícia: é o Pau pra Toda
+ * Obra do Bardo, que a ficha soma sozinha nas perícias sem proficiência. Fichas antigas com ½
+ * continuam abrindo e o clique leva para ✓.
+ */
+const NEXT: Record<ProficiencyLevel, ProficiencyLevel> = { 0: 1, 1: 2, 2: 0, 0.5: 1 };
 
 interface ProficiencyToggleProps {
   value: ProficiencyLevel;
@@ -13,7 +19,7 @@ interface ProficiencyToggleProps {
   testId?: string;
 }
 
-/** Caixinha de proficiência: vazia → ✓ → ✓✓ (especialização) → ½ → vazia. */
+/** Caixinha de proficiência: vazia → ✓ → ✓✓ (Especialização) → vazia. */
 export function ProficiencyToggle({
   value,
   onChange,

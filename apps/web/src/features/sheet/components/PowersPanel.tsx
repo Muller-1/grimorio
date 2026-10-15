@@ -1,14 +1,6 @@
-import {
-  SPELL_ACTIVE_PREFIX,
-  SPELL_EFFECTS,
-  type ActivationView,
-  type ResourceView,
-  type SheetNotice,
-} from '@grimorio/rules';
-import { Minus, Plus, Power, X, Zap } from 'lucide-react';
-import { useId } from 'react';
+import { type ActivationView, type ResourceView, type SheetNotice } from '@grimorio/rules';
+import { Minus, Plus, Power, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/input';
 import { Panel } from '@/components/ui/panel';
 import { useDiceStore } from '@/features/dice/store';
 import { useToastStore } from '@/features/toast/store';
@@ -16,6 +8,7 @@ import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
+import { EffectsOnYou } from './EffectsOnYou';
 
 const p = t.sheet.powers;
 
@@ -151,67 +144,6 @@ function ActivationRow({ a, names }: { a: ActivationView; names: Map<string, str
   );
 }
 
-function SpellsOnYou() {
-  const { sheet } = useSheet();
-  const dispatch = useSheetStore((s) => s.dispatch);
-  const selectId = useId();
-  const on = sheet.state.active
-    .filter((id) => id.startsWith(SPELL_ACTIVE_PREFIX))
-    .map((id) => id.slice(SPELL_ACTIVE_PREFIX.length))
-    .filter((id) => SPELL_EFFECTS[id]);
-  const options = Object.entries(SPELL_EFFECTS)
-    .filter(([id]) => !on.includes(id))
-    .sort(([, a], [, b]) => a.name.localeCompare(b.name, 'pt-BR'));
-
-  return (
-    <div className="space-y-2 border-t border-border pt-3">
-      <div>
-        <p className="text-sm font-semibold">{p.spellsOnYou}</p>
-        <p className="text-xs text-muted">{p.spellsOnYouHint}</p>
-      </div>
-      {on.length ? (
-        <ul className="flex flex-wrap gap-1.5">
-          {on.map((id) => (
-            <li
-              key={id}
-              className="flex items-center gap-1 rounded-full border border-accent bg-accent-soft py-0.5 pr-1 pl-2.5 text-sm"
-            >
-              {SPELL_EFFECTS[id]!.name}
-              <button
-                type="button"
-                onClick={() => dispatch({ type: 'toggle-spell-effect', spellId: id })}
-                aria-label={p.removeSpell(SPELL_EFFECTS[id]!.name)}
-                className="rounded-full p-0.5 hover:bg-surface-2"
-              >
-                <X className="size-3.5" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <label htmlFor={selectId} className="sr-only">
-        {p.addSpell}
-      </label>
-      <Select
-        id={selectId}
-        value=""
-        onChange={(e) =>
-          e.target.value && dispatch({ type: 'toggle-spell-effect', spellId: e.target.value })
-        }
-        className="h-9"
-        data-testid="powers.add-spell"
-      >
-        <option value="">{p.addSpell}</option>
-        {options.map(([id, s]) => (
-          <option key={id} value={id}>
-            {s.name}
-          </option>
-        ))}
-      </Select>
-    </div>
-  );
-}
-
 /**
  * Habilidades de classe (ADR-010): usos que sobram (Fúria, Canalizar Divindade…), o que dá
  * para ligar (Fúria, Ataque Imprudente) ou usar (Recuperar Fôlego), e as magias que estão
@@ -254,7 +186,7 @@ export function PowersPanel() {
           </ul>
         </div>
       ) : null}
-      <SpellsOnYou />
+      <EffectsOnYou />
     </Panel>
   );
 }

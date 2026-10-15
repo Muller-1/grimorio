@@ -26,9 +26,10 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 | Primeiros passos (`/comecar`), glossário e pendências clicáveis no assistente            | `apps/web/src/pages/StartPage.tsx` + `features/builder/guide.ts`   | ✔ (feedback dos testadores)                     |
 | Maestria em Arma e Invocação Mística no nível 1                                          | `packages/rules/src/creation/mastery.ts` + `content.ts`            | ✔                                               |
 | Temas de cor (Automático, Pergaminho, Taverna, Arcano, Floresta, Alto contraste)         | `apps/web/src/lib/theme.ts` + `public/theme.js` + `index.css`      | ✔ (contraste AA testado)                        |
-| Subida de nível (quantos níveis → uma tela por nível → resumo), classes do 1 ao 20       | `features/levelup` + `packages/rules/src/{classes,levelup}`        | ✔ (ADR-010)                                     |
+| Subida de nível (quantos níveis → telas curtas por nível → resumo), classes do 1 ao 20   | `features/levelup` + `packages/rules/src/{classes,levelup}`        | ✔ (ADR-010)                                     |
 | Magias: 339 do SRD, aba Magias (CD, espaços, conjurar, Concentração, Outra magia)        | `features/spells` + `packages/rules/src/spells`                    | ✔ (ADR-010)                                     |
 | Habilidades que o site calcula (Fúria, Frenesi, Ataque Furtivo, Bênção…)                 | `sheet/components/PowersPanel.tsx` + `packages/rules/src/engine`   | ✔ (ADR-010)                                     |
+| Inventário (moedas, peso, arma equipada), características por origem, efeitos em você    | `features/inventory` + `packages/rules/src/{inventory,engine}`     | ✔ (ADR-011)                                     |
 
 Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas para quem tiver o link
 (qualquer conta Google entra, ver ADR-009, decisão 5), com a API no Render, o banco no Neon e o

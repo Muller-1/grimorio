@@ -35,7 +35,8 @@ function SlotsRow({ sc }: { sc: SpellcastingView }) {
           </span>
           <div className="flex flex-wrap gap-1">
             {Array.from({ length: r.max }, (_, i) => {
-              const spent = i < r.spent;
+              // Disponíveis à esquerda; os gastos somem da direita para a esquerda.
+              const spent = i >= r.max - r.spent;
               return (
                 <button
                   key={i}
@@ -323,6 +324,12 @@ export default function SpellsTab({ query }: { query: string }) {
                 <span>{tsp.counts.spellbook(counts.spellbook, sc.spellbookMin)}</span>
               ) : null}
             </p>
+            {(sc.cantripsMax !== undefined && counts.cantrips < sc.cantripsMax) ||
+            (sc.preparedMax !== undefined && counts.prepared < sc.preparedMax) ? (
+              <p className="text-xs text-accent" data-testid="spells.missing">
+                {tsp.counts.missing}
+              </p>
+            ) : null}
           </>
         ) : (
           <p className="text-sm text-muted">{tsp.notCaster}</p>

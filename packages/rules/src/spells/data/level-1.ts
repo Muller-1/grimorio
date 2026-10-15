@@ -427,7 +427,7 @@ export const LEVEL_1: SpellDef[] = [
     },
     duration: 'Concentração, até 1 minuto',
     concentration: true,
-    text: 'Ao acertar o alvo, vinhas o agarram e ele faz uma salvaguarda de Força (com Vantagem se for Grande ou maior). Na falha, fica Impedido até a magia terminar; no sucesso, as vinhas secam e a magia termina. Impedido, sofre 1d6 de dano Perfurante no início de cada turno dele. Ele ou uma criatura ao alcance dele pode usar uma ação para um teste de Força (Atletismo) contra a sua CD; no sucesso, a magia termina.',
+    text: 'Ao acertar o alvo, vinhas o agarram e ele faz uma salvaguarda de Força (com Vantagem se for Grande ou maior). Na falha, fica Contido até a magia terminar; no sucesso, as vinhas secam e a magia termina. Contido, sofre 1d6 de dano Perfurante no início de cada turno dele. Ele ou uma criatura ao alcance dele pode usar uma ação para um teste de Força (Atletismo) contra a sua CD; no sucesso, a magia termina.',
     higher: 'O dano aumenta em 1d6 para cada círculo acima do 1º.',
     save: 'str',
     damage: [
@@ -453,7 +453,7 @@ export const LEVEL_1: SpellDef[] = [
     },
     duration: 'Concentração, até 1 minuto',
     concentration: true,
-    text: 'Plantas agarradoras brotam num quadrado de 6 m ao alcance, tornando a área Terreno Difícil pela duração. Cada criatura na área (menos você) ao conjurar faz uma salvaguarda de Força; na falha, fica Impedida até a magia terminar. Uma criatura Impedida pode usar uma ação para um teste de Força (Atletismo) contra a sua CD e se soltar no sucesso.',
+    text: 'Plantas agarradoras brotam num quadrado de 6 m ao alcance, tornando a área Terreno Difícil pela duração. Cada criatura na área (menos você) ao conjurar faz uma salvaguarda de Força; na falha, fica Contida até a magia terminar. Uma criatura Contida pode usar uma ação para um teste de Força (Atletismo) contra a sua CD e se soltar no sucesso.',
     save: 'str',
   },
   {

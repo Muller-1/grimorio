@@ -171,7 +171,7 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     effects: [
       {
         type: 'note',
-        text: 'Movimentação Livre: terreno difícil não reduz seu movimento; magias não reduzem seu Deslocamento nem deixam você Paralisado ou Impedido.',
+        text: 'Movimentação Livre: terreno difícil não reduz seu movimento; magias não reduzem seu Deslocamento nem deixam você Paralisado ou Contido.',
       },
     ],
   },

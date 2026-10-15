@@ -17,6 +17,7 @@ import { withModifier } from '../dice/modifier';
 export { withModifier };
 import { characterEngine, type CharacterEngine, type SourcedEffect } from '../engine/character';
 import { evalDice, evalScaling } from '../engine/scaling';
+import { carryingLoad, type CarryLoad } from '../inventory/load';
 import { spellcastingView, type SpellcastingView } from '../spells/casting';
 
 /**
@@ -72,6 +73,8 @@ export interface AttackOption {
   attackExpression: string;
   /** Vantagem por alguma habilidade ligada (Ataque Imprudente). */
   advantage: boolean;
+  /** Desvantagem por condição ou magia (Envenenado, Cego…). Com as duas, rola normal. */
+  disadvantage: boolean;
   damageBonus: Explained;
   /** Expressão de dano pronta para rolar (ex.: "1d8+3"), ou `null` se o dado for inválido. */
   damageExpression: string | null;
@@ -92,16 +95,32 @@ export interface SheetDerived {
   abilities: Record<AbilityKey, { score: number; mod: number }>;
   saves: Record<
     AbilityKey,
-    { bonus: Explained; proficient: boolean; advantage: boolean; bonusDice: string[] }
+    {
+      bonus: Explained;
+      proficient: boolean;
+      advantage: boolean;
+      disadvantage: boolean;
+      /** Dados somados ou tirados, já com sinal: "+1d4" (Bênção), "-1d4" (Perdição). */
+      bonusDice: string[];
+    }
   >;
   skills: Record<
     SkillKey,
-    { ability: AbilityKey; bonus: Explained; proficiency: ProficiencyLevel; advantage: boolean }
+    {
+      ability: AbilityKey;
+      bonus: Explained;
+      proficiency: ProficiencyLevel;
+      advantage: boolean;
+      disadvantage: boolean;
+    }
   >;
   armorClass: Explained;
   initiative: Explained;
   initiativeAdvantage: boolean;
+  initiativeDisadvantage: boolean;
   speedFt: number;
+  /** Peso carregado e Capacidade de Carga (cap. 1, "Levantar e Carregar"). */
+  load: CarryLoad;
   resistances: { type: DamageType; source: string }[];
   /** Lembretes das habilidades e magias ativas ("Ataques contra você têm Vantagem"). */
   notes: SourcedNote[];
@@ -202,6 +221,10 @@ function hasAdvantage(effects: SourcedEffect[], target: AdvantageTarget): boolea
   return effects.some((e) => e.effect.type === 'advantage' && e.effect.on.includes(target));
 }
 
+function hasDisadvantage(effects: SourcedEffect[], target: AdvantageTarget): boolean {
+  return effects.some((e) => e.effect.type === 'disadvantage' && e.effect.on.includes(target));
+}
+
 export function deriveSheet(sheet: LocalSheet): SheetDerived {
   const warnings: SheetWarning[] = [];
   const level = sheet.build.level;
@@ -229,7 +252,17 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
     );
 
   const extraSaveProf = new Set(of('save-proficiency').flatMap((e) => e.effect.on));
-  const rollDice = of('roll-bonus-dice');
+  /** Dados com sinal para uma jogada (Bênção +1d4, Perdição −1d4). */
+  const signedDice = (on: 'attack' | 'save' | 'damage') => [
+    ...of('roll-bonus-dice')
+      .filter((e) => on !== 'damage' && e.effect.on.includes(on))
+      .map((e) => `+${e.effect.dice}`),
+    ...of('roll-penalty-dice')
+      .filter((e) => e.effect.on.includes(on))
+      .map((e) => `-${e.effect.dice}`),
+  ];
+  // Exaustão: soma (negativa) em todo Teste de D20.
+  const d20Parts = of('d20-modifier').map((e) => effectPart(e, e.effect.value));
   const saves = mapAbilities((k) => {
     const proficient = sheet.build.saveProficiencies.includes(k) || extraSaveProf.has(k);
     const parts: ExplainedPart[] = [{ source: { kind: 'ability', ability: k }, value: mods[k] }];
@@ -237,11 +270,13 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
     for (const e of of('save-bonus')) {
       if (!e.effect.on || e.effect.on.includes(k)) parts.push(effectPart(e, value(e.effect.value)));
     }
+    parts.push(...d20Parts);
     return {
       bonus: explained(parts),
       proficient,
       advantage: hasAdvantage(effects, `save:${k}`),
-      bonusDice: rollDice.filter((e) => e.effect.on.includes('save')).map((e) => e.effect.dice),
+      disadvantage: hasDisadvantage(effects, `save:${k}`),
+      bonusDice: signedDice('save'),
     };
   });
 
@@ -261,6 +296,7 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
       } else if (halfProf) {
         parts.push({ source: { kind: 'proficiency', level: 0.5 }, value: Math.floor(prof / 2) });
       }
+      parts.push(...d20Parts);
       return [
         skill,
         {
@@ -268,6 +304,7 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
           bonus: explained(parts),
           proficiency,
           advantage: hasAdvantage(effects, `check:${ability}`),
+          disadvantage: hasDisadvantage(effects, `check:${ability}`),
         },
       ];
     }),
@@ -307,11 +344,13 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
       : halfProf
         ? [{ source: { kind: 'proficiency', level: 0.5 } as const, value: Math.floor(prof / 2) }]
         : []),
+    ...d20Parts,
   ]);
 
+  // A Percepção passiva não é um Teste de D20: a Exaustão não entra.
   const passivePerception = explained([
     { source: { kind: 'base' }, value: 10 },
-    ...skills.perception.bonus.parts,
+    ...skills.perception.bonus.parts.filter((p) => !d20Parts.includes(p)),
   ]);
 
   const hpBonus = of('hp-max-bonus').map((e) => effectPart(e, value(e.effect.value)));
@@ -348,78 +387,91 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
 
   const critMin = Math.min(20, ...of('crit-range').map((e) => e.effect.min));
   const attackAdvantage = hasAdvantage(effects, 'attack');
-  const attackDice = rollDice
-    .filter((e) => e.effect.on.includes('attack'))
-    .map((e) => e.effect.dice);
+  const attackDisadvantage = hasDisadvantage(effects, 'attack');
+  const attackDice = signedDice('attack').join('');
+  const damagePenalty = signedDice('damage').join('');
 
-  const attacks = sheet.weapons.map((weapon): AttackOption => {
-    const ability = attackAbility(weapon, mods);
-    const applies = (filter: AttackFilter | undefined) => matchesWeapon(filter, weapon, ability);
-    const magic: ExplainedPart[] =
-      weapon.magicBonus !== 0 ? [{ source: { kind: 'magic' }, value: weapon.magicBonus }] : [];
-    const toHitParts: ExplainedPart[] = [
-      { source: { kind: 'ability', ability }, value: mods[ability] },
-    ];
-    if (weapon.proficient)
-      toHitParts.push({ source: { kind: 'proficiency', level: 1 }, value: prof });
-    const effectToHit = of('attack-bonus')
-      .filter((e) => applies(e.effect.filter))
-      .map((e) => effectPart(e, value(e.effect.value)));
-    const toHit = explained([...toHitParts, ...magic, ...effectToHit]);
-    const effectDamage = of('damage-bonus')
-      .filter((e) => applies(e.effect.filter))
-      .map((e) => effectPart(e, value(e.effect.value)));
-    const damageBonus = explained([
-      { source: { kind: 'ability', ability }, value: mods[ability] },
-      ...magic,
-      ...effectDamage,
-    ]);
+  // Só a arma equipada (carregada) ataca; a guardada fica no Inventário.
+  const attacks = sheet.weapons
+    .filter((w) => w.equipped !== false)
+    .map((weapon): AttackOption => {
+      const ability = attackAbility(weapon, mods);
+      const applies = (filter: AttackFilter | undefined) => matchesWeapon(filter, weapon, ability);
+      const magic: ExplainedPart[] =
+        weapon.magicBonus !== 0 ? [{ source: { kind: 'magic' }, value: weapon.magicBonus }] : [];
+      const toHitParts: ExplainedPart[] = [
+        { source: { kind: 'ability', ability }, value: mods[ability] },
+      ];
+      if (weapon.proficient)
+        toHitParts.push({ source: { kind: 'proficiency', level: 1 }, value: prof });
+      const effectToHit = of('attack-bonus')
+        .filter((e) => applies(e.effect.filter))
+        .map((e) => effectPart(e, value(e.effect.value)));
+      const toHit = explained([...toHitParts, ...magic, ...effectToHit, ...d20Parts]);
+      const effectDamage = of('damage-bonus')
+        .filter((e) => applies(e.effect.filter))
+        .map((e) => effectPart(e, value(e.effect.value)));
+      const damageBonus = explained([
+        { source: { kind: 'ability', ability }, value: mods[ability] },
+        ...magic,
+        ...effectDamage,
+      ]);
 
-    const extraDamage: ExtraDamage[] = [];
-    for (const e of of('extra-damage')) {
-      if (!applies(e.effect.filter)) continue;
-      const dice = evalDice(e.effect.dice, engine.scaling);
-      if (!dice) continue;
-      extraDamage.push({
-        name: e.source.name,
-        dice,
-        ...(e.effect.damageType ? { damageType: e.effect.damageType } : {}),
-        oncePerTurn: Boolean(e.effect.oncePerTurn),
-      });
-    }
+      const extraDamage: ExtraDamage[] = [];
+      for (const e of of('extra-damage')) {
+        if (!applies(e.effect.filter)) continue;
+        const dice = evalDice(e.effect.dice, engine.scaling);
+        if (!dice) continue;
+        extraDamage.push({
+          name: e.source.name,
+          dice,
+          ...(e.effect.damageType ? { damageType: e.effect.damageType } : {}),
+          oncePerTurn: Boolean(e.effect.oncePerTurn),
+        });
+      }
 
-    const dice = weapon.damageDice.trim();
-    const expression = withModifier(dice, damageBonus.value);
-    const valid = dice !== '' && parse(expression).ok;
-    if (!valid) warnings.push({ code: 'invalid-damage-dice', weaponId: weapon.id });
-    const always = extraDamage
-      .filter((x) => !x.oncePerTurn)
-      .map((x) => `+${x.dice}`)
-      .join('');
-    const once = extraDamage
-      .filter((x) => x.oncePerTurn)
-      .map((x) => `+${x.dice}`)
-      .join('');
-    const damageExpression = valid ? `${expression}${always}` : null;
+      const dice = weapon.damageDice.trim();
+      const expression = withModifier(dice, damageBonus.value);
+      const valid = dice !== '' && parse(expression).ok;
+      if (!valid) warnings.push({ code: 'invalid-damage-dice', weaponId: weapon.id });
+      const always = extraDamage
+        .filter((x) => !x.oncePerTurn)
+        .map((x) => `+${x.dice}`)
+        .join('');
+      const once = extraDamage
+        .filter((x) => x.oncePerTurn)
+        .map((x) => `+${x.dice}`)
+        .join('');
+      const damageExpression = valid ? `${expression}${always}${damagePenalty}` : null;
 
-    return {
-      weaponId: weapon.id,
-      ability,
-      toHit,
-      attackExpression: `${withModifier('1d20', toHit.value)}${attackDice.map((d) => `+${d}`).join('')}`,
-      advantage: attackAdvantage || hasAdvantage(effects, `attack:${ability}`),
-      damageBonus,
-      damageExpression,
-      firstHitExpression: damageExpression && once ? `${damageExpression}${once}` : null,
-      extraDamage,
-      critRange: Math.min(weapon.critRange, critMin),
-    };
-  });
+      return {
+        weaponId: weapon.id,
+        ability,
+        toHit,
+        attackExpression: `${withModifier('1d20', toHit.value)}${attackDice}`,
+        advantage: attackAdvantage || hasAdvantage(effects, `attack:${ability}`),
+        disadvantage: attackDisadvantage || hasDisadvantage(effects, `attack:${ability}`),
+        damageBonus,
+        damageExpression,
+        firstHitExpression: damageExpression && once ? `${damageExpression}${once}` : null,
+        extraDamage,
+        critRange: Math.min(weapon.critRange, critMin),
+      };
+    });
 
+  // Bônus e penalidades somam; depois os multiplicadores (Lentidão: metade; Contido: 0).
+  const speedFactor = of('speed-multiplier').reduce((f, e) => f * e.effect.factor, 1);
+  const load = carryingLoad(sheet);
   const speedFt = Math.max(
     0,
-    sheet.combat.speedFt + of('speed-bonus').reduce((sum, e) => sum + value(e.effect.ft), 0),
+    Math.floor(
+      ((sheet.combat.speedFt + of('speed-bonus').reduce((sum, e) => sum + value(e.effect.ft), 0)) *
+        speedFactor) /
+        5,
+    ) * 5,
   );
+  // Acima da Capacidade de Carga só dá para arrastar ou empurrar: até 1,5 m; acima do dobro, 0.
+  const loadedSpeedFt = load.overDrag ? 0 : load.over ? Math.min(speedFt, 5) : speedFt;
   const resistances = of('resistance').flatMap((e) =>
     e.effect.damage.map((type) => ({ type, source: e.source.name })),
   );
@@ -436,7 +488,9 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
     armorClass,
     initiative,
     initiativeAdvantage: hasAdvantage(effects, 'initiative'),
-    speedFt,
+    initiativeDisadvantage: hasDisadvantage(effects, 'initiative'),
+    speedFt: loadedSpeedFt,
+    load,
     passivePerception,
     hpMax,
     hitDice,

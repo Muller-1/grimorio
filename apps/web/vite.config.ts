@@ -50,6 +50,9 @@ export default defineConfig({
               name: 'rules',
               // Fora: o index.ts da raiz (só reexporta; ficando aqui, puxaria o pedaço para
               // /dados), a criação e a subida de nível (vão com o assistente e com o diálogo).
+              // Atenção: este pedaço e o da ficha (com @grimorio/shared) se importam um ao outro.
+              // Nada aqui pode usar um valor de @grimorio/shared no carregamento do módulo
+              // (ex.: `const x = ABILITY_KEYS.map(...)` fora de função): ele ainda não existe.
               test: /packages[\\/]rules[\\/]src[\\/](?!dice[\\/]|spells[\\/]data[\\/]|creation[\\/]|levelup[\\/]|index\.ts$)/,
             },
           ],

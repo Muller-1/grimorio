@@ -1203,7 +1203,7 @@ export const LEVEL_2: SpellDef[] = [
     },
     duration: 'Concentração, até 1 hora',
     concentration: true,
-    text: 'Você conjura uma massa de teias pegajosas que enche um Cubo de 6 m num ponto ao alcance pela duração. As teias são Terreno Difícil e a área fica de Escuridão Leve. Se não estiverem presas entre duas massas sólidas (paredes, árvores) ou estendidas sobre chão, parede ou teto, desabam e a magia termina no início do seu próximo turno; sobre uma superfície plana, têm 1,5 m de profundidade. A primeira vez que uma criatura entra nas teias num turno ou começa o turno nelas, faz uma salvaguarda de Destreza ou fica Impedida enquanto estiver nelas ou até se soltar; Impedida, pode usar uma ação para um teste de Força (Atletismo) contra a sua CD e se soltar no sucesso. As teias são inflamáveis: cada Cubo de 1,5 m exposto ao fogo queima em 1 rodada, causando 2d4 de dano Ígneo a quem começa o turno no fogo.',
+    text: 'Você conjura uma massa de teias pegajosas que enche um Cubo de 6 m num ponto ao alcance pela duração. As teias são Terreno Difícil e a área fica de Escuridão Leve. Se não estiverem presas entre duas massas sólidas (paredes, árvores) ou estendidas sobre chão, parede ou teto, desabam e a magia termina no início do seu próximo turno; sobre uma superfície plana, têm 1,5 m de profundidade. A primeira vez que uma criatura entra nas teias num turno ou começa o turno nelas, faz uma salvaguarda de Destreza ou fica Contida enquanto estiver nelas ou até se soltar; Contida, pode usar uma ação para um teste de Força (Atletismo) contra a sua CD e se soltar no sucesso. As teias são inflamáveis: cada Cubo de 1,5 m exposto ao fogo queima em 1 rodada, causando 2d4 de dano Ígneo a quem começa o turno no fogo.',
     save: 'dex',
   },
   {

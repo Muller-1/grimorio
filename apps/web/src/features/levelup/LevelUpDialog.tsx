@@ -23,9 +23,27 @@ import { tl } from '@/lib/i18n/levelup';
 import { cn } from '@/lib/utils';
 import { newId } from '@/ports/ids';
 import { ChoiceEditor, type ChoiceContext } from './ChoiceEditor';
-import { emptyDraft, pendingCount, toInputs, type LevelDraft } from './state';
+import { emptyDraft, isComplete, toInputs, type LevelDraft } from './state';
 
-type Phase = { kind: 'count' } | { kind: 'level'; index: number } | { kind: 'summary' };
+type Phase = { kind: 'count' } | { kind: 'page'; index: number } | { kind: 'summary' };
+
+/**
+ * Pedido de 15/10 ("ruim de ler, tudo concentrado"): cada nível vira várias telas curtas. A
+ * subclasse vem antes (ela muda o que se ganha), depois o que ganhou, depois uma escolha por tela.
+ */
+type Page = { level: number; kind: 'gains' } | { level: number; kind: 'choice'; key: string };
+
+function pagesOf(steps: LevelStep[]): Page[] {
+  return steps.flatMap((step): Page[] => {
+    const sub = step.choices.filter((c) => c.def.kind === 'subclass');
+    const rest = step.choices.filter((c) => c.def.kind !== 'subclass');
+    return [
+      ...sub.map((c) => ({ level: step.level, kind: 'choice' as const, key: c.key })),
+      { level: step.level, kind: 'gains' as const },
+      ...rest.map((c) => ({ level: step.level, kind: 'choice' as const, key: c.key })),
+    ];
+  });
+}
 
 /** Atributos depois dos aumentos escolhidos nos níveis anteriores a `upTo` (para limites). */
 function scoresBefore(
@@ -51,54 +69,92 @@ function scoresBefore(
 
 function Gains({ step }: { step: LevelStep }) {
   const g = step.gains;
-  const lines: string[] = [];
-  if (g.proficiency) lines.push(tl.proficiency(g.proficiency.from, g.proficiency.to));
-  for (const c of g.columns) lines.push(tl.column(c.name, String(c.from), String(c.to)));
-  if (g.cantrips) lines.push(tl.cantrips(g.cantrips.from, g.cantrips.to));
-  if (g.prepared) lines.push(tl.prepared(g.prepared.from, g.prepared.to));
+  const tiles: { label: string; from: string; to: string }[] = [];
+  if (g.proficiency) {
+    tiles.push({
+      label: tl.proficiencyLabel,
+      from: formatModifier(g.proficiency.from),
+      to: formatModifier(g.proficiency.to),
+    });
+  }
+  for (const c of g.columns) tiles.push({ label: c.name, from: String(c.from), to: String(c.to) });
+  if (g.cantrips) {
+    tiles.push({
+      label: tl.cantripsLabel,
+      from: String(g.cantrips.from),
+      to: String(g.cantrips.to),
+    });
+  }
+  if (g.prepared) {
+    tiles.push({
+      label: tl.preparedLabel,
+      from: String(g.prepared.from),
+      to: String(g.prepared.to),
+    });
+  }
+  for (const sl of g.slots) {
+    tiles.push({ label: tl.slotLabel(sl.circle), from: String(sl.from), to: String(sl.to) });
+  }
   if (g.pact) {
-    lines.push(
-      tl.pact(
-        tl.pactValue(g.pact.from.count, g.pact.from.circle),
-        tl.pactValue(g.pact.to.count, g.pact.to.circle),
-      ),
-    );
+    tiles.push({
+      label: tl.pactLabel,
+      from: tl.pactValue(g.pact.from.count, g.pact.from.circle),
+      to: tl.pactValue(g.pact.to.count, g.pact.to.circle),
+    });
   }
   return (
-    <div className="space-y-2 text-sm">
-      {lines.length ? (
-        <ul className="list-disc space-y-0.5 pl-5" data-testid="levelup.gains.numbers">
-          {lines.map((l) => (
-            <li key={l}>{l}</li>
-          ))}
-        </ul>
-      ) : null}
-      {g.slots.length ? (
-        <p>
-          <strong>{tl.slots}: </strong>
-          {g.slots.map((s) => tl.slot(s.circle, s.from, s.to)).join(' · ')}
-        </p>
+    <div className="space-y-5">
+      {tiles.length ? (
+        <section>
+          <h4 className="mb-2 text-sm font-semibold text-muted">{tl.numbersTitle}</h4>
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="levelup.gains.numbers">
+            {tiles.map((x) => (
+              <li
+                key={x.label}
+                className="rounded-lg border border-border bg-surface-2/60 px-3 py-2"
+              >
+                <p className="text-xs text-muted">{x.label}</p>
+                <p className="tabular font-display text-lg font-bold">
+                  {x.from} <span className="text-muted">→</span> {x.to}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
       {g.grantedSpells.length ? (
-        <p>
-          <strong>{tl.granted}: </strong>
-          {g.grantedSpells
-            .map((s) => `${spellById(s.id)?.name ?? s.id} (${tl.grantedSource[s.source]})`)
-            .join(', ')}
-        </p>
+        <section>
+          <h4 className="mb-2 text-sm font-semibold text-muted">{tl.granted}</h4>
+          <ul className="flex flex-wrap gap-1.5">
+            {g.grantedSpells.map((x) => (
+              <li
+                key={x.id}
+                className="rounded-full border border-accent bg-accent-soft px-2.5 py-0.5 text-sm"
+              >
+                {spellById(x.id)?.name ?? x.id}{' '}
+                <span className="text-xs text-muted">({tl.grantedSource[x.source]})</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
       {g.features.length ? (
-        <ul className="space-y-1.5" data-testid="levelup.gains.features">
-          {g.features.map((f) => (
-            <li key={`${f.source}-${f.id}`} className="rounded-md bg-surface-2 px-2.5 py-1.5">
-              <p className="font-semibold">
-                {f.name}{' '}
-                <span className="text-xs font-normal text-muted">({tl.featureFrom[f.source]})</span>
-              </p>
-              <p className="text-xs">{f.text}</p>
-            </li>
-          ))}
-        </ul>
+        <section>
+          <h4 className="mb-2 text-sm font-semibold text-muted">{tl.featuresTitle}</h4>
+          <ul className="space-y-2" data-testid="levelup.gains.features">
+            {g.features.map((f) => (
+              <li key={`${f.source}-${f.id}`} className="rounded-lg border border-border p-3">
+                <p className="font-display text-base font-bold">
+                  {f.name}{' '}
+                  <span className="font-sans text-xs font-normal text-muted">
+                    ({tl.featureFrom[f.source]})
+                  </span>
+                </p>
+                <p className="mt-1 text-sm leading-relaxed">{f.text}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
     </div>
   );
@@ -116,12 +172,23 @@ function HpChoice({
   const roll = useDiceStore((s) => s.roll);
   const { hitDie, hpAverage, conMod } = step.gains;
   const rolled = draft.hpRolled;
+  const total = Math.max(1, (rolled ?? hpAverage) + conMod);
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm" data-testid="levelup.hp">
-      <strong>{tl.hp}:</strong>
-      <span data-testid="levelup.hp.value" data-value={Math.max(1, (rolled ?? hpAverage) + conMod)}>
-        {rolled === undefined ? tl.hpAverage(hpAverage, conMod) : tl.hpRolled(rolled, conMod)}
-      </span>
+    <section
+      className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/40 bg-accent-soft px-3 py-2.5"
+      data-testid="levelup.hp"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-muted">{tl.hp}</p>
+        <p className="font-display text-xl font-bold">
+          <span data-testid="levelup.hp.value" data-value={total}>
+            +{total}
+          </span>
+        </p>
+        <p className="text-xs text-muted">
+          {rolled === undefined ? tl.hpAverage(hpAverage, conMod) : tl.hpRolled(rolled, conMod)}
+        </p>
+      </div>
       {rolled === undefined ? (
         <Button
           size="sm"
@@ -140,7 +207,7 @@ function HpChoice({
           {tl.hpUseAverage}
         </Button>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -239,7 +306,7 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
             <Button
               variant="primary"
               disabled={!hasClass && !classId}
-              onClick={() => setPhase({ kind: 'level', index: 0 })}
+              onClick={() => setPhase({ kind: 'page', index: 0 })}
               data-testid="levelup.confirm"
             >
               <Check className="size-4" />
@@ -369,7 +436,7 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
           <>
             <Button
               variant="ghost"
-              onClick={() => setPhase({ kind: 'level', index: steps.length - 1 })}
+              onClick={() => setPhase({ kind: 'page', index: pagesOf(steps).length - 1 })}
             >
               <ArrowLeft className="size-4" />
               {tl.back}
@@ -428,12 +495,20 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
     );
   }
 
-  // ---------- 2) um nível ----------
-  const step = steps[phase.index];
-  if (!step || !progression) return null;
+  // ---------- 2) telas de cada nível ----------
+  const pages = pagesOf(steps);
+  const page = pages[Math.min(phase.index, pages.length - 1)];
+  const step = page ? steps.find((x) => x.level === page.level) : undefined;
+  if (!page || !step || !progression) return null;
   const draft = draftOf(step.level);
-  const pending = pendingCount(step, draft);
-  const last = phase.index === steps.length - 1;
+  const last = phase.index >= pages.length - 1;
+  const slot = page.kind === 'choice' ? step.choices.find((c) => c.key === page.key) : undefined;
+  const blocked = slot ? !isComplete(slot, draft) : false;
+  const levelPages = pages.filter((x) => x.level === step.level);
+  const choicePages = levelPages.filter((x) => x.kind === 'choice');
+  const choiceIndex = slot
+    ? choicePages.findIndex((x) => x.kind === 'choice' && x.key === slot.key)
+    : -1;
   const ctx: ChoiceContext = {
     sheet,
     progression,
@@ -456,13 +531,13 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
       footer={
         <>
           <span className="mr-auto self-center text-xs text-muted">
-            {tl.stepOf(phase.index + 1, steps.length)}
+            {tl.stepOf(phase.index + 1, pages.length)}
           </span>
           <Button
             variant="ghost"
             onClick={() =>
               setPhase(
-                phase.index === 0 ? { kind: 'count' } : { kind: 'level', index: phase.index - 1 },
+                phase.index === 0 ? { kind: 'count' } : { kind: 'page', index: phase.index - 1 },
               )
             }
           >
@@ -471,9 +546,9 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
           </Button>
           <Button
             variant="primary"
-            disabled={pending > 0}
+            disabled={blocked}
             onClick={() =>
-              setPhase(last ? { kind: 'summary' } : { kind: 'level', index: phase.index + 1 })
+              setPhase(last ? { kind: 'summary' } : { kind: 'page', index: phase.index + 1 })
             }
             data-testid="levelup.next"
           >
@@ -483,38 +558,58 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
         </>
       }
     >
-      <div className="space-y-4" data-testid={`levelup.level.${step.level}`}>
-        <section className="space-y-2">
-          <h3 className="font-display text-base font-bold">{tl.gainsTitle}</h3>
-          <HpChoice
-            step={step}
-            draft={draft}
-            onChange={(rolled) =>
-              update(step.level, (d) => {
-                const next = { ...d };
-                if (rolled === undefined) delete next.hpRolled;
-                else next.hpRolled = rolled;
-                return next;
-              })
-            }
-          />
-          <Gains step={step} />
-        </section>
-        <section className="space-y-2">
-          <h3 className="font-display text-base font-bold">{tl.choicesTitle}</h3>
-          {step.choices.length === 0 ? (
-            <p className="text-sm text-muted" data-testid="levelup.nothing">
-              {tl.nothingToChoose}
+      <div className="space-y-4" data-testid={`levelup.level.${step.level}`} data-page={page.kind}>
+        <ol className="flex gap-1" aria-label={tl.progressLabel}>
+          {pages.map((_, i) => (
+            <li
+              key={i}
+              className={cn(
+                'h-1.5 flex-1 rounded-full',
+                i < phase.index ? 'bg-accent/60' : i === phase.index ? 'bg-accent' : 'bg-surface-2',
+              )}
+            />
+          ))}
+        </ol>
+        {page.kind === 'gains' ? (
+          <>
+            <h3 className="font-display text-lg font-bold">{tl.gainsTitle}</h3>
+            <HpChoice
+              step={step}
+              draft={draft}
+              onChange={(rolled) =>
+                update(step.level, (d) => {
+                  const next = { ...d };
+                  if (rolled === undefined) delete next.hpRolled;
+                  else next.hpRolled = rolled;
+                  return next;
+                })
+              }
+            />
+            <Gains step={step} />
+            <p
+              className="rounded-md bg-surface-2 px-3 py-2 text-sm"
+              data-testid="levelup.after-gains"
+            >
+              {choicePages.some((x) => pages.indexOf(x) > phase.index)
+                ? tl.choicesNext(choicePages.filter((x) => pages.indexOf(x) > phase.index).length)
+                : step.choices.length === 0
+                  ? tl.nothingToChoose
+                  : tl.allChosen}
             </p>
-          ) : (
-            step.choices.map((slot) => <ChoiceEditor key={slot.key} slot={slot} ctx={ctx} />)
-          )}
-          {pending > 0 ? (
-            <p role="status" className="text-sm text-danger">
-              {tl.pending(pending)}
+          </>
+        ) : slot ? (
+          <>
+            <p className="text-sm font-semibold text-muted">
+              {tl.choiceOf(choiceIndex + 1, choicePages.length)}
             </p>
-          ) : null}
-        </section>
+            <ChoiceEditor slot={slot} ctx={ctx} standalone />
+            {blocked ? (
+              <p role="status" className="text-sm text-danger">
+                {tl.pending(1)}
+              </p>
+            ) : null}
+          </>
+        ) : null}
       </div>
     </Dialog>
   );

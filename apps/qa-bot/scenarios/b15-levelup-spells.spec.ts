@@ -1,7 +1,8 @@
 /**
  * B15 — Subida de nível, magias e habilidades (ADR-010): sobe um Bárbaro de 2 para 4 pelas
- * telas por nível, liga Fúria + Ataque Imprudente e confere o Frenesi; num Mago, adiciona uma
- * magia pela aba Magias, conjura gastando espaço e confere a Concentração. O oráculo é o motor
+ * telas curtas de cada nível (subclasse, o que ganhou, uma escolha por tela), liga Fúria +
+ * Ataque Imprudente e confere o Frenesi; num Mago, adiciona uma magia pela aba Magias, conjura
+ * gastando espaço e confere a Concentração. O oráculo é o motor
  * de regras (mesmas contas que a ficha usa).
  */
 import { createBlankSheet, type LocalSheet } from '@grimorio/shared';
@@ -59,6 +60,14 @@ async function openColumn(page: Page, name: 'Personagem' | 'Combate' | 'Ações'
   if (await tab.isVisible()) await tab.click();
 }
 
+/** Avança pelas telas da subida de nível (escolhas opcionais ficam para depois) até `testId`. */
+async function nextUntil(page: Page, testId: string) {
+  for (let i = 0; i < 8 && !(await page.getByTestId(testId).isVisible()); i++) {
+    await page.getByTestId('levelup.next').click();
+  }
+  await expect(page.getByTestId(testId)).toBeVisible();
+}
+
 const sheetNow = (page: Page) => page.evaluate(() => window.__APP_TEST__!.getSheet() as LocalSheet);
 
 test.describe('B15 — subida de nível, magias e habilidades', { tag: '@B15' }, () => {
@@ -69,20 +78,27 @@ test.describe('B15 — subida de nível, magias e habilidades', { tag: '@B15' },
     await expect(page.getByTestId('levelup.from-to')).toHaveText('Nível 2 → 4');
     await page.getByTestId('levelup.confirm').click();
 
-    // Nível 3: o que ganhou aparece; subclasse é obrigatória.
-    await expect(page.getByTestId('levelup.level.3')).toBeVisible();
-    await expect(page.getByTestId('levelup.gains.numbers')).toContainText('Fúrias: 2 → 3');
+    // Nível 3: a subclasse vem primeiro (muda o que se ganha) e é obrigatória.
+    const level3 = page.getByTestId('levelup.level.3');
+    await expect(level3).toHaveAttribute('data-page', 'choice');
     await expect(page.getByTestId('levelup.next')).toBeDisabled();
     await page.getByTestId('choice.subclass.berserker').check();
+    await page.getByTestId('levelup.next').click();
+    // Depois, numa tela só, o que ganhou (já com a característica da subclasse).
+    await expect(level3).toHaveAttribute('data-page', 'gains');
+    await expect(page.getByTestId('levelup.gains.numbers')).toContainText('Fúrias');
+    await expect(page.getByTestId('levelup.gains.numbers')).toContainText('2 → 3');
     await expect(page.getByTestId('levelup.gains.features')).toContainText('Frenesi');
     expect(await seriousA11yViolations(page)).toEqual([]);
-    await page.getByTestId('levelup.next').click();
+    await nextUntil(page, 'levelup.level.4');
 
-    // Nível 4: +2 em Força.
-    await expect(page.getByTestId('levelup.level.4')).toBeVisible();
+    // Nível 4: o que ganhou e, na tela seguinte, o Aumento de Atributo (+2 em Força).
+    await expect(page.getByTestId('levelup.level.4')).toHaveAttribute('data-page', 'gains');
+    await page.getByTestId('levelup.next').click();
     await expect(page.getByTestId('levelup.next')).toBeDisabled();
     await page.locator('[data-testid^="ability-select."]').first().selectOption('str');
-    await page.getByTestId('levelup.next').click();
+    expect(await seriousA11yViolations(page)).toEqual([]);
+    await nextUntil(page, 'levelup.summary');
 
     await expect(page.getByTestId('levelup.summary')).toContainText('18');
     await page.getByTestId('levelup.apply').click();

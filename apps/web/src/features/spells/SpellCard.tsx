@@ -52,7 +52,10 @@ export function SpellCard({
   const effectKey = `${SPELL_ACTIVE_PREFIX}${spell.id}`;
   const hasEffect = Boolean(SPELL_EFFECTS[spell.id]);
   const onMe = sheet.state.active.includes(effectKey);
-  const self = spell.range.startsWith('Pessoal');
+  // Alcance Pessoal = sempre em você; nas outras, o jogador marca se conjurou em si mesmo.
+  const selfOnly = spell.range.startsWith('Pessoal');
+  const [onSelf, setOnSelf] = useState(selfOnly);
+  const selfId = useId();
   const components = [
     spell.components.v ? 'V' : null,
     spell.components.s ? 'S' : null,
@@ -81,8 +84,8 @@ export function SpellCard({
       }
     }
     if (spell.concentration) dispatch({ type: 'set-concentration', spellId: spell.id });
-    // Magia em você mesmo (alcance Pessoal) com efeito na ficha: já liga.
-    if (hasEffect && self && !useSheetStore.getState().sheet.state.active.includes(effectKey)) {
+    // Só vai para "Magias em você" quando foi conjurada em você mesmo.
+    if (hasEffect && onSelf && !useSheetStore.getState().sheet.state.active.includes(effectKey)) {
       dispatch({ type: 'toggle-spell-effect', spellId: spell.id });
     }
     toast(tsp.castDone(spell.name, slot), 'success');
@@ -181,6 +184,19 @@ export function SpellCard({
                 </Select>
               </>
             ) : null}
+            {hasEffect && !selfOnly ? (
+              <label htmlFor={selfId} className="flex items-center gap-1.5 text-xs">
+                <input
+                  id={selfId}
+                  type="checkbox"
+                  checked={onSelf}
+                  onChange={(e) => setOnSelf(e.target.checked)}
+                  className="size-4 accent-[var(--accent)]"
+                  data-testid={`spell.${spell.id}.on-self`}
+                />
+                {tsp.castOnSelf}
+              </label>
+            ) : null}
             <Button
               size="sm"
               variant="primary"
@@ -215,18 +231,8 @@ export function SpellCard({
                 {tsp.heal} {roll.heal}
               </RollButton>
             ) : null}
-            {hasEffect ? (
-              <Button
-                size="sm"
-                variant={onMe ? 'primary' : 'outline'}
-                aria-pressed={onMe}
-                aria-label={tsp.onMeLabel(spell.name, onMe)}
-                onClick={() => dispatch({ type: 'toggle-spell-effect', spellId: spell.id })}
-              >
-                {tsp.onMe}
-              </Button>
-            ) : null}
           </div>
+          {hasEffect && onMe ? <p className="text-xs text-accent">{tsp.onMeNow}</p> : null}
           {granted?.freePerLongRest ? (
             <p className="text-xs text-muted">{tsp.freeUses(freeLeft, granted.freePerLongRest)}</p>
           ) : null}

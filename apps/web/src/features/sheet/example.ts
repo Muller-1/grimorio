@@ -73,17 +73,30 @@ export function exampleSheet(): LocalSheet {
       id: 'ex-furtivo',
       name: 'Ataque Furtivo (2d6)',
       text: 'Uma vez por turno, some 2d6 ao dano de um ataque com arma de Acuidade ou à distância quando tiver Vantagem, ou quando um aliado estiver a até 1,5 m do alvo.',
+      source: 'class',
     },
     {
       id: 'ex-ardilosa',
       name: 'Ação Ardilosa',
       text: 'Com uma Ação Bônus: Correr, Desengajar ou Esconder.',
+      source: 'class',
     },
     {
       id: 'ex-armadura',
       name: 'CA 15',
-      text: 'Couro Batido (12) + Destreza (+3). Ajustada à mão enquanto as armaduras não estão no site.',
+      text: 'Armadura de Couro Batido (12) + Destreza (+3).',
+      source: 'training',
     },
   ];
+  s.inventory = {
+    coins: { cp: 8, sp: 12, ep: 0, gp: 15, pp: 0 },
+    items: [
+      { id: 'ex-armadura-item', name: 'Armadura de Couro Batido', quantity: 1, weightKg: 6.5 },
+      { id: 'ex-flechas', name: 'Flechas', quantity: 20, weightKg: 0.025 },
+      { id: 'ex-aljava', name: 'Aljava', quantity: 1, weightKg: 0.5 },
+      { id: 'ex-ladrao', name: 'Ferramentas de Ladrão', quantity: 1, weightKg: 0.5 },
+      { id: 'ex-kit', name: 'Kit de Assaltante', quantity: 1, weightKg: 21 },
+    ],
+  };
   return s;
 }

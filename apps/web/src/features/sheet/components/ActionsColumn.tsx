@@ -1,5 +1,5 @@
-import { critical, parse, stringify, withModifier, type AttackOption } from '@grimorio/rules';
-import { DAMAGE_TYPES, type DamageType, type Feature, type Weapon } from '@grimorio/shared';
+import { critical, parse, stringify, type AttackOption } from '@grimorio/rules';
+import { FEATURE_SOURCES, type Feature, type Weapon } from '@grimorio/shared';
 import {
   Backpack,
   ChevronDown,
@@ -12,26 +12,29 @@ import {
   WandSparkles,
 } from 'lucide-react';
 import { Tabs } from 'radix-ui';
-import { lazy, Suspense, useId, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useId, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { D20Icon } from '@/components/ui/d20-icon';
-import { Dialog } from '@/components/ui/dialog';
-import { Input, Label, Select, Textarea } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { Panel } from '@/components/ui/panel';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { newId } from '@/ports/ids';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
-import { AdvantageBadge } from './AdvantageBadge';
+import { AdvantageBadge, d20 } from './AdvantageBadge';
 import { ExplainButton } from './Explain';
 import { RollButton } from './RollButton';
 
 type TabKey = 'weapons' | 'spells' | 'inventory' | 'features';
 
+/** Pedido de 15/10: a ficha não cresce sem fim; a lista de cada aba rola por dentro. */
+const LIST_AREA = 'px-3 pb-3 md:max-h-[70dvh] md:overflow-y-auto';
+
 // A aba Magias traz a lista das 339 magias: só carrega quando o jogador abre a aba.
 const SpellsTab = lazy(() => import('@/features/spells/SpellsTab'));
+const InventoryTab = lazy(() => import('@/features/inventory/InventoryTab'));
+const WeaponEditor = lazy(() => import('./Editors').then((m) => ({ default: m.WeaponEditor })));
+const FeatureEditor = lazy(() => import('./Editors').then((m) => ({ default: m.FeatureEditor })));
 const a = t.sheet.actions;
 
 /** Normaliza para busca: sem acentos e sem maiúsculas ("Rapiéira" acha "rapieira"). */
@@ -65,7 +68,7 @@ function WeaponCard({
   const typeLabel = weapon.damageType ? t.damageTypes[weapon.damageType] : null;
   // A jogada já vem com os dados extras (Bênção: +1d4); Vantagem troca o d20 por 2d20.
   const withD20 = (d20: string) => attack.attackExpression.replace(/^1d20/, d20);
-  const mainRoll = withD20(attack.advantage ? '2d20kh1' : '1d20');
+  const mainRoll = withD20(d20(attack.advantage, attack.disadvantage));
   const extras = attack.extraDamage
     .map((x) => `${x.name} ${x.dice}${x.oncePerTurn ? ` (${a.oncePerTurn})` : ''}`)
     .join(', ');
@@ -100,7 +103,7 @@ function WeaponCard({
             {a.crit(attack.critRange)}
           </p>
         </div>
-        {attack.advantage ? <AdvantageBadge /> : null}
+        <AdvantageBadge advantage={attack.advantage} disadvantage={attack.disadvantage} />
         <RollButton
           rollLabel={a.attackRollLabel(weapon.name)}
           expression={mainRoll}
@@ -213,207 +216,6 @@ function WeaponCard({
   );
 }
 
-const blankWeapon = (): Weapon => ({
-  id: newId(),
-  name: '',
-  ability: 'str',
-  proficient: true,
-  damageDice: '',
-  magicBonus: 0,
-  critRange: 20,
-});
-
-function WeaponEditor({ initial, onClose }: { initial: Weapon | null; onClose: () => void }) {
-  const edit = useSheetStore((s) => s.edit);
-  const { derived } = useSheet();
-  const [w, setW] = useState<Weapon>(() => initial ?? blankWeapon());
-  const [error, setError] = useState<string | null>(null);
-  const ids = {
-    name: useId(),
-    ability: useId(),
-    dice: useId(),
-    type: useId(),
-    magic: useId(),
-    crit: useId(),
-    props: useId(),
-    notes: useId(),
-    prof: useId(),
-  };
-  const e = t.sheet.weaponEditor;
-
-  const set = <K extends keyof Weapon>(key: K, value: Weapon[K]) =>
-    setW((prev) => ({ ...prev, [key]: value }));
-
-  // Prévia com as mesmas regras da ficha
-  const mods = { str: derived.abilities.str.mod, dex: derived.abilities.dex.mod };
-  const ability = w.ability === 'finesse' ? (mods.dex > mods.str ? 'dex' : 'str') : w.ability;
-  const toHit = mods[ability] + (w.proficient ? derived.proficiencyBonus.value : 0) + w.magicBonus;
-  const dmgBonus = mods[ability] + w.magicBonus;
-  const dice = w.damageDice.trim();
-  const diceOk = dice !== '' && parse(withModifier(dice, dmgBonus)).ok;
-
-  const save = () => {
-    if (w.name.trim() === '') return setError(e.nameRequired);
-    if (!diceOk) return setError(e.invalidDice);
-    const clean: Weapon = { ...w, name: w.name.trim(), damageDice: dice };
-    edit((d) => {
-      const i = d.weapons.findIndex((x) => x.id === clean.id);
-      if (i >= 0) d.weapons[i] = clean;
-      else d.weapons.push(clean);
-    });
-    onClose();
-  };
-
-  return (
-    <Dialog
-      open
-      onOpenChange={(o) => !o && onClose()}
-      title={initial ? e.titleEdit : e.titleNew}
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>
-            {e.cancel}
-          </Button>
-          <Button variant="primary" onClick={save} data-testid="weapon.save">
-            {e.save}
-          </Button>
-        </>
-      }
-    >
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
-          <Label htmlFor={ids.name}>{e.name}</Label>
-          <Input
-            id={ids.name}
-            value={w.name}
-            maxLength={60}
-            placeholder={e.namePlaceholder}
-            onChange={(ev) => set('name', ev.target.value)}
-            data-testid="weapon.name"
-          />
-        </div>
-        <div className="col-span-2">
-          <Label htmlFor={ids.ability}>{e.ability}</Label>
-          <Select
-            id={ids.ability}
-            value={w.ability}
-            onChange={(ev) => set('ability', ev.target.value as Weapon['ability'])}
-          >
-            <option value="str">{e.abilityStr}</option>
-            <option value="dex">{e.abilityDex}</option>
-            <option value="finesse">{e.abilityFinesse}</option>
-          </Select>
-        </div>
-        <label htmlFor={ids.prof} className="col-span-2 flex items-center gap-2 text-sm">
-          <input
-            id={ids.prof}
-            type="checkbox"
-            checked={w.proficient}
-            onChange={(ev) => set('proficient', ev.target.checked)}
-            className="size-4 accent-[var(--accent)]"
-          />
-          {e.proficient}
-        </label>
-        <div>
-          <Label htmlFor={ids.dice}>{e.damageDice}</Label>
-          <Input
-            id={ids.dice}
-            value={w.damageDice}
-            maxLength={40}
-            placeholder={e.damageDicePlaceholder}
-            onChange={(ev) => set('damageDice', ev.target.value)}
-            className="font-mono"
-            autoCapitalize="off"
-            spellCheck={false}
-            aria-invalid={dice !== '' && !diceOk ? true : undefined}
-            data-testid="weapon.dice"
-          />
-        </div>
-        <div>
-          <Label htmlFor={ids.type}>{e.damageType}</Label>
-          <Select
-            id={ids.type}
-            value={w.damageType ?? ''}
-            onChange={(ev) => {
-              const v = ev.target.value;
-              setW((prev) => {
-                const next = { ...prev };
-                if (v === '') delete next.damageType;
-                else next.damageType = v as DamageType;
-                return next;
-              });
-            }}
-          >
-            <option value="">{e.noDamageType}</option>
-            {DAMAGE_TYPES.map((dt) => (
-              <option key={dt} value={dt}>
-                {t.damageTypes[dt]}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <p className="col-span-2 -mt-1 text-xs text-muted">{e.damageDiceHint}</p>
-        <div>
-          <Label htmlFor={ids.magic}>{e.magicBonus}</Label>
-          <Select
-            id={ids.magic}
-            value={w.magicBonus}
-            onChange={(ev) => set('magicBonus', Number(ev.target.value))}
-          >
-            {[0, 1, 2, 3].map((n) => (
-              <option key={n} value={n}>
-                {formatModifier(n)}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor={ids.crit}>{e.critRange}</Label>
-          <Select
-            id={ids.crit}
-            value={w.critRange}
-            onChange={(ev) => set('critRange', Number(ev.target.value))}
-          >
-            {[20, 19, 18].map((n) => (
-              <option key={n} value={n}>
-                {a.crit(n)}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div className="col-span-2">
-          <Label htmlFor={ids.props}>{e.properties}</Label>
-          <Input
-            id={ids.props}
-            value={w.properties ?? ''}
-            maxLength={120}
-            placeholder={e.propertiesPlaceholder}
-            onChange={(ev) => set('properties', ev.target.value)}
-          />
-        </div>
-        <div className="col-span-2">
-          <Label htmlFor={ids.notes}>{e.notes}</Label>
-          <Textarea
-            id={ids.notes}
-            value={w.notes ?? ''}
-            maxLength={2000}
-            onChange={(ev) => set('notes', ev.target.value)}
-            className="min-h-16"
-          />
-        </div>
-      </div>
-      <p className="mt-3 rounded-md bg-surface-2 px-3 py-2 text-sm" aria-live="polite">
-        {diceOk ? e.preview(formatModifier(toHit), withModifier(dice, dmgBonus)) : e.damageDiceHint}
-      </p>
-      {error ? (
-        <p role="alert" className="mt-2 text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
-    </Dialog>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Características
 // ---------------------------------------------------------------------------
@@ -465,73 +267,6 @@ function FeatureCard({ feature, onEdit }: { feature: Feature; onEdit: () => void
   );
 }
 
-function FeatureEditor({ initial, onClose }: { initial: Feature | null; onClose: () => void }) {
-  const edit = useSheetStore((s) => s.edit);
-  const [f, setF] = useState<Feature>(() => initial ?? { id: newId(), name: '', text: '' });
-  const [error, setError] = useState<string | null>(null);
-  const nameId = useId();
-  const textId = useId();
-  const e = t.sheet.featureEditor;
-
-  const save = () => {
-    if (f.name.trim() === '') return setError(e.nameRequired);
-    const clean = { ...f, name: f.name.trim() };
-    edit((d) => {
-      const i = d.features.findIndex((x) => x.id === clean.id);
-      if (i >= 0) d.features[i] = clean;
-      else d.features.push(clean);
-    });
-    onClose();
-  };
-
-  return (
-    <Dialog
-      open
-      onOpenChange={(o) => !o && onClose()}
-      title={initial ? e.titleEdit : e.titleNew}
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>
-            {e.cancel}
-          </Button>
-          <Button variant="primary" onClick={save}>
-            {e.save}
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-3">
-        <div>
-          <Label htmlFor={nameId}>{e.name}</Label>
-          <Input
-            id={nameId}
-            value={f.name}
-            maxLength={80}
-            placeholder={e.namePlaceholder}
-            onChange={(ev) => setF({ ...f, name: ev.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor={textId}>{e.text}</Label>
-          <Textarea
-            id={textId}
-            value={f.text}
-            maxLength={4000}
-            placeholder={e.textPlaceholder}
-            onChange={(ev) => setF({ ...f, text: ev.target.value })}
-            className="min-h-32"
-          />
-        </div>
-      </div>
-      {error ? (
-        <p role="alert" className="mt-2 text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
-    </Dialog>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Coluna
 // ---------------------------------------------------------------------------
@@ -551,25 +286,28 @@ export function ActionsColumn() {
   const [tab, setTab] = useState<TabKey>('weapons');
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<Editing>(null);
+  const [addingItem, setAddingItem] = useState(false);
   const searchId = useId();
 
   const q = fold(query.trim());
-  const weapons = useMemo(
-    () => sheet.weapons.filter((w) => q === '' || fold(w.name).includes(q)),
-    [sheet.weapons, q],
-  );
-  const features = useMemo(
-    () => sheet.features.filter((f) => q === '' || fold(`${f.name} ${f.text}`).includes(q)),
-    [sheet.features, q],
-  );
+  // Só as armas equipadas atacam; as guardadas ficam no Inventário.
+  const equipped = sheet.weapons.filter((w) => w.equipped !== false);
+  const stored = sheet.weapons.length - equipped.length;
+  const weapons = equipped.filter((w) => q === '' || fold(w.name).includes(q));
+  // Pedido de 15/10: características separadas pela origem (classe, espécie, talentos…).
+  const found = sheet.features.filter((f) => q === '' || fold(`${f.name} ${f.text}`).includes(q));
+  const featureGroups = FEATURE_SOURCES.map((source) => ({
+    source,
+    list: found.filter((f) => (f.source ?? 'other') === source),
+  })).filter((g) => g.list.length > 0);
   const attacks = new Map(derived.attacks.map((atk) => [atk.weaponId, atk]));
-  const canAdd = tab === 'weapons' || tab === 'features';
+  const canAdd = tab !== 'spells';
   const current = TABS.find((x) => x.key === tab)!;
 
   return (
     <Panel bodyClassName="p-0">
       <Tabs.Root value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-        <div className="flex items-stretch border-b border-border">
+        <div className="flex items-stretch overflow-hidden rounded-t-xl border-b border-border">
           <Tabs.List className="flex flex-1" aria-label={t.sheet.columns.actions}>
             {TABS.map((x) => (
               <Tabs.Trigger
@@ -586,11 +324,13 @@ export function ActionsColumn() {
           <button
             type="button"
             onClick={() =>
-              setEditing(
-                tab === 'features'
-                  ? { kind: 'feature', item: null }
-                  : { kind: 'weapon', item: null },
-              )
+              tab === 'inventory'
+                ? setAddingItem(true)
+                : setEditing(
+                    tab === 'features'
+                      ? { kind: 'feature', item: null }
+                      : { kind: 'weapon', item: null },
+                  )
             }
             disabled={!canAdd}
             aria-label={`${a.tabs.add}: ${current.label}`}
@@ -623,10 +363,10 @@ export function ActionsColumn() {
           </div>
         </div>
 
-        <Tabs.Content value="weapons" className="px-3 pb-3">
+        <Tabs.Content value="weapons" className={LIST_AREA}>
           {sheet.weapons.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted">{a.emptyWeapons}</p>
-          ) : weapons.length === 0 ? (
+          ) : weapons.length === 0 && stored === 0 ? (
             <p className="py-4 text-center text-sm text-muted">{a.noResults}</p>
           ) : (
             <ul className="space-y-2">
@@ -643,9 +383,20 @@ export function ActionsColumn() {
               })}
             </ul>
           )}
+          {stored > 0 ? (
+            <p
+              className="mt-2 flex flex-wrap items-center justify-center gap-x-2 text-center text-xs text-muted"
+              data-testid="weapons.stored"
+            >
+              {a.storedWeapons(stored)}
+              <Button size="sm" variant="ghost" onClick={() => setTab('inventory')}>
+                {a.seeInventory}
+              </Button>
+            </p>
+          ) : null}
         </Tabs.Content>
 
-        <Tabs.Content value="spells" className="px-3 pb-3">
+        <Tabs.Content value="spells" className={LIST_AREA}>
           {tab === 'spells' ? (
             <Suspense
               fallback={<p className="py-4 text-center text-sm text-muted">{t.common.loading}</p>}
@@ -655,43 +406,68 @@ export function ActionsColumn() {
           ) : null}
         </Tabs.Content>
 
-        {(['inventory'] as const).map((k) => (
-          <Tabs.Content key={k} value={k} className="px-3 pb-6">
-            <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
-              <D20Icon className="size-8 opacity-50" />
-              <p>{a.comingSoon}</p>
-              <Button size="sm" variant="ghost" onClick={() => setTab('features')}>
-                {a.tabs.features}
-              </Button>
-            </div>
-          </Tabs.Content>
-        ))}
+        <Tabs.Content value="inventory" className={LIST_AREA}>
+          {tab === 'inventory' ? (
+            <Suspense
+              fallback={<p className="py-4 text-center text-sm text-muted">{t.common.loading}</p>}
+            >
+              <InventoryTab
+                query={query}
+                adding={addingItem}
+                onAddDone={() => setAddingItem(false)}
+              />
+            </Suspense>
+          ) : null}
+        </Tabs.Content>
 
-        <Tabs.Content value="features" className="px-3 pb-3">
+        <Tabs.Content value="features" className={LIST_AREA}>
           {sheet.features.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted">{a.emptyFeatures}</p>
-          ) : features.length === 0 ? (
+          ) : featureGroups.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted">{a.noResults}</p>
           ) : (
-            <ul className="space-y-2">
-              {features.map((f) => (
-                <FeatureCard
-                  key={f.id}
-                  feature={f}
-                  onEdit={() => setEditing({ kind: 'feature', item: f })}
-                />
+            <div className="space-y-3">
+              {featureGroups.map((g) => (
+                <details
+                  key={g.source}
+                  open
+                  className="group rounded-lg border border-border bg-surface-2/40"
+                  data-testid={`features.${g.source}`}
+                >
+                  <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2 font-display text-sm font-bold">
+                    <ChevronDown
+                      className="size-4 shrink-0 text-muted transition-transform group-[:not([open])]:-rotate-90"
+                      aria-hidden="true"
+                    />
+                    <span className="flex-1">{a.featureGroups[g.source]}</span>
+                    <span className="rounded-full bg-surface px-2 text-xs font-semibold text-muted">
+                      {g.list.length}
+                    </span>
+                  </summary>
+                  <ul className="space-y-2 px-2 pb-2">
+                    {g.list.map((f) => (
+                      <FeatureCard
+                        key={f.id}
+                        feature={f}
+                        onEdit={() => setEditing({ kind: 'feature', item: f })}
+                      />
+                    ))}
+                  </ul>
+                </details>
               ))}
-            </ul>
+            </div>
           )}
         </Tabs.Content>
       </Tabs.Root>
 
-      {editing?.kind === 'weapon' ? (
-        <WeaponEditor initial={editing.item} onClose={() => setEditing(null)} />
-      ) : null}
-      {editing?.kind === 'feature' ? (
-        <FeatureEditor initial={editing.item} onClose={() => setEditing(null)} />
-      ) : null}
+      <Suspense fallback={null}>
+        {editing?.kind === 'weapon' ? (
+          <WeaponEditor initial={editing.item} onClose={() => setEditing(null)} />
+        ) : null}
+        {editing?.kind === 'feature' ? (
+          <FeatureEditor initial={editing.item} onClose={() => setEditing(null)} />
+        ) : null}
+      </Suspense>
     </Panel>
   );
 }

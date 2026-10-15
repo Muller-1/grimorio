@@ -133,6 +133,11 @@ describe('aplicar a subida de nível', () => {
       ]),
     );
     expect(names).not.toContain('Aumento no Valor de Atributo');
+    // Cada característica nova diz de onde vem (a aba Características agrupa por isso).
+    const source = (name: string) => after.features.find((f) => f.name === name)?.source;
+    expect(source('Subclasse: Trilha do Berserker')).toBe('subclass');
+    expect(source('Frenesi')).toBe('subclass');
+    expect(source('Conhecimento Primordial')).toBe('class');
     // O motor já enxerga o Frenesi.
     expect(deriveSheet(after).engine.features.map((f) => f.def.id)).toContain('frenzy');
   });

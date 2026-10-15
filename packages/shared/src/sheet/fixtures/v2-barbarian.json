@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 2,
+  "kind": "local-sheet",
+  "rulesEdition": "2024",
+  "identity": {
+    "name": "Grum",
+    "className": "Bárbaro",
+    "playerName": "",
+    "origin": "Soldado · Orc",
+    "description": ""
+  },
+  "build": {
+    "level": 1,
+    "abilities": {
+      "str": 17,
+      "dex": 14,
+      "con": 14,
+      "int": 10,
+      "wis": 12,
+      "cha": 8
+    },
+    "saveProficiencies": ["str", "con"],
+    "skillProficiencies": {
+      "animal-handling": 1,
+      "perception": 1,
+      "athletics": 1,
+      "intimidation": 1
+    }
+  },
+  "combat": {
+    "hitDie": 12,
+    "speedFt": 30,
+    "armorClassOverride": 14
+  },
+  "state": {
+    "hp": {
+      "current": 14,
+      "temp": 0
+    },
+    "deathSaves": {
+      "successes": 0,
+      "failures": 0
+    },
+    "hitDiceSpent": 0,
+    "inspiration": 0,
+    "hpLog": [],
+    "slotsSpent": [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "pactSlotsSpent": 0,
+    "resources": {},
+    "active": []
+  },
+  "weapons": [
+    {
+      "id": "id-1",
+      "name": "Machado Grande",
+      "ability": "str",
+      "proficient": true,
+      "damageDice": "1d12",
+      "damageType": "slashing",
+      "magicBonus": 0,
+      "critRange": 20,
+      "properties": "Duas Mãos, Pesada · Maestria: Trespassar"
+    },
+    {
+      "id": "id-2",
+      "name": "Machadinha (×4)",
+      "ability": "str",
+      "proficient": true,
+      "damageDice": "1d6",
+      "damageType": "slashing",
+      "magicBonus": 0,
+      "critRange": 20,
+      "properties": "Arremesso (6/18 m), Leve · Maestria: Afligir (você usa)"
+    },
+    {
+      "id": "id-3",
+      "name": "Lança",
+      "ability": "str",
+      "proficient": true,
+      "damageDice": "1d6",
+      "damageType": "piercing",
+      "magicBonus": 0,
+      "critRange": 20,
+      "properties": "Arremesso (6/18 m), Versátil (1d8) · Maestria: Drenar"
+    },
+    {
+      "id": "id-4",
+      "name": "Arco Curto",
+      "ability": "dex",
+      "proficient": true,
+      "damageDice": "1d6",
+      "damageType": "piercing",
+      "magicBonus": 0,
+      "critRange": 20,
+      "properties": "Duas Mãos, Munição (24/96 m; Flecha) · Maestria: Afligir"
+    }
+  ],
+  "features": [
+    {
+      "id": "id-5",
+      "name": "Fúria",
+      "text": "Ação Bônus (sem armadura Pesada). 2 usos; recupera 1 no Descanso Curto e todos no Longo. Enquanto dura: Resistência a dano Contundente, Cortante e Perfurante; +2 no dano de ataques com Força; Vantagem em testes e salvaguardas de Força; sem Concentração e sem magias."
+    },
+    {
+      "id": "id-6",
+      "name": "Defesa sem Armadura",
+      "text": "Sem armadura, sua CA é 10 + Destreza + Constituição. Pode usar Escudo."
+    },
+    {
+      "id": "id-7",
+      "name": "Maestria em Arma",
+      "text": "Use a maestria de 2 tipos de armas corpo a corpo (Simples ou Marciais). Pode trocar uma delas a cada Descanso Longo. Escolhidas: Adaga — Ágil: O ataque extra da propriedade Leve pode ser feito dentro da ação Atacar, sem gastar a Ação Bônus (uma vez por turno). Machadinha — Afligir: Acertou e causou dano: você tem Vantagem no próximo ataque contra essa criatura até o fim do seu próximo turno."
+    },
+    {
+      "id": "id-8",
+      "name": "Classe de Armadura",
+      "text": "CA 14 = Defesa sem Armadura 10 + Destreza +2 + Constituição +2"
+    },
+    {
+      "id": "id-9",
+      "name": "Pico de Adrenalina",
+      "text": "Correr como Ação Bônus e ganhar PV temporários iguais ao Bônus de Proficiência. Usos = Bônus de Proficiência, por Descanso Curto ou Longo."
+    },
+    {
+      "id": "id-10",
+      "name": "Visão no Escuro",
+      "text": "Enxerga no escuro a até 36 m."
+    },
+    {
+      "id": "id-11",
+      "name": "Vigor Implacável",
+      "text": "Ao cair a 0 PV sem morrer na hora, fica com 1 PV. 1 vez por Descanso Longo."
+    },
+    {
+      "id": "id-12",
+      "name": "Talento: Atacante Selvagem",
+      "text": "Uma vez por turno, ao acertar um alvo com uma arma, role os dados de dano da arma duas vezes e use o resultado que preferir. (Vem de: antecedente Soldado.)"
+    },
+    {
+      "id": "id-13",
+      "name": "Treinamento e idiomas",
+      "text": "Armaduras: Leve, Média e Escudos. Armas: Armas Simples e Marciais. Ferramentas: 1 tipo de Kit de Jogos. Idiomas: Comum, Anão e Gigante."
+    },
+    {
+      "id": "id-14",
+      "name": "Equipamento inicial",
+      "text": "Machado Grande, 4 Machadinhas, Kit de Aventureiro, Lança, Arco Curto, 20 Flechas, Kit de Curandeiro, Kit de Jogos (o mesmo da proficiência), Aljava, Roupas de Viagem. 29 PO. (Classe: opção A; antecedente: opção A. O ouro pode ser gasto em equipamento do capítulo 6.)"
+    }
+  ],
+  "creation": {
+    "version": 1,
+    "contentVersion": "srd52-ptbr-1",
+    "classId": "barbarian",
+    "speciesId": "orc",
+    "backgroundId": "soldier",
+    "weaponMasteries": ["dagger", "handaxe"],
+    "abilityMethod": "standard-array",
+    "baseAbilities": {
+      "str": 15,
+      "dex": 13,
+      "con": 14,
+      "int": 10,
+      "wis": 12,
+      "cha": 8
+    },
+    "backgroundBonus": {
+      "str": 2,
+      "dex": 1
+    },
+    "classSkills": ["animal-handling", "perception"],
+    "extraSkills": [],
+    "originFeatId": "savage-attacker",
+    "classEquipment": "A",
+    "backgroundEquipment": "A",
+    "languages": ["Comum", "Anão", "Gigante"]
+  },
+  "progression": {
+    "classId": "barbarian",
+    "levels": []
+  },
+  "spells": {
+    "cantrips": [],
+    "prepared": [],
+    "spellbook": [],
+    "granted": [],
+    "custom": []
+  }
+}

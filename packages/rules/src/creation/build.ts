@@ -3,8 +3,9 @@
  * Detalhes"). Pura: ids e data entram por parâmetro.
  *
  * A ficha ainda é a local (ADR-002): o que ela não tem campo próprio (treinamentos, idiomas,
- * equipamento, traços) vira "Características", e a CA da armadura inicial vira ajuste manual
- * com o cálculo explicado.
+ * traços) vira "Características", cada uma marcada com a origem (classe, espécie, talento…), e a
+ * CA da armadura inicial vira ajuste manual com o cálculo explicado. O equipamento inicial vai
+ * para o Inventário, com o ouro e o peso de cada item.
  */
 import {
   ABILITY_KEYS,
@@ -14,11 +15,14 @@ import {
   type AbilityKey,
   type CreationRecord,
   type Feature,
+  type FeatureSource,
   type LocalSheet,
   type ProficiencyLevel,
   type SkillKey,
   type Weapon,
 } from '@grimorio/shared';
+import { knownWeightKg } from '../inventory/weights';
+import { startingItems } from '../inventory/starting';
 import { abilityModifier, deriveSheet } from '../sheet/derive';
 import { finalScores } from './abilities';
 import { weaponProficient } from './mastery';
@@ -99,6 +103,9 @@ function toSheetWeapon(
     magicBonus: 0,
     critRange: 20,
     properties,
+    ...(knownWeightKg(weapon.name) !== undefined
+      ? { weightKg: knownWeightKg(weapon.name)! * quantity }
+      : {}),
   };
 }
 
@@ -221,8 +228,9 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
 
   // ---------- características (o que a ficha local não tem campo próprio) ----------
   const features: Feature[] = [];
+  let source: FeatureSource = 'class';
   const add = (name: string, text: string) =>
-    features.push({ id: ctx.newId(), name: name.slice(0, 80), text: text.slice(0, 4000) });
+    features.push({ id: ctx.newId(), name: name.slice(0, 80), text: text.slice(0, 4000), source });
 
   for (const f of cls.features) {
     if (f.name === 'Maestria em Arma' && masteries.size) {
@@ -238,6 +246,7 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     const style = FIGHTING_STYLES[draft.fightingStyleId];
     add(`Estilo de Luta: ${style.name}`, style.text);
   }
+  source = 'training';
   if (ac.explanation) {
     const notes = [
       ac.explanation,
@@ -247,6 +256,7 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     add('Classe de Armadura', notes.join(' '));
   }
 
+  source = 'species';
   if (species) {
     for (const trait of species.traits) add(trait.name, trait.text);
     if (speciesOption && species.option) {
@@ -256,6 +266,7 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     add(`Traços de ${draft.customSpecies.name.trim()}`, draft.customSpecies.traits.trim());
   }
 
+  source = 'feat';
   for (const [i, featId] of feats.entries()) {
     const feat = ORIGIN_FEATS[featId];
     const source = i === 0 ? `antecedente ${background.name}` : 'Humano (Versátil)';
@@ -267,6 +278,7 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     (k) => cls.armorTraining.includes(k) || classOption?.armor === k,
   );
   const languages = ['Comum', ...draft.languages, ...(cls.languages?.fixed ?? [])];
+  source = 'training';
   const tools = [cls.toolsText, background.tool].filter((x): x is string => Boolean(x));
   add(
     'Treinamento e idiomas',
@@ -280,12 +292,9 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
       .join(' '),
   );
 
-  const items = [...cPack.items, ...bPack.items];
+  // ---------- inventário: o equipamento inicial e o ouro ----------
+  const items = startingItems([...cPack.items, ...bPack.items], weapons, ctx.newId);
   const gold = cPack.gold + bPack.gold;
-  add(
-    'Equipamento inicial',
-    `${items.length ? `${items.join(', ')}. ` : ''}${gold} PO. (Classe: opção ${cPack.option}; antecedente: opção ${bPack.option}. O ouro pode ser gasto em equipamento do capítulo 6.)`,
-  );
 
   // ---------- identidade ----------
   const speciesName =
@@ -354,6 +363,7 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
   };
   sheet.weapons = weapons;
   sheet.features = features;
+  sheet.inventory = { coins: { cp: 0, sp: 0, ep: 0, gp: gold, pp: 0 }, items };
   sheet.creation = record;
   sheet.progression = { classId: cls.id, levels: [] };
   // Magias da espécie (truques e, no Gnomo do Bosque, Falar com Animais): sempre preparadas.

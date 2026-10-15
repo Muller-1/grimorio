@@ -53,10 +53,6 @@ function featComplete(c: LevelChoice | undefined): boolean {
   return !feat?.abilityIncrease || Boolean(c.ability);
 }
 
-export function pendingCount(step: LevelStep, draft: LevelDraft): number {
-  return step.choices.filter((c) => !isComplete(c, draft)).length;
-}
-
 /** Rascunhos → o que `applyLevelUp` recebe. */
 export function toInputs(steps: LevelStep[], drafts: Record<number, LevelDraft>): LevelUpInput[] {
   return steps.map((step) => {

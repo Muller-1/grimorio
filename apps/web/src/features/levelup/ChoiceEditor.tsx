@@ -66,7 +66,7 @@ function Radio({
   return (
     <label
       className={cn(
-        'flex cursor-pointer items-start gap-2 rounded-md border px-2.5 py-2 text-sm',
+        'flex cursor-pointer items-start gap-2.5 rounded-md border px-3 py-2.5 text-sm',
         checked ? 'border-accent bg-accent-soft' : 'border-border',
         disabled && 'cursor-not-allowed opacity-50',
       )}
@@ -82,7 +82,9 @@ function Radio({
       />
       <span className="min-w-0 flex-1">
         <span className="font-semibold">{title}</span>
-        {text ? <span className="block text-xs text-muted">{text}</span> : null}
+        {text ? (
+          <span className="mt-0.5 block text-[13px] leading-snug text-muted">{text}</span>
+        ) : null}
       </span>
     </label>
   );
@@ -106,7 +108,7 @@ function Check({
   return (
     <label
       className={cn(
-        'flex cursor-pointer items-start gap-2 rounded-md border px-2.5 py-2 text-sm',
+        'flex cursor-pointer items-start gap-2.5 rounded-md border px-3 py-2.5 text-sm',
         checked ? 'border-accent bg-accent-soft' : 'border-border',
         disabled && !checked && 'cursor-not-allowed opacity-50',
       )}
@@ -121,7 +123,9 @@ function Check({
       />
       <span className="min-w-0 flex-1">
         <span className="font-semibold">{title}</span>
-        {text ? <span className="block text-xs text-muted">{text}</span> : null}
+        {text ? (
+          <span className="mt-0.5 block text-[13px] leading-snug text-muted">{text}</span>
+        ) : null}
       </span>
     </label>
   );
@@ -148,7 +152,13 @@ function MultiPick({
   return (
     <div className="space-y-1.5">
       <p className="text-xs text-muted">{tl.pickCount(picks.length, count)}</p>
-      <div className="grid gap-1.5 sm:grid-cols-2">
+      {/* Opções com texto longo (metamagias, invocações) ficam em uma coluna: mais fácil de ler. */}
+      <div
+        className={cn(
+          'grid gap-1.5',
+          !options.some((o) => (o.text?.length ?? 0) > 50) && 'sm:grid-cols-2',
+        )}
+      >
         {options.map((o) => {
           const on = ids.includes(o.id);
           return (
@@ -522,7 +532,16 @@ function ReplacePick({
 }
 
 /** Uma escolha do nível (o tipo decide o formulário). */
-export function ChoiceEditor({ slot, ctx }: { slot: LevelChoiceSlot; ctx: ChoiceContext }) {
+export function ChoiceEditor({
+  slot,
+  ctx,
+  standalone = false,
+}: {
+  slot: LevelChoiceSlot;
+  ctx: ChoiceContext;
+  /** Sozinha numa tela da subida de nível: título maior e sem caixa em volta. */
+  standalone?: boolean;
+}) {
   const def = slot.def as ChoiceDef | SpellChoiceDef;
   const radio = useId();
   const picks = ctx.draft.picks[slot.key] ?? [];
@@ -849,18 +868,20 @@ export function ChoiceEditor({ slot, ctx }: { slot: LevelChoiceSlot; ctx: Choice
 
   return (
     <section
-      className="space-y-2 rounded-lg border border-border p-3"
+      className={cn('space-y-3', !standalone && 'rounded-lg border border-border p-3')}
       data-testid={`choice.${slot.key}`}
     >
-      <header>
-        <h4 className="font-display text-sm font-bold">
+      <header className="space-y-1">
+        <h3 className={cn('font-display font-bold', standalone ? 'text-lg' : 'text-sm')}>
           {slot.title}{' '}
           <span className="font-sans text-xs font-normal text-muted">
             ({slot.required ? tl.required : tl.optional})
           </span>
-        </h4>
+        </h3>
         {slot.text && def.kind !== 'subclass' ? (
-          <p className="text-xs text-muted">{slot.text}</p>
+          <p className={cn('leading-relaxed text-muted', standalone ? 'text-sm' : 'text-xs')}>
+            {slot.text}
+          </p>
         ) : null}
       </header>
       {body}

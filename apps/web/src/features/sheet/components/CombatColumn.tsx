@@ -107,10 +107,16 @@ function CombatStats() {
           testId="stat.initiative"
           className="font-display text-2xl font-bold"
         />
-        {derived.initiativeAdvantage ? <AdvantageBadge /> : null}
+        <AdvantageBadge
+          advantage={derived.initiativeAdvantage}
+          disadvantage={derived.initiativeDisadvantage}
+        />
         <RollButton
           rollLabel={t.sheet.combat.initiative}
-          expression={withModifier(d20(derived.initiativeAdvantage), derived.initiative.value)}
+          expression={withModifier(
+            d20(derived.initiativeAdvantage, derived.initiativeDisadvantage),
+            derived.initiative.value,
+          )}
           ariaLabel={t.sheet.combat.rollInitiative}
           className="size-7"
         />
@@ -139,7 +145,7 @@ function CombatStats() {
             step={1.5}
             min={0}
             max={90}
-            defaultValue={Number(feetToMeters(derived.speedFt).replace(',', '.'))}
+            defaultValue={Number(feetToMeters(sheet.combat.speedFt).replace(',', '.'))}
             onChange={(e) => {
               const m = Number(e.target.value);
               if (Number.isFinite(m) && m >= 0 && m <= 90)
@@ -147,6 +153,14 @@ function CombatStats() {
             }}
             className="mt-1"
           />
+          {/* O campo é o deslocamento base; magias, condições e carga mudam o valor de agora. */}
+          {derived.speedFt !== sheet.combat.speedFt ? (
+            <p className="mt-1.5 max-w-56 text-xs text-muted" data-testid="stat.speed.why">
+              {derived.load.over
+                ? t.sheet.combat.speedLoaded(feetToMeters(derived.speedFt))
+                : t.sheet.combat.speedNow(feetToMeters(derived.speedFt))}
+            </p>
+          ) : null}
         </Popover>
       </StatTile>
     </div>
@@ -567,7 +581,7 @@ function SkillRow({ skill }: { skill: SkillKey }) {
         testId={`skill.${skill}.prof`}
       />
       <span className="min-w-0 flex-1 truncate text-sm">{name}</span>
-      {s.advantage ? <AdvantageBadge /> : null}
+      <AdvantageBadge advantage={s.advantage} disadvantage={s.disadvantage} />
       <ExplainButton
         explained={s.bonus}
         title={name}
@@ -576,7 +590,7 @@ function SkillRow({ skill }: { skill: SkillKey }) {
       />
       <RollButton
         rollLabel={name}
-        expression={withModifier(d20(s.advantage), s.bonus.value)}
+        expression={withModifier(d20(s.advantage, s.disadvantage), s.bonus.value)}
         ariaLabel={t.sheet.rollSkill(name)}
         className="size-7 max-xl:size-8"
       />
@@ -584,12 +598,12 @@ function SkillRow({ skill }: { skill: SkillKey }) {
   );
 }
 
-function SkillsPanel() {
+export function SkillsPanel() {
   const { derived } = useSheet();
   const sorted = [...SKILL_KEYS].sort((a, b) => t.skills[a].localeCompare(t.skills[b], 'pt-BR'));
   return (
     <Panel title={t.sheet.skillsTitle}>
-      <ul className="grid grid-cols-1 gap-x-4 min-[420px]:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-x-4 min-[380px]:grid-cols-2">
         {sorted.map((skill) => (
           <SkillRow key={skill} skill={skill} />
         ))}
@@ -617,7 +631,6 @@ export function CombatColumn() {
         <DeathSavesPanel />
       </div>
       <PowersPanel />
-      <SkillsPanel />
     </div>
   );
 }

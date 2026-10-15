@@ -72,6 +72,14 @@ export type Effect =
   /** Dado somado à jogada (Bênção: +1d4 em ataques e salvaguardas). */
   | { type: 'roll-bonus-dice'; dice: string; on: ('attack' | 'save')[] }
   | { type: 'advantage'; on: AdvantageTarget[] }
+  /** Desvantagem (Envenenado: ataques e testes). Com Vantagem junto, as duas se anulam. */
+  | { type: 'disadvantage'; on: AdvantageTarget[] }
+  /** Dado tirado da jogada (Perdição: −1d4 em ataques e salvaguardas; Raio do Enfraquecimento: −1d8 no dano). */
+  | { type: 'roll-penalty-dice'; dice: string; on: ('attack' | 'save' | 'damage')[] }
+  /** Soma em todo Teste de D20: ataques, salvaguardas, testes e Iniciativa (Exaustão: −2 por nível). */
+  | { type: 'd20-modifier'; value: number }
+  /** Multiplica o Deslocamento no fim das contas (Lentidão: metade; Contido: 0). */
+  | { type: 'speed-multiplier'; factor: number }
   | { type: 'resistance'; damage: DamageType[] }
   | { type: 'ac-bonus'; value: Scaling }
   /** Defesa sem Armadura: CA base = 10 + Destreza + estes atributos (sem armadura). */

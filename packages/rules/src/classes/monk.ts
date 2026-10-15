@@ -33,7 +33,7 @@ export const MONK: ClassProgression = {
       id: 'martial-arts',
       level: 1,
       name: 'Artes Marciais',
-      text: 'Desarmado ou só com armas de Monge (Simples corpo a corpo e Marciais corpo a corpo Leves), sem armadura nem Escudo: Ataque Desarmado como Ação Bônus; use o dado de Artes Marciais (d6, d8 no 5, d10 no 11, d12 no 17) no lugar do dano normal; e Destreza no lugar de Força no ataque, no dano e na CD de Agarrar e Empurrar.',
+      text: 'Desarmado ou só com armas de Monge (Simples corpo a corpo e Marciais corpo a corpo Leves), sem armadura nem Escudo: Ataque Desarmado como Ação Bônus; use o dado de Artes Marciais (d6, d8 no 5, d10 no 11, d12 no 17) no lugar do dano normal; e Destreza no lugar de Força no ataque, no dano e na CD de Imobilizar e Empurrar.',
     },
     {
       id: 'unarmored-defense',

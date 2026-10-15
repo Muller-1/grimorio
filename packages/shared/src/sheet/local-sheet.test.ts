@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import v1Barbarian from './fixtures/v1-barbarian.json';
 import v1Blank from './fixtures/v1-blank.json';
-import { createBlankSheet, LOCAL_SHEET_SCHEMA_VERSION } from './local-sheet';
+import v2Barbarian from './fixtures/v2-barbarian.json';
+import { createBlankSheet, emptyInventory, LOCAL_SHEET_SCHEMA_VERSION } from './local-sheet';
 import { migrateSheet, parseLocalSheet } from './migrations';
 
 describe('LocalSheet', () => {
@@ -34,8 +35,17 @@ describe('migrações da ficha', () => {
     expect(sheet!.state.slotsSpent).toHaveLength(9);
     // Nada do que existia muda.
     const { schemaVersion: _a, ...before } = v1Barbarian as Record<string, unknown>;
-    const { schemaVersion: _b, progression: _p, spells: _s, ...after } = sheet!;
+    const { schemaVersion: _b, progression: _p, spells: _s, inventory: _i, ...after } = sheet!;
     expect({ ...after, state: { ...after.state } }).toMatchObject(before);
+  });
+
+  it('v2 ganha o inventário vazio e guarda tudo o que tinha', () => {
+    const sheet = parseLocalSheet(v2Barbarian);
+    expect(sheet).not.toBeNull();
+    expect(sheet!.inventory).toEqual(emptyInventory());
+    const { schemaVersion: _a, ...before } = v2Barbarian as Record<string, unknown>;
+    const { schemaVersion: _b, inventory: _i, ...after } = sheet!;
+    expect(after).toEqual(before);
   });
 
   it('migrar de novo não muda nada (idempotente)', () => {

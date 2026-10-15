@@ -318,7 +318,10 @@ describe('ficha montada', () => {
     const sheet = buildCharacterSheet(d, ctx)!;
     expect(sheet.combat.speedFt).toBe(35);
     expect(sheet.weapons).toEqual([]);
-    expect(sheet.features.find((f) => f.name === 'Equipamento inicial')?.text).toMatch(/^200 PO/);
+    expect(sheet.inventory).toEqual({ coins: { cp: 0, sp: 0, ep: 0, gp: 200, pp: 0 }, items: [] });
+    // Cada característica diz de onde vem (a aba Características agrupa por isso).
+    expect(sheet.features.find((f) => f.name === 'Visão no Escuro')?.source).toBe('species');
+    expect(sheet.features.every((f) => f.source)).toBe(true);
     // ADR-010: o truque da linhagem já vem na aba Magias, sempre preparado.
     expect(sheet.spells.granted).toEqual([{ id: 'druidcraft', source: 'species' }]);
     expect(sheet.progression).toEqual({ classId: 'ranger', levels: [] });
