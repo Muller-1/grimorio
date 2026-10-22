@@ -87,7 +87,7 @@ function PreviewCard() {
 }
 
 /**
- * Página inicial. Pedido de 22/10 ("desvibecodar"): sem rótulo acima do título, sem faixas
+ * Página inicial (ADR-012): sem rótulo acima do título, sem faixas
  * coloridas nem caixas iguais repetidas; as seções são separadas pelo filete dourado
  * (`Ornament`) e o conteúdo fica em listas, como num livro.
  */

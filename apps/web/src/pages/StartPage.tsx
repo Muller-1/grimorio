@@ -34,7 +34,7 @@ export default function StartPage() {
         </Button>
       </div>
 
-      {/* Pedido de 15/10: a página era comprida demais. Cada parte abre ao tocar. */}
+      {/* A página era comprida demais: cada parte abre ao tocar. */}
       <p className="mt-8 text-sm text-muted">{s.tapToOpen}</p>
       <div className="mt-2 divide-y divide-border rounded-xl border border-border bg-surface">
         {s.sections.map((section, i) => (

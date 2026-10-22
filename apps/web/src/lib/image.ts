@@ -1,7 +1,7 @@
 import { PORTRAIT_DATA_MAX } from '@grimorio/shared';
 
 /**
- * Foto do personagem enviada do computador (pedido de 15/10). Antes de guardar na ficha, a
+ * Foto do personagem enviada do computador. Antes de guardar na ficha, a
  * imagem é reduzida no próprio navegador: lado maior de até 320 px, WebP (ou JPEG, se o navegador
  * não gerar WebP). Uma foto de celular de vários MB vira ~15–40 kB, o que cabe no navegador e na
  * conta sem pesar no salvamento.

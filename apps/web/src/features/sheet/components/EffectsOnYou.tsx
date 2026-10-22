@@ -17,7 +17,7 @@ const EffectsDialog = lazy(() => import('./EffectsDialog'));
 const o = t.sheet.powers.onYou;
 
 /**
- * "Efeitos em você" (pedido de 15/10): magias de aliados e de inimigos e condições, escolhidas
+ * "Efeitos em você" (ADR-011): magias de aliados e de inimigos e condições, escolhidas
  * num popup. A ficha mostra só os que estão valendo, com um X para tirar.
  */
 export function EffectsOnYou() {

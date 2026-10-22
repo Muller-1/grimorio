@@ -5,7 +5,7 @@
 
 ## Contexto
 
-O usuário pediu (14/10): (1) subir de nível escolhendo **quantos níveis** subiu, confirmar e
+Objetivos (14/10, depois dos testes com amigos): (1) subir de nível escolhendo **quantos níveis** subiu, confirmar e
 passar por **uma tela por nível** com o que ganhou (mesmo sem escolha) e o que escolher; (2) o
 **sistema de magias**, com uma estratégia para a lista enorme; (3) habilidades que o jogador
 **liga** e o site **calcula sozinho**, inclusive combinações como o **Frenesi** (Fúria + Ataque

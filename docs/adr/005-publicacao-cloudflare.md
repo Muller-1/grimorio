@@ -6,7 +6,7 @@
 ## Contexto
 
 A Etapa 8 publica o R1: páginas institucionais, hospedagem estática com pré-visualização por
-pull request, orçamentos de desempenho no CI e o monitor sintético B14. O usuário escolheu a
+pull request, orçamentos de desempenho no CI e o monitor sintético B14. Escolhi a
 Cloudflare Pages. A plataforma de apoio (decisão #2) e o nome/domínio (decisão #3) seguem em
 aberto.
 

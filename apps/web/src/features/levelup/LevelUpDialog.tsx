@@ -28,7 +28,7 @@ import { emptyDraft, isComplete, toInputs, type LevelDraft } from './state';
 type Phase = { kind: 'count' } | { kind: 'page'; index: number } | { kind: 'summary' };
 
 /**
- * Pedido de 15/10 ("ruim de ler, tudo concentrado"): cada nível vira várias telas curtas. A
+ * Tudo numa tela só ficava ruim de ler: cada nível vira várias telas curtas. A
  * subclasse vem antes (ela muda o que se ganha), depois o que ganhou, depois uma escolha por tela.
  */
 type Page = { level: number; kind: 'gains' } | { level: number; kind: 'choice'; key: string };
@@ -212,7 +212,7 @@ function HpChoice({
 }
 
 /**
- * Subir de nível (pedido do usuário, ADR-010): 1) quantos níveis, confirmar; 2) uma tela por
+ * Subir de nível (ADR-010): 1) quantos níveis, confirmar; 2) uma tela por
  * nível com o que ganhou (sempre) e o que escolher; 3) resumo antes → depois e aplicar, com
  * "Desfazer" logo depois.
  */

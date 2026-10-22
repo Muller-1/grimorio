@@ -191,7 +191,7 @@ function ItemEditor({ initial, onClose }: { initial: Item | null; onClose: () =>
 }
 
 /**
- * Inventário (pedido de 15/10): ouro e peso no topo, como o cabeçalho das magias; depois as
+ * Inventário (ADR-011): ouro e peso no topo, como o cabeçalho das magias; depois as
  * armas (equipada ou guardada) e os itens, com quantidade e peso.
  */
 export default function InventoryTab({

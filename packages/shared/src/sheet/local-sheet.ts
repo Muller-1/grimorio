@@ -12,7 +12,7 @@ import { CreationRecordSchema } from './creation';
 /**
  * Ficha do personagem (a mesma no navegador e na conta). Começou como formato provisório
  * (ADR-002); a versão 2 (ADR-010) acrescenta a progressão de classe, as magias e o estado das
- * habilidades (usos gastos, o que está ativo); a versão 3 (pedido de 15/10) acrescenta o
+ * habilidades (usos gastos, o que está ativo); a versão 3 (ADR-011) acrescenta o
  * inventário (moedas e itens), arma equipada ou guardada, peso e a origem das características.
  *
  * - Guarda ESCOLHAS e o estado de jogo; os números derivados são recalculados (plano v2, 9.1).

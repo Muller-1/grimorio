@@ -16,7 +16,7 @@ export const ptBR = {
   },
 
   /**
-   * Título e descrição de cada página (pedido de 22/10): cada uma com o seu, no HTML gerado no
+   * Título e descrição de cada página (ADR-012): cada uma com o seu, no HTML gerado no
    * build e ao navegar. A descrição aparece na busca e na prévia do link no WhatsApp.
    */
   meta: {
@@ -155,7 +155,7 @@ export const ptBR = {
     },
     features: {
       title: 'O que já dá para fazer',
-      /** Agrupado pelo momento do jogo (pedido de 22/10: menos caixas iguais lado a lado). */
+      /** Agrupado pelo momento do jogo (menos caixas iguais lado a lado). */
       groups: [
         {
           title: 'Criar e evoluir',
@@ -913,7 +913,7 @@ export const ptBR = {
           ? '1 arma guardada (não equipada) não aparece aqui.'
           : `${n} armas guardadas (não equipadas) não aparecem aqui.`,
       seeInventory: 'Ver no Inventário',
-      /** Pedido de 15/10: as características separadas pela origem. */
+      /** As características separadas pela origem. */
       featureGroups: {
         class: 'Classe',
         subclass: 'Subclasse',
@@ -993,7 +993,7 @@ export const ptBR = {
       nameRequired: 'Dê um nome à característica.',
     },
 
-    /** Aba Inventário (pedido de 15/10): moedas, peso e itens. */
+    /** Aba Inventário: moedas, peso e itens. */
     inventory: {
       gold: 'Peças de Ouro',
       goldEdit: 'Peças de Ouro (PO)',

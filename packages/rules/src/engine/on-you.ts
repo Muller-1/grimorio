@@ -1,7 +1,7 @@
 import type { AdvantageTarget, Effect } from '../classes/types';
 
 /**
- * O que está afetando o personagem e a ficha calcula (pedido de 15/10): condições do glossário
+ * O que está afetando o personagem e a ficha calcula: condições do glossário
  * do Livro do Jogador 2024 (nomes da edição brasileira) e magias que atrapalham. As magias que
  * ajudam ficam em `spells/effects.ts`. Textos curtos escritos para o site.
  *

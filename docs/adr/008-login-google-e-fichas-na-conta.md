@@ -5,7 +5,7 @@
 
 ## Contexto
 
-O dono do projeto pediu, nesta ordem: (1) login com conta Google e "link com o banco de dados";
+Objetivos desta etapa, nesta ordem: (1) login com conta Google e "link com o banco de dados";
 (2) o sistema de criação de ficha em etapas — classe, origem, atributos e detalhes —, conferido
 com o Livro do Jogador 2024 (5.5e). O ADR-007 deixava abertas as decisões #7 (biblioteca de
 login), #3 (domínio, que bloqueava o cookie de sessão) e #6 (classes da fatia mínima).

@@ -5,14 +5,13 @@
 
 ## Contexto
 
-Pedido de 22/10 (madrugada): "tem erros e coisas mal feitas no site, melhore isso"; focar no
-essencial — **melhorar o que já existe para ser usável de verdade** e **aparecer no Google**;
-planejar (só planejar) escala, concorrência na campanha e o que falta para um site
-profissional. O usuário mandou dois prints (tema escuro): o título "Salvaguardas contra Morte"
-quebrado e, no glossário de Primeiros passos, abrir "Modificador" esticava a linha de
-"Atributo" na outra coluna.
+Revisão de 22/10, antes de chamar mais gente para usar: corrigir o que estava quebrado ou mal
+acabado, deixar o site **usável de verdade** e **aparecer no Google**, e planejar (só planejar)
+escala, concorrência na campanha e o que falta para um site profissional. Dois problemas vistos
+no tema escuro: o título "Salvaguardas contra Morte" quebrado e, no glossário de Primeiros
+passos, abrir "Modificador" esticava a linha de "Atributo" na outra coluna.
 
-Além dos prints, uma auditoria automática (5 temas × computador, tablet, celular e celular de
+Além desses, uma auditoria automática (5 temas × computador, tablet, celular e celular de
 360 px × 21 telas, procurando rolagem lateral, texto estourando a caixa e erros no console) e
 uma revisão visual acharam os outros pontos abaixo.
 
@@ -77,7 +76,7 @@ idempotentes + tabela de eventos, em vez de salvar a seção inteira), papéis (
 jogador), tempo real (consulta periódica primeiro; depois uma "sala" por campanha com Durable
 Objects), gargalos de escala e a lista do que falta para um site profissional, em ordem.
 
-## O que depende do usuário
+## Pendências fora do código
 
 Search Console (verificar e enviar o sitemap), e-mail de contato e link de "Relatar problema",
 monitor externo do `/health` (opcional, mantém a API acordada), domínio próprio (#3), revisão

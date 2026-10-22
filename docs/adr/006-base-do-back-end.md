@@ -6,7 +6,7 @@
 ## Contexto
 
 A Etapa 9 deixa pronto o que o R2 (contas e ficha salva no servidor) precisa: a API, o banco,
-as portas de teste e as salvaguardas. O usuário escolheu rodar o Postgres local com Docker.
+as portas de teste e as salvaguardas. Escolhi rodar o Postgres local com Docker.
 
 ## Decisões
 

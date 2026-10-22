@@ -300,7 +300,7 @@ function ClassDetails({ cls }: { cls: ClassDef }) {
 }
 
 /**
- * Pedido de 22/10 ("desvibecodar"): cada classe com um símbolo (do mesmo conjunto de ícones do
+ * ADR-012: cada classe com um símbolo (do mesmo conjunto de ícones do
  * site) e a dificuldade em pontos, no lugar das etiquetas coloridas repetidas em todo cartão.
  */
 const CLASS_ICONS: Record<string, LucideIcon> = {

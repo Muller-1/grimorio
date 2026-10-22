@@ -1,8 +1,8 @@
 # Plano: escala, campanha com várias pessoas e "site profissional"
 
-- **Data:** 2026-10-22 (objetivo: planejar melhor a escalabilidade, a concorrência — principalmente
-  na campanha, onde várias pessoas poderão acessar a mesma ficha — e outras especificações de
-  sites mais profissionais; **só planejamento**).
+- **Data:** 2026-10-22. Objetivo: planejar a escala, a concorrência — principalmente na campanha,
+  onde várias pessoas mexem na mesma ficha — e o que falta para um site profissional. **Só
+  planejamento.**
 - **Situação:** nada daqui foi implementado, exceto o que está marcado como _feito_. A base
   continua a do plano técnico v2 (seções 6, 10, 11 e 15); este documento diz **o que muda com o
   que aprendemos** desde então e **em que ordem** fazer.
@@ -10,7 +10,7 @@
   **como funciona a cura entre jogadores** (seções 2.2, 2.3 e 2.5); o domínio **`grimorio.net.br`**
   foi comprado (decisão #3; passo a passo na seção 4.1); e a plataforma de apoio será o
   **Apoia.se** (decisão #2; a página fica para depois).
-- Decisões que dependem de você estão marcadas com **(decisão)**; as já tomadas aparecem como
+- Decisões em aberto estão marcadas com **(decisão)**; as já tomadas aparecem como
   **(decidido em 22/10)**.
 
 ## 1. Onde estamos (out/2026)
@@ -188,13 +188,13 @@ Em ordem de prioridade.
 
 1. **Aparecer no Google** — _feito nesta versão:_ título/descrição por página, endereço
    canônico, `sitemap.xml`, `robots.txt`, páginas pessoais com `noindex`, dados estruturados
-   (schema.org) e imagem de prévia. **Falta você:** verificar o site no Search Console e enviar o
+   (schema.org) e imagem de prévia. **Falta:** verificar o site no Search Console e enviar o
    sitemap (ver `docs/publicacao.md`, seção 6) — **agora no endereço novo**, depois de ligar o
    domínio (seção 4.1), para não verificar duas vezes. Domínio próprio **(decisão #3, decidida em
    22/10: `grimorio.net.br`, comprado)** — um nome próprio passa mais confiança e não muda se a
    hospedagem mudar.
 2. **Canais de contato** (LGPD): e-mail de contato e "Relatar problema" configurados — hoje a
-   página de privacidade diz que o canal "ainda não foi configurado". **Falta você.**
+   página de privacidade diz que o canal "ainda não foi configurado". **Falta configurar.**
 3. **Monitoramento de erros**: Sentry (plano grátis) no site e na API, para ver erros que as
    pessoas não relatam. Exige atualizar a política de privacidade e a CSP **(decisão)**.
 4. **Monitor de disponibilidade**: além do B14 (que já testa o rolador), um monitor externo de
@@ -219,7 +219,7 @@ Em ordem de prioridade.
 11. **Conteúdo para busca**: páginas de guia (ex.: "como criar seu primeiro personagem",
     "o que é teste de resistência") escritas para o site com base no SRD 5.2. É o que mais traz
     gente pelo Google, depois do básico técnico.
-12. **Apoio** — **plataforma escolhida em 22/10: Apoia.se (decisão #2)**. **Falta você**
+12. **Apoio** — **plataforma escolhida em 22/10: Apoia.se (decisão #2)**. **Falta**
     (depois): criar a página de apoio no Apoia.se e guardar o link; aí configuramos as variáveis
     `VITE_SUPPORT_*` e a página de apoio do site. É só um link: trocar de plataforma depois
     custa pouco. Fica na etapa "antes de divulgar" (seção 5).

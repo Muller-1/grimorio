@@ -5,7 +5,7 @@
 
 ## Contexto
 
-Pedidos de 15/10: o equipamento inicial estava escrito numa característica; o usuário quer um
+Problemas de 15/10: o equipamento inicial estava escrito numa característica. A ideia é ter um
 **Inventário** com peças de ouro e cálculo de peso no topo (como o cabeçalho das magias), **toda
 arma no inventário** com a opção de estar **equipada** (carregada) ou não, as **características
 separadas pela origem** (classe, subclasse, espécie, talentos…), **condições e magias que

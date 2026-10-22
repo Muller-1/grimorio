@@ -7,7 +7,7 @@ import { useDiceStore } from '../store';
 import { RollHistory } from './RollHistory';
 import { RollResultView } from './RollResultView';
 
-/** Quanto tempo a última rolagem fica na tela (pedido do usuário, 15/10: no celular atrapalhava). */
+/** Quanto tempo a última rolagem fica na tela (no celular, ficar parada na tela atrapalhava). */
 const VISIBLE_MS = 6000;
 
 /**

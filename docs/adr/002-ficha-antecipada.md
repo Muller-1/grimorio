@@ -7,7 +7,7 @@
 
 O plano de início começa pelo rolador (R1) e deixa a ficha para o R2, porque a ficha completa
 depende de decisões ainda abertas (edição das regras, contas, conteúdo do SRD). Mesmo assim,
-foi pedido ter já a tela inicial e a tela da ficha do protótipo, editável e com cálculo
+decidi ter já a tela inicial e a tela da ficha do protótipo, editável e com cálculo
 automático.
 
 ## Decisão

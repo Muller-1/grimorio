@@ -191,7 +191,7 @@ export default function SheetPage({ mode = 'local' }: { mode?: 'local' | 'accoun
           aria-label={t.sheet.columns.actions}
           className={cn('md:col-span-2 xl:col-span-1', column !== 'actions' && 'max-md:hidden')}
         >
-          {/* Pedido de 15/10: perícias em cima das armas, magias, inventário e características. */}
+          {/* Perícias em cima das armas, magias, inventário e características. */}
           <div className="space-y-3">
             <SkillsPanel />
             <ActionsColumn />

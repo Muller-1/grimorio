@@ -131,7 +131,7 @@ test.describe('B1 — fumaça', { tag: '@B1' }, () => {
     });
   }
 
-  // Pedido de 22/10 (ADR-013): o Google acha as páginas públicas e deixa as pessoais de fora.
+  // ADR-013: o Google acha as páginas públicas e deixa as pessoais de fora.
   test('busca: sitemap, robots.txt, endereço canônico e noindex nas páginas pessoais', async ({
     request,
   }) => {

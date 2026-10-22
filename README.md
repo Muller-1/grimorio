@@ -30,7 +30,7 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 | Magias: 339 do SRD, aba Magias (CD, espaços, conjurar, Concentração, Outra magia)               | `features/spells` + `packages/rules/src/spells`                           | ✔ (ADR-010)                                     |
 | Habilidades que o site calcula (Fúria, Frenesi, Ataque Furtivo, Bênção…)                        | `sheet/components/PowersPanel.tsx` + `packages/rules/src/engine`          | ✔ (ADR-010)                                     |
 | Inventário (moedas, peso, arma equipada), características por origem, efeitos em você           | `features/inventory` + `packages/rules/src/{inventory,engine}`            | ✔ (ADR-011)                                     |
-| Etapa Magias no assistente (recomendadas do livro, Iniciado em Magia); visual sem "cara de IA"  | `features/builder/steps/SpellsStep.tsx` + `components/ui/ornament.tsx`    | ✔ (ADR-012)                                     |
+| Etapa Magias no assistente (recomendadas do livro, Iniciado em Magia); visual mais limpo        | `features/builder/steps/SpellsStep.tsx` + `components/ui/ornament.tsx`    | ✔ (ADR-012)                                     |
 | Uso real: aviso de servidor acordando com novas tentativas; busca do Google (sitemap, canônico) | `features/auth/ServerStatus.tsx` + `app/seo.ts` + `scripts/prerender.mjs` | ✔ (ADR-013)                                     |
 
 Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas para quem tiver o link
@@ -179,7 +179,7 @@ grimorio/
   003: pré-renderização; 004: terminologia e edição; 005: publicação na Cloudflare; 006: base
   do back-end; 007: decisões do R2; 008: login com Google, fichas na conta e assistente;
   009: publicação com contas para um grupo de teste; 010: magias, subida de nível e
-  habilidades que o site calcula; 011: inventário e ficha v3; 012: visual sem "cara de IA" e
+  habilidades que o site calcula; 011: inventário e ficha v3; 012: visual mais limpo e
   magias no assistente; 013: correções para uso real, servidor acordando e busca do Google).
 - `docs/publicacao.md` — passo a passo para colocar o site no ar, ligar o monitor B14, aparecer
   no Google e manter a API acordada.
@@ -187,5 +187,5 @@ grimorio/
   (várias pessoas na mesma ficha), escala e o que falta para um site profissional.
 - `docs/publicar-com-contas.md` — site + API (Render) + banco (Neon) com login, para testar com
   amigos.
-- Os planos (`plano-tecnico-site-dnd-v2.md` e `plano-de-inicio-site-dnd.md`) estão nos arquivos
-  do Projeto no Claude; copie-os para `docs/` (Etapa 0).
+- Os planos (`plano-tecnico-site-dnd-v2.md` e `plano-de-inicio-site-dnd.md`) ainda estão fora
+  do repositório; a Etapa 0 é copiá-los para `docs/`.

@@ -27,7 +27,7 @@ import { RollButton } from './RollButton';
 
 type TabKey = 'weapons' | 'spells' | 'inventory' | 'features';
 
-/** Pedido de 15/10: a ficha não cresce sem fim; a lista de cada aba rola por dentro. */
+/** A ficha não cresce sem fim: a lista de cada aba rola por dentro. */
 const LIST_AREA = 'px-3 pb-3 md:max-h-[70dvh] md:overflow-y-auto';
 
 // A aba Magias traz a lista das 339 magias: só carrega quando o jogador abre a aba.
@@ -294,7 +294,7 @@ export function ActionsColumn() {
   const equipped = sheet.weapons.filter((w) => w.equipped !== false);
   const stored = sheet.weapons.length - equipped.length;
   const weapons = equipped.filter((w) => q === '' || fold(w.name).includes(q));
-  // Pedido de 15/10: características separadas pela origem (classe, espécie, talentos…).
+  // Características separadas pela origem (classe, espécie, talentos…).
   const found = sheet.features.filter((f) => q === '' || fold(`${f.name} ${f.text}`).includes(q));
   const featureGroups = FEATURE_SOURCES.map((source) => ({
     source,

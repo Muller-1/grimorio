@@ -1,5 +1,5 @@
 /**
- * B16 — Pedido de 15/10: inventário (ouro, peso, arma equipada ou guardada), características
+ * B16 — Inventário (ouro, peso, arma equipada ou guardada), características
  * separadas pela origem, efeitos em você (condições) e foto enviada do computador. Uma ficha de
  * antes do inventário abre e é organizada sozinha. O oráculo é o motor de regras.
  */

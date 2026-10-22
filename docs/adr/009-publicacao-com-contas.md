@@ -5,7 +5,7 @@
 
 ## Contexto
 
-O usuário quer que amigos testem o site com login e fichas na conta. Até aqui as contas só
+Quero que amigos testem o site com login e fichas na conta. Até aqui as contas só
 funcionavam no computador: o Vite repassava `/api` para a API local (ADR-008, item 2). Faltava
 escolher onde hospedar a API e o Postgres (decisão #8) e como manter site e API na mesma origem
 sem domínio próprio (decisão #3). A revisão jurídica (decisão #4) continua pendente, então as

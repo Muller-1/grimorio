@@ -1,14 +1,13 @@
-# ADR-012 — Visual sem "cara de IA" e magias no assistente
+# ADR-012 — Visual mais limpo e magias no assistente
 
 - **Status:** aceito
 - **Data:** 2026-10-22
 
 ## Contexto
 
-Pedido de 22/10: pesquisar vídeos sobre "como desvibecodar o seu site", aplicar o que não for
-radical (mais aparência básica e organização do HTML), **sem mudar tudo e mantendo o tema
-mágico**, e continuar implementando o livro. As dicas que se repetem nos vídeos e artigos
-(DesignCode, Isaac Cloward, AI Agent Guy, artigos sobre o "vibe coded look"):
+Revisão de design de 22/10. A ideia era deixar o visual com menos cara de modelo pronto, **sem
+refazer tudo e mantendo o tema mágico**, e continuar a etapa de magias do assistente. Os
+padrões genéricos que mais aparecem em sites de modelo (e que eu queria evitar):
 
 - caixas iguais repetidas (grade de 3 colunas com ícone + título + frase em toda seção), o mesmo
   arredondado e a mesma sombra em tudo, faixas coloridas alternadas;
@@ -17,8 +16,8 @@ mágico**, e continuar implementando o livro. As dicas que se repetem nos vídeo
 - gradiente roxo, brilho, emoji como ícone, ícones de conjuntos diferentes;
 - HTML: vários `h1`, título feito de `div`, `div` clicável, descrição igual em todas as páginas,
   seções sem nome;
-- correção: um sistema de tokens com nome (cores, tipos, espaços) e regras do que fazer e do que
-  não fazer, em vez de pedir "mais bonito".
+- o que ajuda: um sistema de tokens com nome (cores, tipos, espaços) e regras do que fazer e do
+  que não fazer.
 
 O site já não tinha gradiente, emoji nem roxo; a paleta (pergaminho, carmim, ouro) e a Cinzel
 são o tema e ficam.

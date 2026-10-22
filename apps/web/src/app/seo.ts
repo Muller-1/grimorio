@@ -1,5 +1,5 @@
 /**
- * Busca do Google e prévia de link (pedido de 22/10, ADR-013). Funções puras, usadas só no build
+ * Busca do Google e prévia de link (ADR-013). Funções puras, usadas só no build
  * (entry-server → scripts/prerender.mjs): nada disto vai para o pacote do navegador.
  */
 

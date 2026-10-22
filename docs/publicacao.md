@@ -108,7 +108,7 @@ ao Google que o site é seu:
 3. Método **Tag HTML**: o Google mostra `<meta name="google-site-verification" content="XXXX" />`.
    Copie **só o código** `XXXX`.
 4. Na Cloudflare, no Worker: **Settings → Build → Variables and secrets → Add**:
-   `VITE_GOOGLE_SITE_VERIFICATION` = `XXXX`. Publique de novo (um `git push`, ou peça ao Claude).
+   `VITE_GOOGLE_SITE_VERIFICATION` = `XXXX`. Publique de novo (um `git push`, como na seção 3).
 5. Quando o site novo estiver no ar, volte ao Search Console e clique em **Verificar**.
 6. Menu **Sitemaps** → digite `sitemap.xml` → **Enviar**.
 7. Opcional: **Inspeção de URL** na página inicial → **Solicitar indexação**.
