@@ -99,7 +99,8 @@ export function campaignService(orm: Orm, ports: Ports) {
       .from(campaignMembers)
       .innerJoin(users, eq(users.id, campaignMembers.userId))
       .where(eq(campaignMembers.campaignId, id))
-      .orderBy(asc(campaignMembers.joinedAt));
+      // Na mesma hora (relógio parado nos testes), desempata pela ordem de criação da conta.
+      .orderBy(asc(campaignMembers.joinedAt), asc(users.createdAt), asc(users.id));
     return {
       id: campaign.id,
       name: campaign.name,
@@ -326,7 +327,7 @@ export function campaignService(orm: Orm, ports: Ports) {
         .innerJoin(characters, eq(characters.id, campaignCharacters.characterId))
         .innerJoin(users, eq(users.id, characters.ownerId))
         .where(and(eq(campaignCharacters.campaignId, id), isNull(characters.deletedAt)))
-        .orderBy(asc(campaignCharacters.addedAt));
+        .orderBy(asc(campaignCharacters.addedAt), asc(characters.createdAt), asc(characters.id));
       return rows.map(({ character, player }) => ({
         characterId: character.id,
         player,
