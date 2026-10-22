@@ -136,7 +136,7 @@ export function CreditsPage() {
         <h2 className="font-display text-lg font-bold">{c.rulesTitle}</h2>
         <p className="mt-2 text-muted">{c.rules}</p>
         <blockquote
-          className="mt-3 border-l-4 border-border-strong pl-3 text-sm text-muted"
+          className="mt-3 border-l-4 border-border-strong pl-3 text-sm break-words text-muted"
           lang="en"
         >
           {c.srdAttribution}

@@ -1,9 +1,10 @@
-import { Check, CloudOff, HardDrive, LogIn } from 'lucide-react';
+import { Check, HardDrive, LogIn } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { D20Icon } from '@/components/ui/d20-icon';
 import { t } from '@/lib/i18n';
+import { ServerStatus } from './ServerStatus';
 import { safeNext, useAuthStore } from './store';
 
 /** Logo do Google (marca do botão "Entrar com Google", conforme as regras de uso do Google). */
@@ -35,7 +36,6 @@ export default function LoginPage() {
   const status = useAuthStore((s) => s.status);
   const user = useAuthStore((s) => s.user);
   const googleEnabled = useAuthStore((s) => s.googleEnabled);
-  const refresh = useAuthStore((s) => s.refresh);
   const signIn = useAuthStore((s) => s.signInWithGoogle);
   const [redirecting, setRedirecting] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -73,15 +73,7 @@ export default function LoginPage() {
           ) : status === 'disabled' ? (
             <p className="text-sm text-muted">{p.disabled}</p>
           ) : status === 'unavailable' ? (
-            <div className="space-y-3">
-              <p className="flex items-start gap-2 text-sm text-muted">
-                <CloudOff className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                {p.unavailable}
-              </p>
-              <Button size="sm" onClick={() => void refresh()}>
-                {p.retry}
-              </Button>
-            </div>
+            <ServerStatus />
           ) : (
             <div className="space-y-3">
               <Button
@@ -103,6 +95,7 @@ export default function LoginPage() {
                 <GoogleMark />
                 {redirecting ? p.redirecting : p.google}
               </Button>
+              {status === 'loading' ? <ServerStatus /> : null}
               {status === 'signed-out' && !googleEnabled ? (
                 <p className="text-sm text-muted">{p.googleOff}</p>
               ) : null}

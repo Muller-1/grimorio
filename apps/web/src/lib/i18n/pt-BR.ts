@@ -362,6 +362,16 @@ export const ptBR = {
     accountMenu: (name: string) => `Conta de ${name}`,
     myCharacters: 'Meus personagens',
     signOutFailed: 'Não foi possível sair agora. Tente de novo.',
+    server: {
+      waking:
+        'Acordando o servidor… Na versão gratuita ele dorme quando ninguém usa e leva até 1 minuto para voltar.',
+      wakingShort: 'Acordando o servidor…',
+      down: 'O servidor de contas não respondeu.',
+      localOk: 'A ficha deste navegador e os dados continuam funcionando.',
+      retryIn: (seconds: number) => `Tentando de novo em ${seconds} s.`,
+      gaveUp: 'Tente de novo daqui a pouco.',
+      retryNow: 'Tentar agora',
+    },
     page: {
       title: 'Entrar no Grimório',
       lead: 'Com uma conta, suas fichas ficam salvas no servidor e abrem em qualquer aparelho: no celular durante a sessão e no computador na hora de subir de nível.',
@@ -382,9 +392,6 @@ export const ptBR = {
       alreadyIn: (name: string) => `Você já entrou como ${name}.`,
       goToCharacters: 'Ver meus personagens',
       disabled: 'Contas ainda não estão disponíveis nesta versão do site.',
-      unavailable:
-        'O servidor de contas não respondeu. Ele pode estar "acordando": tente de novo em alguns segundos.',
-      retry: 'Tentar de novo',
       failed: 'Não foi possível falar com o Google agora. Tente de novo.',
       errors: {
         access_denied: 'Você cancelou o login no Google.',

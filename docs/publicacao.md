@@ -94,7 +94,44 @@ Dá para rodar na hora em **Actions → Monitor sintético (B14) → Run workflo
 
 Quando o nome estiver escolhido (sem "D&D" nem "Dungeons & Dragons"): no Worker, **Settings →
 Domains & Routes → Add → Custom domain**. O HTTPS é automático. Depois, atualize a variável
-`PRODUCTION_URL` do GitHub, o `SITE_URL` do Render e os endereços no Google.
+`PRODUCTION_URL` do GitHub, o `SITE_URL` do Render, a variável de build `VITE_SITE_URL` do
+Worker (seção 6) e os endereços no Google (tela de consentimento e "URIs de redirecionamento").
+
+## 6. Aparecer no Google (ADR-013)
+
+O site já gera `sitemap.xml`, `robots.txt`, endereço canônico e a prévia de link. Falta dizer
+ao Google que o site é seu:
+
+1. Abra o **Google Search Console** (search.google.com/search-console) com a sua conta Google.
+2. **Adicionar propriedade → Prefixo do URL** → `https://grimorio.SUA-CONTA.workers.dev/`.
+   (A opção "Domínio" pede um registro de DNS, que só existe com domínio próprio.)
+3. Método **Tag HTML**: o Google mostra `<meta name="google-site-verification" content="XXXX" />`.
+   Copie **só o código** `XXXX`.
+4. Na Cloudflare, no Worker: **Settings → Build → Variables and secrets → Add**:
+   `VITE_GOOGLE_SITE_VERIFICATION` = `XXXX`. Publique de novo (um `git push`, ou peça ao Claude).
+5. Quando o site novo estiver no ar, volte ao Search Console e clique em **Verificar**.
+6. Menu **Sitemaps** → digite `sitemap.xml` → **Enviar**.
+7. Opcional: **Inspeção de URL** na página inicial → **Solicitar indexação**.
+
+O Google leva de alguns dias a algumas semanas para mostrar o site. Com domínio próprio, crie
+outra propriedade para ele e mude `VITE_SITE_URL` para o endereço novo (sem barra no fim).
+
+| Variável de build                | Para quê                                        | Padrão                         |
+| -------------------------------- | ----------------------------------------------- | ------------------------------ |
+| `VITE_SITE_URL`                  | Endereço canônico, sitemap e prévia de link     | o endereço `workers.dev` atual |
+| `VITE_GOOGLE_SITE_VERIFICATION`  | Verificação do Search Console (só o código)     | vazio                          |
+
+## 7. Manter a API acordada (opcional)
+
+No plano grátis do Render, a API dorme depois de 15 min sem uso e leva até 1 minuto para
+acordar. O site já avisa ("Acordando o servidor…") e tenta de novo sozinho. Para evitar a
+espera:
+
+- **Grátis:** um monitor externo (ex.: UptimeRobot) chamando
+  `https://SUA-API.onrender.com/health` a cada 5 minutos. A rota `/health` não toca no banco, então
+  o Neon continua dormindo quando ninguém usa. O plano grátis do Render dá 750 horas por mês
+  por conta: dá para **um** serviço ligado o mês inteiro, não para dois.
+- **Pago:** plano Starter do Render (não dorme).
 
 ## Checklist de lançamento (plano de início, Etapa 8)
 
@@ -107,6 +144,8 @@ Domains & Routes → Add → Custom domain**. O HTTPS é automático. Depois, at
 - [ ] Termos, privacidade e apoio publicados (e `VITE_SUPPORT_*` configurado quando a decisão #2
       sair).
 - [ ] Três pessoas usaram o rolador numa sessão de jogo e deram retorno.
+- [ ] Site verificado no Search Console e `sitemap.xml` enviado (seção 6).
+- [ ] `VITE_CONTACT_EMAIL` e `VITE_REPORT_URL` configurados (a privacidade cita o contato).
 
 ## Rodar as verificações no seu computador
 

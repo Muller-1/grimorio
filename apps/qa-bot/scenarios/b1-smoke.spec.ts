@@ -131,6 +131,25 @@ test.describe('B1 — fumaça', { tag: '@B1' }, () => {
     });
   }
 
+  // Pedido de 22/10 (ADR-013): o Google acha as páginas públicas e deixa as pessoais de fora.
+  test('busca: sitemap, robots.txt, endereço canônico e noindex nas páginas pessoais', async ({
+    request,
+  }) => {
+    const sitemap = await (await request.get('/sitemap.xml')).text();
+    expect(sitemap).toContain('/dados</loc>');
+    expect(sitemap).not.toContain('/entrar');
+    expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://');
+
+    const home = await (await request.get('/')).text();
+    expect(home).toMatch(/<link rel="canonical" href="https:\/\/[^"]+\/"/);
+    expect(home).toContain('application/ld+json');
+    expect(home).toContain('property="og:image"');
+    const login = await (await request.get('/entrar')).text();
+    expect(login).toContain('<meta name="robots" content="noindex" />');
+    expect(login).not.toContain('rel="canonical"');
+    expect((await request.get('/og.jpg')).headers()['content-type']).toContain('image/jpeg');
+  });
+
   test('responde com os cabeçalhos de segurança da produção', async ({ request }) => {
     const headers = (await request.get('/dados')).headers();
     expect(headers['content-security-policy']).toContain("script-src 'self'");

@@ -66,14 +66,21 @@ export function Panel({
     >
       {title || actions ? (
         <header className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-border px-3 py-2">
+          {/* O título nunca fica mais estreito que a sua maior palavra: se as ações não cabem ao
+              lado, descem para a linha de baixo. */}
           {title ? (
-            <h2 id={titleId} className="font-display text-sm font-bold whitespace-nowrap">
+            <h2
+              id={titleId}
+              className="flex-1 font-display text-sm font-bold text-balance break-words"
+            >
               {title}
             </h2>
           ) : (
             <span />
           )}
-          {actions}
+          {actions ? (
+            <div className="flex max-w-full flex-wrap items-center gap-1">{actions}</div>
+          ) : null}
         </header>
       ) : null}
       <div className={cn('p-3', bodyClassName)}>

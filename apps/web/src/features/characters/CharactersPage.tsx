@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
+import { ServerStatus } from '@/features/auth/ServerStatus';
 import { useAuthStore } from '@/features/auth/store';
 import { useToastStore } from '@/features/toast/store';
 import { formatDateTime } from '@/lib/format';
@@ -185,7 +186,12 @@ export default function CharactersPage() {
       );
     }
   } else if (status === 'loading') {
-    body = <p className="py-10 text-center text-muted">{c.loading}</p>;
+    body = (
+      <div className="py-10 text-center text-muted">
+        <p>{c.loading}</p>
+        <ServerStatus className="mx-auto mt-3 max-w-md justify-center text-left" />
+      </div>
+    );
   } else {
     body = (
       <div className="rounded-xl border border-border bg-surface p-5">
@@ -200,10 +206,10 @@ export default function CharactersPage() {
               </Link>
             </Button>
           </>
+        ) : status === 'unavailable' ? (
+          <ServerStatus />
         ) : (
-          <p className="text-sm text-muted">
-            {status === 'unavailable' ? t.nav.accountsUnavailable : t.auth.page.disabled}
-          </p>
+          <p className="text-sm text-muted">{t.auth.page.disabled}</p>
         )}
       </div>
     );

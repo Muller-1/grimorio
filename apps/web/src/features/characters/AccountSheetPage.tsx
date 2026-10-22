@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/button';
+import { ServerStatus } from '@/features/auth/ServerStatus';
 import { useAuthStore } from '@/features/auth/store';
 import { useToastStore } from '@/features/toast/store';
 import { isUnreachable } from '@/lib/api';
@@ -21,6 +22,8 @@ export default function AccountSheetPage() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const toast = useToastStore((s) => s.push);
   const [fetched, setFetched] = useState<{ id: string; load: Load } | null>(null);
+  // Muda para buscar a ficha de novo (botão "Tentar de novo" com o servidor fora do ar).
+  const [attempt, setAttempt] = useState(0);
 
   // Sem sessão não há o que buscar: o estado sai direto do login.
   const load: Load =
@@ -56,7 +59,7 @@ export default function AccountSheetPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, status, userId, toast]);
+  }, [id, status, userId, toast, attempt]);
 
   // Saindo da página: o que estiver pendente é enviado (e fica guardado neste aparelho).
   useEffect(() => () => stopSync(), []);
@@ -83,6 +86,7 @@ export default function AccountSheetPage() {
   return (
     <div className="mx-auto max-w-xl px-4 py-16 text-center">
       <h1 className="font-display text-xl font-bold">{message}</h1>
+      <ServerStatus className="mx-auto mt-4 max-w-md text-left" />
       {load !== 'loading' ? (
         <div className="mt-4 flex justify-center gap-2">
           {load === 'need-sign-in' ? (
@@ -90,6 +94,17 @@ export default function AccountSheetPage() {
               <Link to={`/entrar?voltar=${encodeURIComponent(`/personagem?id=${id}`)}`}>
                 {t.auth.signIn}
               </Link>
+            </Button>
+          ) : null}
+          {load === 'unavailable' && status === 'signed-in' ? (
+            <Button
+              variant="primary"
+              onClick={() => {
+                setFetched(null);
+                setAttempt((n) => n + 1);
+              }}
+            >
+              {t.common.retry}
             </Button>
           ) : null}
           <Button asChild>

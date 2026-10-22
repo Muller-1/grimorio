@@ -11,6 +11,10 @@ interface ImportMetaEnv {
   readonly VITE_CONTACT_EMAIL?: string;
   /** "true" liga contas (login com Google) e fichas na conta. Em `pnpm dev`, ligado por padrão. */
   readonly VITE_ACCOUNTS?: string;
+  /** Endereço público do site, sem barra no fim (endereço canônico, sitemap, prévia de link). */
+  readonly VITE_SITE_URL?: string;
+  /** Código da verificação do Google Search Console (meta "google-site-verification"). */
+  readonly VITE_GOOGLE_SITE_VERIFICATION?: string;
 }
 
 interface ImportMeta {

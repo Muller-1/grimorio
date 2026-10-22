@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { t } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { Avatar } from './Avatar';
 import { useAuthStore } from './store';
 
@@ -12,13 +13,19 @@ const AccountPopover = lazy(() => import('./AccountPopover'));
 export function AccountMenu() {
   const status = useAuthStore((s) => s.status);
   const user = useAuthStore((s) => s.user);
+  const slow = useAuthStore((s) => s.slow);
 
   if (status === 'disabled' || status === 'loading') {
+    const label =
+      status === 'disabled' ? t.nav.profileSoon : slow ? t.auth.server.wakingShort : t.auth.account;
     return (
       <span
-        className="grid size-9 place-items-center rounded-full text-muted"
-        title={status === 'disabled' ? t.nav.profileSoon : t.auth.account}
-        aria-label={status === 'disabled' ? t.nav.profileSoon : t.auth.account}
+        className={cn(
+          'grid size-9 place-items-center rounded-full text-muted',
+          slow && 'animate-pulse',
+        )}
+        title={label}
+        aria-label={label}
         role="img"
         data-testid="account.status"
         data-value={status}

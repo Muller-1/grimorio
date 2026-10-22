@@ -13,7 +13,9 @@ const [distDir = 'dist', ssrDir = 'dist-ssr'] = process.argv.slice(2);
 const dist = new URL(`../${distDir}/`, import.meta.url);
 const ssr = new URL(`../${ssrDir}/`, import.meta.url);
 
-const { render, STATIC_PAGES } = await import(new URL('entry-server.js', ssr).href);
+const { render, STATIC_PAGES, SEO, headTags, sitemapXml, robotsTxt } = await import(
+  new URL('entry-server.js', ssr).href
+);
 
 // Manifesto do Vite (build.manifest): arquivos de cada módulo carregado sob demanda.
 const manifestFile = new URL('.vite/manifest.json', dist);
@@ -38,35 +40,37 @@ if (!template.includes(MARKER))
   throw new Error(`Marcador ${MARKER} não encontrado em ${distDir}/index.html`);
 
 /** Escapa texto para dentro de um atributo HTML. */
-const attr = (text) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const attr = (text) =>
+  text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-for (const { path, file, prerender, lazyModule, meta } of STATIC_PAGES) {
+for (const pageInfo of STATIC_PAGES) {
+  const { path, file, prerender, lazyModule, meta } = pageInfo;
   const html = render(path);
   // `data-prerendered` diz ao main.tsx que pode hidratar; `data-shell`, que deve desenhar do zero.
   const mark = prerender === 'full' ? 'data-prerendered' : 'data-shell';
   const preloads = (lazyModule ? preloadsFor(lazyModule) : [])
     .map((js) => `<link rel="modulepreload" crossorigin href="/${js}">`)
     .join('\n    ');
-  // Cada página com o seu título e a sua descrição (antes, todas iguais), e a prévia de link
-  // (Open Graph) que o WhatsApp e as redes sociais mostram.
-  const og = [
-    `<meta property="og:type" content="website" />`,
-    `<meta property="og:locale" content="pt_BR" />`,
-    `<meta property="og:site_name" content="Grimório" />`,
-    `<meta property="og:title" content="${attr(meta.title)}" />`,
-    `<meta property="og:description" content="${attr(meta.description)}" />`,
-  ].join('\n    ');
+  // Cada página com o seu título e a sua descrição, a prévia de link (WhatsApp, redes sociais),
+  // o endereço canônico ou o "noindex", e na inicial os dados estruturados (src/app/seo.ts).
+  const head = headTags(pageInfo, SEO).join('\n    ');
+  // Substituições por função: um "$" no texto nunca vira padrão especial do replace.
   const page = template
-    .replace(/<title>[^<]*<\/title>/, `<title>${attr(meta.title)}</title>\n    ${og}`)
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${attr(meta.title)}</title>\n    ${head}`)
     .replace(
       /<meta\s+name="description"\s+content="[^"]*"\s*\/>/,
-      `<meta name="description" content="${attr(meta.description)}" />`,
+      () => `<meta name="description" content="${attr(meta.description)}" />`,
     )
-    .replace('</head>', preloads ? `  ${preloads}\n  </head>` : '</head>')
-    .replace(MARKER, `<div id="root" ${mark}="${path}">${html}</div>`);
+    .replace('</head>', () => (preloads ? `  ${preloads}\n  </head>` : '</head>'))
+    .replace(MARKER, () => `<div id="root" ${mark}="${path}">${html}</div>`);
   await writeFile(new URL(file, dist), page);
   console.log(`${prerender.padEnd(5)} ${path} → ${distDir}/${file} (${html.length} caracteres)`);
 }
+
+// Para o Google: a lista das páginas públicas e as regras para os robôs de busca.
+await writeFile(new URL('sitemap.xml', dist), sitemapXml(STATIC_PAGES, SEO));
+await writeFile(new URL('robots.txt', dist), robotsTxt(SEO));
+console.log(`sitemap.xml e robots.txt para ${SEO.siteUrl}`);
 
 await rm(ssr, { recursive: true, force: true });
 // O manifesto só serve ao build; não precisa ir para o ar.

@@ -77,8 +77,7 @@ export const wizardPtBR = {
       ]
         .filter(Boolean)
         .join(' · '),
-    spellsLater:
-      'A escolha das magias ainda é feita na mesa (a lista de magias chega numa próxima versão do site).',
+    spellsLater: 'Você escolhe as magias na etapa Magias, depois de Atributos.',
     features: 'Características de nível 1',
     skills: (n: number) => `Escolha ${n} perícias`,
     skillsAny: (n: number) => `Escolha ${n} perícias quaisquer`,

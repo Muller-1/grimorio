@@ -363,14 +363,15 @@ function HpPanel() {
         </div>
       </div>
 
+      {/* Campo + 3 botões numa linha só, também no celular (antes o "Temp." caía sozinho embaixo). */}
       <form
-        className="flex flex-wrap items-end gap-2"
+        className="grid grid-cols-[4.5rem_repeat(3,minmax(0,1fr))] items-end gap-1.5 sm:gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           apply('damage');
         }}
       >
-        <div className="w-24">
+        <div>
           <Label htmlFor={amountId}>{t.sheet.hp.amount}</Label>
           <Input
             id={amountId}
@@ -387,36 +388,39 @@ function HpPanel() {
         <Button
           variant="danger"
           size="md"
+          className="w-full px-1.5"
           disabled={!validAmount}
           onClick={() => apply('damage')}
           data-testid="hp.damage"
         >
-          <HeartMinus className="size-4" />
+          <HeartMinus className="size-4 max-[380px]:hidden" />
           {t.sheet.hp.damage}
         </Button>
         <Button
           variant="success"
           size="md"
+          className="w-full px-1.5"
           disabled={!validAmount}
           onClick={() => apply('heal')}
           data-testid="hp.heal"
         >
-          <HeartPlus className="size-4" />
+          <HeartPlus className="size-4 max-[380px]:hidden" />
           {t.sheet.hp.heal}
         </Button>
         <Button
           variant="subtle"
           size="md"
+          className="w-full px-1.5"
           disabled={!validAmount}
           onClick={() => apply('set-temp-hp')}
           title={t.sheet.hp.tempLong}
           data-testid="hp.temp.add"
         >
-          <ShieldPlus className="size-4" />
+          <ShieldPlus className="size-4 max-[380px]:hidden" />
           {t.sheet.hp.addTemp}
         </Button>
         {current === 0 ? (
-          <label className="flex items-center gap-1.5 text-sm">
+          <label className="col-span-4 flex items-center gap-1.5 text-sm">
             <input
               type="checkbox"
               checked={critical}
@@ -604,7 +608,7 @@ export function SkillsPanel() {
   const sorted = [...SKILL_KEYS].sort((a, b) => t.skills[a].localeCompare(t.skills[b], 'pt-BR'));
   return (
     <Panel title={t.sheet.skillsTitle}>
-      <ul className="grid grid-cols-1 gap-x-4 min-[380px]:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-x-4 min-[480px]:grid-cols-2">
         {sorted.map((skill) => (
           <SkillRow key={skill} skill={skill} />
         ))}

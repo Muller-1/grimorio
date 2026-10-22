@@ -107,15 +107,12 @@ function Footer() {
     <footer className="border-t border-border bg-surface">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
         <nav aria-label={t.nav.footerLabel} className="flex flex-wrap gap-x-4 gap-y-1">
+          {/* Sem o endereço do formulário (VITE_REPORT_URL), o link não aparece: nada de texto morto. */}
           {report ? (
             <a href={report} target="_blank" rel="noreferrer" className={link}>
               {t.footer.report}
             </a>
-          ) : (
-            <span title={t.footer.reportSoon} className="cursor-help">
-              {t.footer.report}
-            </span>
-          )}
+          ) : null}
           <Link to="/comecar" className={link}>
             {t.footer.start}
           </Link>

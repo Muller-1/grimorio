@@ -8,29 +8,30 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 
 ## O que já existe
 
-| Parte                                                                                          | Onde                                                                   | Estado                                          |
-| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------- |
-| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                                  | raiz                                                                   | Etapa 1 ✔                                       |
-| CI (GitHub Actions) + modelo de PR                                                             | `.github/`                                                             | Etapa 2 ✔ (falta ativar a proteção da `main`)   |
-| Gerador aleatório (criptográfico + semente para testes)                                        | `packages/rules/src/dice/rng.ts`                                       | Etapa 3 ✔                                       |
-| Parser e avaliação de expressões de dados                                                      | `packages/rules/src/dice/`                                             | Etapa 4 ✔                                       |
-| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`                    | `apps/web`                                                             | Etapa 5 ✔                                       |
-| Tela inicial                                                                                   | `apps/web/src/pages/HomePage.tsx`                                      | ✔                                               |
-| Ficha editável com cálculo automático (antecipada, ver ADR-002)                                | `apps/web/src/features/sheet` + `packages/rules/src/sheet`             | ✔                                               |
-| Ganchos de teste + bot (Playwright) com os cenários B1, B11 e B12                              | `apps/web/src/testing` + `apps/qa-bot`                                 | Etapa 6 ✔                                       |
-| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação       | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice`       | Etapa 7 ✔                                       |
-| Publicação: páginas institucionais, Cloudflare Pages, CSP, orçamentos, Lighthouse, B14         | `docs/publicacao.md` + `apps/web/public/_headers`                      | Etapa 8 ✔ (falta criar o projeto na Cloudflare) |
-| API (Fastify + Postgres/Drizzle): portas, `/health` `/ready` `/version`, API de teste          | `apps/api` + `docker-compose.yml`                                      | Etapa 9 ✔ (falta staging e decisões do R2)      |
-| Login com Google (Better Auth) e fichas salvas na conta, com salvamento por seção              | `apps/api/src/modules` + `apps/web/src/features/{auth,characters}`     | ✔ (ADR-008; contas em fase de testes)           |
-| Assistente de criação: Classe → Origem → Atributos → Toques Finais (regras de 2024)            | `apps/web/src/features/builder` + `packages/rules/src/creation`        | ✔ (ADR-008)                                     |
-| Primeiros passos (`/comecar`), glossário e pendências clicáveis no assistente                  | `apps/web/src/pages/StartPage.tsx` + `features/builder/guide.ts`       | ✔ (feedback dos testadores)                     |
-| Maestria em Arma e Invocação Mística no nível 1                                                | `packages/rules/src/creation/mastery.ts` + `content.ts`                | ✔                                               |
-| Temas de cor (Automático, Pergaminho, Taverna, Arcano, Floresta, Alto contraste)               | `apps/web/src/lib/theme.ts` + `public/theme.js` + `index.css`          | ✔ (contraste AA testado)                        |
-| Subida de nível (quantos níveis → telas curtas por nível → resumo), classes do 1 ao 20         | `features/levelup` + `packages/rules/src/{classes,levelup}`            | ✔ (ADR-010)                                     |
-| Magias: 339 do SRD, aba Magias (CD, espaços, conjurar, Concentração, Outra magia)              | `features/spells` + `packages/rules/src/spells`                        | ✔ (ADR-010)                                     |
-| Habilidades que o site calcula (Fúria, Frenesi, Ataque Furtivo, Bênção…)                       | `sheet/components/PowersPanel.tsx` + `packages/rules/src/engine`       | ✔ (ADR-010)                                     |
-| Inventário (moedas, peso, arma equipada), características por origem, efeitos em você          | `features/inventory` + `packages/rules/src/{inventory,engine}`         | ✔ (ADR-011)                                     |
-| Etapa Magias no assistente (recomendadas do livro, Iniciado em Magia); visual sem "cara de IA" | `features/builder/steps/SpellsStep.tsx` + `components/ui/ornament.tsx` | ✔ (ADR-012)                                     |
+| Parte                                                                                           | Onde                                                                      | Estado                                          |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------- |
+| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                                   | raiz                                                                      | Etapa 1 ✔                                       |
+| CI (GitHub Actions) + modelo de PR                                                              | `.github/`                                                                | Etapa 2 ✔ (falta ativar a proteção da `main`)   |
+| Gerador aleatório (criptográfico + semente para testes)                                         | `packages/rules/src/dice/rng.ts`                                          | Etapa 3 ✔                                       |
+| Parser e avaliação de expressões de dados                                                       | `packages/rules/src/dice/`                                                | Etapa 4 ✔                                       |
+| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`                     | `apps/web`                                                                | Etapa 5 ✔                                       |
+| Tela inicial                                                                                    | `apps/web/src/pages/HomePage.tsx`                                         | ✔                                               |
+| Ficha editável com cálculo automático (antecipada, ver ADR-002)                                 | `apps/web/src/features/sheet` + `packages/rules/src/sheet`                | ✔                                               |
+| Ganchos de teste + bot (Playwright) com os cenários B1, B11 e B12                               | `apps/web/src/testing` + `apps/qa-bot`                                    | Etapa 6 ✔                                       |
+| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação        | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice`          | Etapa 7 ✔                                       |
+| Publicação: páginas institucionais, Cloudflare Pages, CSP, orçamentos, Lighthouse, B14          | `docs/publicacao.md` + `apps/web/public/_headers`                         | Etapa 8 ✔ (falta criar o projeto na Cloudflare) |
+| API (Fastify + Postgres/Drizzle): portas, `/health` `/ready` `/version`, API de teste           | `apps/api` + `docker-compose.yml`                                         | Etapa 9 ✔ (falta staging e decisões do R2)      |
+| Login com Google (Better Auth) e fichas salvas na conta, com salvamento por seção               | `apps/api/src/modules` + `apps/web/src/features/{auth,characters}`        | ✔ (ADR-008; contas em fase de testes)           |
+| Assistente de criação: Classe → Origem → Atributos → Toques Finais (regras de 2024)             | `apps/web/src/features/builder` + `packages/rules/src/creation`           | ✔ (ADR-008)                                     |
+| Primeiros passos (`/comecar`), glossário e pendências clicáveis no assistente                   | `apps/web/src/pages/StartPage.tsx` + `features/builder/guide.ts`          | ✔ (feedback dos testadores)                     |
+| Maestria em Arma e Invocação Mística no nível 1                                                 | `packages/rules/src/creation/mastery.ts` + `content.ts`                   | ✔                                               |
+| Temas de cor (Automático, Pergaminho, Taverna, Arcano, Floresta, Alto contraste)                | `apps/web/src/lib/theme.ts` + `public/theme.js` + `index.css`             | ✔ (contraste AA testado)                        |
+| Subida de nível (quantos níveis → telas curtas por nível → resumo), classes do 1 ao 20          | `features/levelup` + `packages/rules/src/{classes,levelup}`               | ✔ (ADR-010)                                     |
+| Magias: 339 do SRD, aba Magias (CD, espaços, conjurar, Concentração, Outra magia)               | `features/spells` + `packages/rules/src/spells`                           | ✔ (ADR-010)                                     |
+| Habilidades que o site calcula (Fúria, Frenesi, Ataque Furtivo, Bênção…)                        | `sheet/components/PowersPanel.tsx` + `packages/rules/src/engine`          | ✔ (ADR-010)                                     |
+| Inventário (moedas, peso, arma equipada), características por origem, efeitos em você           | `features/inventory` + `packages/rules/src/{inventory,engine}`            | ✔ (ADR-011)                                     |
+| Etapa Magias no assistente (recomendadas do livro, Iniciado em Magia); visual sem "cara de IA"  | `features/builder/steps/SpellsStep.tsx` + `components/ui/ornament.tsx`    | ✔ (ADR-012)                                     |
+| Uso real: aviso de servidor acordando com novas tentativas; busca do Google (sitemap, canônico) | `features/auth/ServerStatus.tsx` + `app/seo.ts` + `scripts/prerender.mjs` | ✔ (ADR-013)                                     |
 
 Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas para quem tiver o link
 (qualquer conta Google entra, ver ADR-009, decisão 5), com a API no Render, o banco no Neon e o
@@ -178,8 +179,12 @@ grimorio/
   003: pré-renderização; 004: terminologia e edição; 005: publicação na Cloudflare; 006: base
   do back-end; 007: decisões do R2; 008: login com Google, fichas na conta e assistente;
   009: publicação com contas para um grupo de teste; 010: magias, subida de nível e
-  habilidades que o site calcula).
-- `docs/publicacao.md` — passo a passo para colocar o site no ar e ligar o monitor B14.
+  habilidades que o site calcula; 011: inventário e ficha v3; 012: visual sem "cara de IA" e
+  magias no assistente; 013: correções para uso real, servidor acordando e busca do Google).
+- `docs/publicacao.md` — passo a passo para colocar o site no ar, ligar o monitor B14, aparecer
+  no Google e manter a API acordada.
+- `docs/plano-escala-e-campanha.md` — planejamento (sem código): concorrência na campanha
+  (várias pessoas na mesma ficha), escala e o que falta para um site profissional.
 - `docs/publicar-com-contas.md` — site + API (Render) + banco (Neon) com login, para testar com
   amigos.
 - Os planos (`plano-tecnico-site-dnd-v2.md` e `plano-de-inicio-site-dnd.md`) estão nos arquivos

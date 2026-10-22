@@ -8,3 +8,8 @@ export function nowIso(): string {
 export function setNow(iso: string | null): void {
   fixed = iso;
 }
+
+/** Milissegundos desde 1970 (para contagens regressivas). Segue o horário fixado nos testes. */
+export function nowMs(): number {
+  return Date.parse(nowIso());
+}

@@ -44,6 +44,8 @@ interface PageRoute {
   prerender: Prerender;
   /** Módulo carregado sob demanda: o HTML da página já pede os arquivos dele (modulepreload). */
   lazyModule?: string;
+  /** `false`: página pessoal (conta, login), fora do Google e do sitemap. */
+  index?: false;
 }
 
 /** Rotas do R1 (plano de início, Etapa 5) + fichas e contas. Fonte única para o roteador e o build. */
@@ -72,6 +74,7 @@ const PAGES: readonly PageRoute[] = [
   },
   {
     path: '/personagens',
+    index: false,
     element: (
       <Loading>
         <CharactersPage />
@@ -83,6 +86,7 @@ const PAGES: readonly PageRoute[] = [
   {
     // A ficha da conta: /personagem?id=… (um HTML só; o id vai na busca, não no caminho).
     path: '/personagem',
+    index: false,
     element: (
       <Loading>
         <AccountSheetPage />
@@ -103,6 +107,7 @@ const PAGES: readonly PageRoute[] = [
   },
   {
     path: '/entrar',
+    index: false,
     element: (
       <Loading>
         <LoginPage />
@@ -128,15 +133,18 @@ export const STATIC_PAGES: readonly {
   lazyModule?: string;
   /** Título e descrição gravados no HTML da página (busca e prévia de link). */
   meta: { title: string; description: string };
+  /** Entra no Google (sitemap e endereço canônico) ou leva `noindex`. */
+  index: boolean;
 }[] = [
-  ...PAGES.map(({ path, prerender, lazyModule }) => ({
+  ...PAGES.map(({ path, prerender, lazyModule, index }) => ({
     path,
     file: path === '/' ? 'index.html' : `${path.slice(1)}.html`,
     prerender,
     ...(lazyModule ? { lazyModule } : {}),
     meta: pageMeta(path),
+    index: index !== false,
   })),
-  { path: '/404', file: '404.html', prerender: 'shell', meta: t.meta.default },
+  { path: '/404', file: '404.html', prerender: 'shell', meta: t.meta.default, index: false },
 ];
 
 export function AppRoutes() {

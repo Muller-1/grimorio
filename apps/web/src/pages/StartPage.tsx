@@ -4,10 +4,14 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Ornament } from '@/components/ui/ornament';
 import { t } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 /** "Primeiros passos" (feedback dos testadores, 14/10): o básico para quem nunca jogou. */
 export default function StartPage() {
   const s = t.start;
+  const entries = Object.values(t.glossary);
+  const half = Math.ceil(entries.length / 2);
+  const columns = [entries.slice(0, half), entries.slice(half)];
   useEffect(() => {
     document.title = `${s.pageTitle} · ${t.brand.name}`;
   }, [s.pageTitle]);
@@ -59,26 +63,35 @@ export default function StartPage() {
           {s.glossaryTitle}
         </h2>
         <p className="mt-1 text-sm text-muted">{s.glossaryHint}</p>
-        {/* Uma lista só (antes eram 22 caixinhas iguais), em duas colunas no computador. */}
-        <ul className="mt-3 grid rounded-xl border border-border bg-surface px-4 sm:grid-cols-2 sm:gap-x-8">
-          {Object.values(t.glossary).map((entry) => (
-            <li
-              key={entry.term}
-              className="border-b border-border last:border-b-0 sm:[&:nth-last-child(2):nth-child(odd)]:border-b-0"
-            >
-              <details className="group">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-2 font-semibold [&::-webkit-details-marker]:hidden">
-                  {entry.term}
-                  <ChevronDown
-                    className="size-4 shrink-0 text-muted transition-transform group-open:rotate-180"
-                    aria-hidden="true"
-                  />
-                </summary>
-                <p className="pb-3 text-sm text-muted">{entry.text}</p>
-              </details>
-            </li>
+        {/* Uma lista só (antes eram 22 caixinhas iguais). No computador, duas colunas
+            independentes: abrir uma palavra não estica a palavra ao lado. */}
+        <div className="mt-3 rounded-xl border border-border bg-surface px-4 sm:grid sm:grid-cols-2 sm:items-start sm:gap-x-8">
+          {columns.map((column, ci) => (
+            <ul key={ci}>
+              {column.map((entry) => (
+                <li
+                  key={entry.term}
+                  className={cn(
+                    'border-b border-border last:border-b-0',
+                    // No celular as duas listas viram uma: a 1ª mantém a linha no fim.
+                    ci === 0 && 'max-sm:last:border-b',
+                  )}
+                >
+                  <details className="group">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-2 font-semibold [&::-webkit-details-marker]:hidden">
+                      {entry.term}
+                      <ChevronDown
+                        className="size-4 shrink-0 text-muted transition-transform group-open:rotate-180"
+                        aria-hidden="true"
+                      />
+                    </summary>
+                    <p className="pb-3 text-sm text-muted">{entry.text}</p>
+                  </details>
+                </li>
+              ))}
+            </ul>
           ))}
-        </ul>
+        </div>
       </section>
     </article>
   );
