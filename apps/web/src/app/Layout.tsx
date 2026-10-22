@@ -12,6 +12,7 @@ import { pageMeta } from './meta';
 
 /** Páginas que contam como "Fichas" na barra (a lista, a ficha, o assistente). */
 const SHEET_PATHS = ['/personagens', '/personagem', '/ficha', '/criar'];
+const CAMPAIGN_PATHS = ['/campanhas', '/campanha'];
 
 function NavTab({
   to,
@@ -70,14 +71,20 @@ function Header() {
           >
             {t.nav.sheet}
           </NavTab>
-          <span
-            className="flex h-9 cursor-not-allowed items-center gap-1.5 rounded-md px-3 text-sm font-semibold text-muted opacity-60"
-            title={t.nav.campaignSoon}
-            aria-disabled="true"
-          >
-            <Swords className="size-4" aria-hidden="true" />
-            <span className="max-sm:sr-only">{t.nav.campaign}</span>
-          </span>
+          {siteConfig.accountsEnabled ? (
+            <NavTab to="/campanhas" activeFor={CAMPAIGN_PATHS} icon={<Swords className="size-4" />}>
+              {t.nav.campaign}
+            </NavTab>
+          ) : (
+            <span
+              className="flex h-9 cursor-not-allowed items-center gap-1.5 rounded-md px-3 text-sm font-semibold text-muted opacity-60"
+              title={t.nav.campaignSoon}
+              aria-disabled="true"
+            >
+              <Swords className="size-4" aria-hidden="true" />
+              <span className="max-sm:sr-only">{t.nav.campaign}</span>
+            </span>
+          )}
           <NavTab to="/dados" icon={<Dices className="size-4" />}>
             {t.nav.dice}
           </NavTab>

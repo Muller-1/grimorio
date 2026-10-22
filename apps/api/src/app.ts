@@ -6,9 +6,11 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import type { Env } from './config/env';
 import { createDatabase, isPostgresDatabase, type DatabasePort } from './db/client';
 import { authRoutes } from './modules/auth/routes';
+import { campaignRoutes } from './modules/campaigns/routes';
 import { characterRoutes } from './modules/characters/routes';
 import { proxyGuard } from './modules/proxy-guard';
 import { systemRoutes } from './modules/system/routes';
+import { rateLimit, type RateRule } from './plugins/rate-limit';
 import { testApi } from './plugins/test-api';
 import { defaultPorts, type Ports } from './ports';
 
@@ -17,6 +19,11 @@ export interface BuildOptions {
   ports?: Partial<Ports>;
   /** Banco já criado (quem passa é responsável por fechar). Sem isso, usa DATABASE_URL. */
   db?: DatabasePort;
+  /**
+   * Limite de pedidos nas rotas de escrita. Ligado fora dos testes; um teste pode passar regras
+   * próprias (ex.: limite 2) para conferir o 429.
+   */
+  rateLimit?: boolean | RateRule[];
 }
 
 export async function buildApp(env: Env, options: BuildOptions = {}): Promise<FastifyInstance> {
@@ -47,12 +54,15 @@ export async function buildApp(env: Env, options: BuildOptions = {}): Promise<Fa
 
   // Antes de todas as rotas: publicado, só atende /api/* que chegue pelo site (ADR-009).
   await app.register(proxyGuard);
+  const limits = options.rateLimit ?? env.APP_ENV !== 'test';
+  if (limits) await app.register(rateLimit, Array.isArray(limits) ? { rules: limits } : {});
   await app.register(systemRoutes);
   // Login e personagens precisam do Postgres. Os testes de unidade usam um banco falso e só
   // exercitam as rotas de sistema e as salvaguardas da API de teste.
   if (isPostgresDatabase(db)) {
     await app.register(authRoutes);
     await app.register(characterRoutes);
+    await app.register(campaignRoutes);
   }
   if (env.ENABLE_TEST_API) await app.register(testApi);
 

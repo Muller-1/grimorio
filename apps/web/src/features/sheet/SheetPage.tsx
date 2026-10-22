@@ -1,6 +1,6 @@
 import { createBlankSheet } from '@grimorio/shared';
 import { ArrowLeft, FilePlus2, HardDriveDownload, Sparkles, Wand2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { ActionsColumn } from './components/ActionsColumn';
 import { CharacterColumn } from './components/CharacterColumn';
 import { CombatColumn, SkillsPanel } from './components/CombatColumn';
-import { SyncIndicator } from '@/features/characters/SyncIndicator';
 import { safeStorage } from '@/ports/storage';
 import { exampleSheet } from './example';
 import { useSheetStore } from './store';
@@ -67,7 +66,17 @@ type Confirm = 'blank' | 'example' | null;
  * `local` = a ficha deste navegador (/ficha). `account` = uma ficha da conta (/personagem),
  * aberta pela AccountSheetPage, com salvamento automático no servidor.
  */
-export default function SheetPage({ mode = 'local' }: { mode?: 'local' | 'account' }) {
+export default function SheetPage({
+  mode = 'local',
+  status,
+  banner,
+}: {
+  mode?: 'local' | 'account';
+  /** Ficha da conta: a situação do salvamento, embaixo do nome (vem da AccountSheetPage). */
+  status?: ReactNode;
+  /** Ficha da conta: avisos da mesa (campanha, curas propostas) acima da ficha. */
+  banner?: ReactNode;
+}) {
   const name = useSheetStore((s) => s.sheet.identity.name);
   const openLocal = useSheetStore((s) => s.openLocal);
   const recovered = useSheetStore((s) => s.recoveredFromBadData);
@@ -122,7 +131,7 @@ export default function SheetPage({ mode = 'local' }: { mode?: 'local' | 'accoun
           <div className="min-w-0">
             <h1 className="truncate font-display text-xl font-bold">{name || t.sheet.unnamed}</h1>
             {mode === 'account' ? (
-              <SyncIndicator />
+              status
             ) : (
               <p className="flex items-center gap-1 text-xs text-muted">
                 <HardDriveDownload className="size-3.5" aria-hidden="true" />
@@ -145,7 +154,7 @@ export default function SheetPage({ mode = 'local' }: { mode?: 'local' | 'accoun
         ) : null}
       </div>
 
-      {mode === 'local' ? <WizardHint /> : null}
+      {mode === 'local' ? <WizardHint /> : banner}
 
       {/* Abas só no celular */}
       <div

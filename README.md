@@ -32,6 +32,7 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 | Inventário (moedas, peso, arma equipada), características por origem, efeitos em você           | `features/inventory` + `packages/rules/src/{inventory,engine}`            | ✔ (ADR-011)                                     |
 | Etapa Magias no assistente (recomendadas do livro, Iniciado em Magia); visual mais limpo        | `features/builder/steps/SpellsStep.tsx` + `components/ui/ornament.tsx`    | ✔ (ADR-012)                                     |
 | Uso real: aviso de servidor acordando com novas tentativas; busca do Google (sitemap, canônico) | `features/auth/ServerStatus.tsx` + `app/seo.ts` + `scripts/prerender.mjs` | ✔ (ADR-013)                                     |
+| Campanha, parte 1: mesa com mestre e jogadores, ações sem conflito, resumo, curas propostas     | `features/campaigns` + `apps/api/src/modules/campaigns`                   | ✔ (ADR-014)                                     |
 
 Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas para quem tiver o link
 (qualquer conta Google entra, ver ADR-009, decisão 5), com a API no Render, o banco no Neon e o
@@ -180,7 +181,7 @@ grimorio/
   do back-end; 007: decisões do R2; 008: login com Google, fichas na conta e assistente;
   009: publicação com contas para um grupo de teste; 010: magias, subida de nível e
   habilidades que o site calcula; 011: inventário e ficha v3; 012: visual mais limpo e
-  magias no assistente; 013: correções para uso real, servidor acordando e busca do Google).
+  magias no assistente; 013: correções para uso real, servidor acordando e busca do Google; 014: campanha, parte 1).
 - `docs/publicacao.md` — passo a passo para colocar o site no ar, ligar o monitor B14, aparecer
   no Google e manter a API acordada.
 - `docs/plano-escala-e-campanha.md` — planejamento (sem código): concorrência na campanha

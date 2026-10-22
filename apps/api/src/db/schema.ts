@@ -15,6 +15,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   smallint,
   text,
   timestamp,
@@ -155,6 +156,120 @@ export const characters = pgTable(
   ],
 );
 
+/**
+ * Campanhas (docs/plano-escala-e-campanha.md, seção 2.3). A dona da linha é a mestre. O
+ * convite é um código aleatório com validade; trocar o código invalida o anterior.
+ */
+export const campaigns = pgTable(
+  'campaigns',
+  {
+    id: uuid('id').primaryKey(),
+    ownerId: uuid('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 80 }).notNull(),
+    inviteCode: text('invite_code').notNull(),
+    inviteExpiresAt: timestamp('invite_expires_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('campaigns_invite_code_uq').on(t.inviteCode),
+    index('campaigns_owner_idx').on(t.ownerId),
+  ],
+);
+
+/** Quem está em cada campanha: `dm` (mestre) ou `player`. */
+export const campaignMembers = pgTable(
+  'campaign_members',
+  {
+    campaignId: uuid('campaign_id')
+      .notNull()
+      .references(() => campaigns.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: varchar('role', { length: 8 }).$type<'dm' | 'player'>().notNull(),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.campaignId, t.userId] }),
+    index('campaign_members_user_idx').on(t.userId),
+  ],
+);
+
+/** Que ficha está em que campanha. Uma ficha fica em uma campanha só. */
+export const campaignCharacters = pgTable(
+  'campaign_characters',
+  {
+    campaignId: uuid('campaign_id')
+      .notNull()
+      .references(() => campaigns.id, { onDelete: 'cascade' }),
+    characterId: uuid('character_id')
+      .notNull()
+      .references(() => characters.id, { onDelete: 'cascade' }),
+    addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.campaignId, t.characterId] }),
+    uniqueIndex('campaign_characters_character_uq').on(t.characterId),
+  ],
+);
+
+/**
+ * Ações de jogo aplicadas pelo canal de ações (seção 2.2): não aplicar duas vezes
+ * (`action_id` único por ficha), histórico ("a mestre aplicou 7 de dano") e "o que mudou depois
+ * da versão N".
+ */
+export const characterEvents = pgTable(
+  'character_events',
+  {
+    id: uuid('id').primaryKey(),
+    characterId: uuid('character_id')
+      .notNull()
+      .references(() => characters.id, { onDelete: 'cascade' }),
+    actionId: uuid('action_id').notNull(),
+    /** Quem fez. Some (vira nulo) se a pessoa excluir a conta; o evento fica. */
+    actorId: uuid('actor_id').references(() => users.id, { onDelete: 'set null' }),
+    actorRole: varchar('actor_role', { length: 8 }).$type<'owner' | 'dm' | 'player'>().notNull(),
+    /** Só quando veio de uma proposta aceita: a dona. */
+    approvedBy: uuid('approved_by').references(() => users.id, { onDelete: 'set null' }),
+    action: jsonb('action').$type<unknown>().notNull(),
+    version: integer('version').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('character_events_action_uq').on(t.characterId, t.actionId),
+    index('character_events_version_idx').on(t.characterId, t.version),
+  ],
+);
+
+/** Cura oferecida por outro jogador: só muda a ficha quando a dona aceita (seção 2.2). */
+export const actionProposals = pgTable(
+  'action_proposals',
+  {
+    id: uuid('id').primaryKey(),
+    characterId: uuid('character_id')
+      .notNull()
+      .references(() => characters.id, { onDelete: 'cascade' }),
+    proposerId: uuid('proposer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    action: jsonb('action').$type<unknown>().notNull(),
+    note: varchar('note', { length: 120 }),
+    status: varchar('status', { length: 10 })
+      .$type<'pending' | 'accepted' | 'rejected' | 'expired'>()
+      .notNull(),
+    createdAt: createdAt(),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    decidedBy: uuid('decided_by').references(() => users.id, { onDelete: 'set null' }),
+  },
+  (t) => [index('action_proposals_character_idx').on(t.characterId, t.status)],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type CharacterRow = typeof characters.$inferSelect;
+export type CampaignRow = typeof campaigns.$inferSelect;
+export type ProposalRow = typeof actionProposals.$inferSelect;

@@ -42,7 +42,7 @@ export type PatchResult =
   | { kind: 'invalid'; issues: unknown };
 
 /** Colunas que a lista mostra, tiradas da ficha (o servidor é dono delas). */
-function summaryColumns(sheet: LocalSheet) {
+export function summaryColumns(sheet: LocalSheet) {
   return {
     name: sheet.identity.name.slice(0, 100),
     level: sheet.build.level,
@@ -56,7 +56,7 @@ function summaryColumns(sheet: LocalSheet) {
  * A ficha da linha no formato atual. Linhas antigas são migradas na leitura (ADR-010); só são
  * regravadas no formato novo quando o jogador salvar alguma mudança.
  */
-function sheetOf(row: CharacterRow): LocalSheet {
+export function sheetOf(row: CharacterRow): LocalSheet {
   const parsed = SheetInputSchema.safeParse(row.data);
   // Só entra no banco ficha validada; se um dia falhar, é bug de migração (aparece no log).
   if (!parsed.success) throw new Error(`ficha ${row.id} não pôde ser migrada`);
@@ -64,12 +64,12 @@ function sheetOf(row: CharacterRow): LocalSheet {
 }
 
 /** Revisões com todas as seções (as que não existiam quando a linha foi salva contam 0). */
-function revsOf(row: CharacterRow): SectionRevs {
+export function revsOf(row: CharacterRow): SectionRevs {
   const revs = Object.fromEntries(SHEET_SECTIONS.map((s) => [s, 0])) as SectionRevs;
   return { ...revs, ...row.sectionRevs };
 }
 
-function toDocument(row: CharacterRow): CharacterDocument {
+export function toDocument(row: CharacterRow): CharacterDocument {
   return {
     id: row.id,
     version: row.version,

@@ -59,7 +59,7 @@ export const siteConfig = {
   accountsEnabled: env.VITE_ACCOUNTS ? env.VITE_ACCOUNTS === 'true' : env.DEV,
 
   /** Data da versão em vigor dos termos e da política de privacidade. */
-  legalUpdatedAt: '08/10/2026',
+  legalUpdatedAt: '22/10/2026',
 };
 
 /** Monta o link de "Relatar problema" com a página e a versão do site (RF-104). */

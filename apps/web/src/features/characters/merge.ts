@@ -20,6 +20,8 @@ export interface SyncSnapshot {
   local: LocalSheet;
   base: LocalSheet;
   revs: SectionRevs;
+  /** Versão da ficha no servidor quando `base` foi recebida (para pedir "o que mudou depois"). */
+  version?: number;
 }
 
 export function dirtySections(snapshot: SyncSnapshot): SheetSection[] {
@@ -73,7 +75,7 @@ export function afterSave(
     localNow,
     server.sheet,
   );
-  return { local, base: server.sheet, revs: server.sectionRevs };
+  return { local, base: server.sheet, revs: server.sectionRevs, version: server.version };
 }
 
 /**
@@ -81,7 +83,12 @@ export function afterSave(
  * (com a base antiga, para o servidor detectar conflito); as demais vêm do servidor.
  */
 export function openWithCache(server: CharacterDocument, cache: SyncSnapshot | null): SyncSnapshot {
-  const fresh: SyncSnapshot = { local: server.sheet, base: server.sheet, revs: server.sectionRevs };
+  const fresh: SyncSnapshot = {
+    local: server.sheet,
+    base: server.sheet,
+    revs: server.sectionRevs,
+    version: server.version,
+  };
   if (!cache) return fresh;
   const dirty = new Set(dirtySections(cache));
   if (dirty.size === 0) return fresh;
@@ -92,6 +99,7 @@ export function openWithCache(server: CharacterDocument, cache: SyncSnapshot | n
     local: compose(fromCache, cache.local, server.sheet),
     base: compose(fromCache, cache.base, server.sheet),
     revs,
+    version: server.version,
   };
 }
 
@@ -117,5 +125,10 @@ export function resolveConflicts(
       else local[section] = server;
     }
   }
-  return { local: local as LocalSheet, base: base as LocalSheet, revs };
+  return {
+    local: local as LocalSheet,
+    base: base as LocalSheet,
+    revs,
+    ...(snapshot.version === undefined ? {} : { version: snapshot.version }),
+  };
 }

@@ -64,6 +64,7 @@ interface CacheEntry {
   local: unknown;
   base: unknown;
   revs: unknown;
+  version?: number;
 }
 
 function cacheKey(id: string): string {
@@ -86,7 +87,12 @@ export function readCache(id: string, userId: string): SyncSnapshot | null {
     const base = SheetInputSchema.safeParse(entry.base);
     const revs = SectionRevsSchema.safeParse(entry.revs);
     if (!local.success || !base.success || !revs.success) return null;
-    return { local: local.data, base: base.data, revs: revs.data };
+    return {
+      local: local.data,
+      base: base.data,
+      revs: revs.data,
+      ...(typeof entry.version === 'number' ? { version: entry.version } : {}),
+    };
   } catch {
     return null;
   }
@@ -179,6 +185,17 @@ export async function flush(): Promise<void> {
 
   again = false;
   if (result.status === 409 && result.error?.code === 'CONFLICT_SECTION') {
+    // Na mesa, quase sempre é a mestre que mudou o estado de jogo: a campanha junta sozinha as
+    // ações dela com o que está na tela e tenta de novo, antes de perguntar ao jogador.
+    if (conflictRecovery && !recovering) {
+      recovering = true;
+      const recovered = await conflictRecovery().catch(() => false);
+      recovering = false;
+      if (recovered && currentId() === id) {
+        void flush();
+        return;
+      }
+    }
     const details = result.error.details as { conflicts?: SectionConflict[] } | undefined;
     useSyncStore.setState({
       status: 'conflict',
@@ -196,6 +213,42 @@ export async function flush(): Promise<void> {
   setStatus(offline ? 'offline' : 'error');
   schedule(RETRY_MS[Math.min(attempt, RETRY_MS.length - 1)]!);
   attempt += 1;
+}
+
+// ---------- campanha (features/campaigns/table-sync) ----------
+
+let conflictRecovery: (() => Promise<boolean>) | null = null;
+let recovering = false;
+
+/** A campanha registra como juntar as ações dos outros quando o servidor acusa conflito. */
+export function setConflictRecovery(fn: (() => Promise<boolean>) | null): void {
+  conflictRecovery = fn;
+}
+
+/** A ficha da conta aberta agora (ou `null`). */
+export function currentSync(): { id: string; snapshot: SyncSnapshot; busy: boolean } | null {
+  const id = currentId();
+  if (!id || !snapshot) return null;
+  return { id, snapshot, busy: inFlight };
+}
+
+/**
+ * Troca o que está guardado pela junção com o servidor (feita pela campanha). Recusa se um
+ * salvamento estiver no caminho: quem chamou tenta de novo depois.
+ */
+export function adoptRemote(id: string, next: SyncSnapshot): boolean {
+  if (id !== currentId() || inFlight) return false;
+  snapshot = next;
+  writeCache(id);
+  showLocal(next.local);
+  const { status } = useSyncStore.getState();
+  if (dirtySections(next).length > 0) {
+    if (status !== 'conflict') setStatus('pending');
+    schedule(DEBOUNCE_MS);
+  } else if (status !== 'conflict') {
+    setStatus('saved');
+  }
+  return true;
 }
 
 /** Começa a sincronizar uma ficha da conta e a mostra na tela. */

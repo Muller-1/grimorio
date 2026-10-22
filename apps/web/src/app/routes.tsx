@@ -20,6 +20,8 @@ const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const CharactersPage = lazy(() => import('@/features/characters/CharactersPage'));
 const AccountSheetPage = lazy(() => import('@/features/characters/AccountSheetPage'));
 const CreatePage = lazy(() => import('@/features/builder/CreatePage'));
+const CampaignsPage = lazy(() => import('@/features/campaigns/CampaignsPage'));
+const CampaignPage = lazy(() => import('@/features/campaigns/CampaignPage'));
 
 function Loading({ children }: { children: ReactNode }) {
   return (
@@ -115,6 +117,29 @@ const PAGES: readonly PageRoute[] = [
     ),
     prerender: 'shell',
     lazyModule: 'src/features/auth/LoginPage.tsx',
+  },
+  {
+    path: '/campanhas',
+    index: false,
+    element: (
+      <Loading>
+        <CampaignsPage />
+      </Loading>
+    ),
+    prerender: 'shell',
+    lazyModule: 'src/features/campaigns/CampaignsPage.tsx',
+  },
+  {
+    // Uma campanha: /campanha?id=… (como a ficha da conta, o id vai na busca).
+    path: '/campanha',
+    index: false,
+    element: (
+      <Loading>
+        <CampaignPage />
+      </Loading>
+    ),
+    prerender: 'shell',
+    lazyModule: 'src/features/campaigns/CampaignPage.tsx',
   },
   { path: '/apoie', element: <SupportPage />, prerender: 'full' },
   { path: '/creditos', element: <CreditsPage />, prerender: 'full' },

@@ -10,6 +10,9 @@
   **como funciona a cura entre jogadores** (seções 2.2, 2.3 e 2.5); o domínio **`grimorio.net.br`**
   foi comprado (decisão #3; passo a passo na seção 4.1); e a plataforma de apoio será o
   **Apoia.se** (decisão #2; a página fica para depois).
+- **Atualização (22/10, tarde):** a **campanha, parte 1** está feita (ADR-014): canal de ações,
+  eventos, papéis, resumo da mesa, propostas de cura, convite por link, limite de pedidos e as
+  telas. A ficha da dona acompanha a mesa por consulta a cada 10 s (seção 2.4, opção 1).
 - Decisões em aberto estão marcadas com **(decisão)**; as já tomadas aparecem como
   **(decidido em 22/10)**.
 
@@ -175,7 +178,7 @@ propostas pendentes e a tela da mesa atualiza o resumo (`/party`); na sala em te
 | Conexões com o banco          | Erros "too many connections"                        | Usar o endereço **com pooler** do Neon (`-pooler` no host) e limitar o pool por instância.                                    |
 | Ficha grande no banco         | Fotos de 100+ kB dentro do JSONB                    | Guardar a foto num armazenamento de arquivos (Cloudflare R2) e deixar na ficha só o endereço; limitar tamanho.               |
 | Lista de personagens          | Muitas fichas por conta                             | Já há limite de 50 por conta e índice `(owner_id, updated_at)`; paginação quando o limite subir.                             |
-| Abuso (robôs, spam)           | Picos de pedidos de um IP                           | Limite de pedidos por IP e por conta nas rotas de escrita (hoje só o login tem); regras de limite na Cloudflare. As propostas de cura entram nesse limite. |
+| Abuso (robôs, spam)           | Picos de pedidos de um IP                           | _Feito (ADR-014):_ limite por IP nas rotas de escrita, nos convites e nas propostas. Depois: por conta, e regras de limite na Cloudflare. |
 | Tarefas agendadas             | Lixeira de 30 dias, limpar eventos antigos          | Gatilho agendado do Worker (Cron Trigger) chamando uma rota interna protegida, em vez de um servidor a mais. Também expira as propostas vencidas. |
 
 Índices previstos para a campanha: `campaign_members (user_id)`, `campaign_characters
@@ -261,7 +264,7 @@ variáveis ficam em `docs/publicacao.md`; conferir lá antes de começar.
 | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | **Agora** (feito em 22/10)     | Correções de tela, aviso de servidor acordando com novas tentativas, SEO básico. Decisões de campanha, domínio e apoio tomadas. |
 | Antes de divulgar              | **Ligar `grimorio.net.br` (seção 4.1)**, depois Search Console + sitemap no endereço novo, contato e "Relatar problema", **página de apoio no Apoia.se**, monitor de `/health`, revisão jurídica (#4). |
-| Antes da campanha              | PR + proteção da `main`, Sentry, backup testado, limite de pedidos nas rotas de escrita.                 |
-| **Campanha, parte 1**          | Canal de ações + `character_events` + papéis + **resumo da mesa (`/party`)** + **propostas de cura** + tela da mestre com polling (seção 2.4, opção 1). |
+| Antes de abrir a campanha a todos | PR + proteção da `main`, Sentry, backup testado (o limite de pedidos já entrou com a parte 1).        |
+| **Campanha, parte 1** — _feito em 22/10 (ADR-014)_ | Canal de ações + `character_events` + papéis + **resumo da mesa (`/party`)** + **propostas de cura** + tela da mestre com polling (seção 2.4, opção 1). |
 | Campanha, parte 2              | Sala em tempo real (Durable Objects), rolagens no servidor, histórico e desfazer.                        |
 | Quando crescer                 | API paga/2 instâncias, fotos no R2, staging, estatísticas.                                              |

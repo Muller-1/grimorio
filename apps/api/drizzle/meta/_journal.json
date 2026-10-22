@@ -15,6 +15,13 @@
       "when": 1791480668676,
       "tag": "0001_login_e_personagens",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792681034047,
+      "tag": "0002_campanhas",
+      "breakpoints": true
     }
   ]
 }

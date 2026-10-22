@@ -8,6 +8,8 @@ import { isUnreachable } from '@/lib/api';
 import { t } from '@/lib/i18n';
 import { getCharacter } from './api';
 import { startOffline, startSync, stopSync } from './sync';
+import { SyncIndicator } from './SyncIndicator';
+import { TableBar } from '@/features/campaigns/TableBar';
 
 // Carregada sob demanda, como na rota /ficha: a ficha continua sendo um pedaço separado do site.
 const SheetPage = lazy(() => import('@/features/sheet/SheetPage'));
@@ -69,7 +71,7 @@ export default function AccountSheetPage() {
       <Suspense
         fallback={<p className="min-h-dvh p-8 text-center text-muted">{t.common.loading}</p>}
       >
-        <SheetPage mode="account" />
+        <SheetPage mode="account" status={<SyncIndicator />} banner={<TableBar id={id} />} />
       </Suspense>
     );
   }

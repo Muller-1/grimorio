@@ -53,7 +53,7 @@ export default defineConfig({
               // Atenção: este pedaço e o da ficha (com @grimorio/shared) se importam um ao outro.
               // Nada aqui pode usar um valor de @grimorio/shared no carregamento do módulo
               // (ex.: `const x = ABILITY_KEYS.map(...)` fora de função): ele ainda não existe.
-              test: /packages[\\/]rules[\\/]src[\\/](?!dice[\\/]|spells[\\/]data[\\/]|creation[\\/]|levelup[\\/]|index\.ts$)/,
+              test: /packages[\\/]rules[\\/]src[\\/](?!dice[\\/]|spells[\\/]data[\\/]|campaign[\\/]|creation[\\/]|levelup[\\/]|index\.ts$)/,
             },
           ],
         },

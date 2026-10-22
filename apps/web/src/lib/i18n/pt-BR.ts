@@ -55,6 +55,11 @@ export const ptBR = {
         title: 'Meus personagens · Grimório',
         description: 'Suas fichas de personagem, neste navegador ou na sua conta.',
       },
+      '/campanhas': {
+        title: 'Campanhas · Grimório',
+        description:
+          'Junte a mestre e os jogadores da mesa: dano, cura e condições nas fichas de todos.',
+      },
       '/apoie': {
         title: 'Apoie o projeto · Grimório',
         description: 'O Grimório é gratuito e mantido por quem joga. Veja como ajudar.',
@@ -626,6 +631,13 @@ export const ptBR = {
           body: [
             'Do Google recebemos e guardamos o seu e-mail, nome, foto e o identificador da sua conta Google. Eles servem para você entrar e para mostrar o seu nome no site. Não guardamos senha nem os acessos (tokens) do Google, e não lemos nada da sua conta Google.',
             'As suas fichas ficam no nosso banco de dados para abrir em qualquer aparelho. Uma cópia fica no navegador para a ficha funcionar sem internet; ela é apagada quando você sai da conta.',
+          ],
+        },
+        {
+          title: 'Campanhas',
+          body: [
+            'Numa campanha, quem está na mesa vê o seu nome. A mestre vê a ficha inteira dos personagens que você puser na mesa e pode mudar o estado de jogo deles (dano, cura, condições); os outros jogadores veem só o resumo: nome, classe, nível, CA, PV e condições. O site guarda quem fez cada mudança (histórico da ficha).',
+            'Você tira a ficha da mesa ou sai da campanha quando quiser; a ficha continua sua.',
           ],
         },
         {
