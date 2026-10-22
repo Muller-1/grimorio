@@ -11,6 +11,7 @@ import {
 } from '@/pages/SimplePages';
 import { t } from '@/lib/i18n';
 import { Layout } from './Layout';
+import { pageMeta } from './meta';
 
 // Ficha e rolador são carregados sob demanda: a página inicial fica leve.
 const SheetPage = lazy(() => import('@/features/sheet/SheetPage'));
@@ -125,14 +126,17 @@ export const STATIC_PAGES: readonly {
   file: string;
   prerender: Prerender;
   lazyModule?: string;
+  /** Título e descrição gravados no HTML da página (busca e prévia de link). */
+  meta: { title: string; description: string };
 }[] = [
   ...PAGES.map(({ path, prerender, lazyModule }) => ({
     path,
     file: path === '/' ? 'index.html' : `${path.slice(1)}.html`,
     prerender,
     ...(lazyModule ? { lazyModule } : {}),
+    meta: pageMeta(path),
   })),
-  { path: '/404', file: '404.html', prerender: 'shell' },
+  { path: '/404', file: '404.html', prerender: 'shell', meta: t.meta.default },
 ];
 
 export function AppRoutes() {

@@ -13,7 +13,25 @@ import {
 } from '@grimorio/rules';
 import { SKILL_KEYS } from '@grimorio/shared';
 import type { ReactNode } from 'react';
-import { Coins, MousePointerClick, Shield, Sparkles } from 'lucide-react';
+import {
+  Axe,
+  BookOpenText,
+  BowArrow,
+  Coins,
+  Eye,
+  Flame,
+  HandFist,
+  Leaf,
+  MousePointerClick,
+  Music,
+  Shield,
+  ShieldPlus,
+  Sparkles,
+  Sun,
+  Swords,
+  VenetianMask,
+  type LucideIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel } from '@/components/ui/panel';
 import { t } from '@/lib/i18n';
@@ -281,7 +299,46 @@ function ClassDetails({ cls }: { cls: ClassDef }) {
   );
 }
 
-const COMPLEXITY_TONE = { low: 'gold', medium: 'muted', high: 'accent' } as const;
+/**
+ * Pedido de 22/10 ("desvibecodar"): cada classe com um símbolo (do mesmo conjunto de ícones do
+ * site) e a dificuldade em pontos, no lugar das etiquetas coloridas repetidas em todo cartão.
+ */
+const CLASS_ICONS: Record<string, LucideIcon> = {
+  barbarian: Axe,
+  bard: Music,
+  cleric: Sun,
+  druid: Leaf,
+  fighter: Swords,
+  monk: HandFist,
+  paladin: ShieldPlus,
+  ranger: BowArrow,
+  rogue: VenetianMask,
+  sorcerer: Flame,
+  warlock: Eye,
+  wizard: BookOpenText,
+};
+const COMPLEXITY_DOTS = { low: 1, medium: 2, high: 3 } as const;
+
+function Difficulty({ level }: { level: keyof typeof COMPLEXITY_DOTS }) {
+  const n = COMPLEXITY_DOTS[level];
+  return (
+    <span className="flex items-center gap-1.5" title={w.complexityLabel(w.complexity[level]!)}>
+      <span className="flex gap-0.5" aria-hidden="true">
+        {[1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className={cn(
+              'size-1.5 rounded-full',
+              i <= n ? 'bg-accent' : 'border border-border-strong',
+            )}
+          />
+        ))}
+      </span>
+      <span className="sr-only">{w.complexityLabel(w.complexity[level]!)}</span>
+      <span aria-hidden="true">{w.complexity[level]}</span>
+    </span>
+  );
+}
 
 export function ClassStep() {
   const classId = useBuilderStore((s) => s.draft.classId);
@@ -321,23 +378,19 @@ export function ClassStep() {
         >
           {CLASS_ORDER.map((id) => {
             const cls = CLASSES[id];
+            const Icon = CLASS_ICONS[id] ?? Swords;
             return (
               <div role="listitem" key={id}>
                 <ChoiceCard
                   selected={classId === id}
                   onSelect={() => update((d) => withClass(d, id))}
                   title={cls.name}
+                  icon={<Icon className="size-4 shrink-0 text-gold" aria-hidden="true" />}
                   testId={`wizard.option.class.${id}`}
-                  badges={
-                    <>
-                      <Badge tone={COMPLEXITY_TONE[cls.complexity]}>
-                        {w.complexity[cls.complexity]}
-                      </Badge>
-                      <Badge>{abilityList(cls.primary)}</Badge>
-                    </>
-                  }
                 >
-                  <span className="mt-2 flex items-center gap-3 text-xs text-muted">
+                  <span className="mt-1 text-xs text-muted">{abilityList(cls.primary)}</span>
+                  <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                    <Difficulty level={cls.complexity} />
                     <span className="flex items-center gap-1">
                       <Shield className="size-3.5" aria-hidden="true" />
                       {w.hitDieValue(cls.hitDie)}

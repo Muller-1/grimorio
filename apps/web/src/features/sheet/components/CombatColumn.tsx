@@ -311,7 +311,8 @@ function HpPanel() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-4 gap-1.5 text-center">
+      {/* Uma faixa com divisórias (antes, quatro caixinhas dentro do painel). */}
+      <div className="grid grid-cols-4 divide-x divide-border rounded-md bg-surface-2/70 py-1 text-center">
         {(
           [
             [t.sheet.hp.temp, temp, 'hp.temp'],
@@ -319,14 +320,14 @@ function HpPanel() {
             [t.sheet.hp.received, derived.hpTotals.received, 'hp.received'],
           ] as const
         ).map(([label, value, testId]) => (
-          <div key={testId} className="rounded-md border border-border px-1 py-1">
+          <div key={testId} className="px-1 py-0.5">
             <p className="truncate text-[11px] font-semibold text-muted">{label}</p>
             <p className="tabular text-xl font-bold" data-testid={testId} data-value={value}>
               {value}
             </p>
           </div>
         ))}
-        <div className="rounded-md border border-border px-1 py-1">
+        <div className="px-1 py-0.5">
           <p className="truncate text-[11px] font-semibold text-muted">{t.sheet.hp.max}</p>
           <ExplainButton
             explained={derived.hpMax}

@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useId, type ErrorInfo, type ReactNode } from 'react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
@@ -39,7 +39,6 @@ interface PanelProps {
   bodyClassName?: string;
   children: ReactNode;
   as?: 'section' | 'div';
-  labelledBy?: string;
   /** Âncora (ex.: o assistente leva o jogador até o bloco que falta). */
   id?: string;
 }
@@ -54,18 +53,23 @@ export function Panel({
   id,
 }: PanelProps) {
   const Tag = as;
+  // A seção leva o nome do título (o leitor de tela anuncia "Perícias, região").
+  const titleId = useId();
   return (
     <Tag
       id={id}
+      {...(title && as === 'section' ? { 'aria-labelledby': titleId } : {})}
       className={cn(
         'scroll-mt-24 rounded-xl border border-border bg-surface shadow-card',
         className,
       )}
     >
       {title || actions ? (
-        <header className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+        <header className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-border px-3 py-2">
           {title ? (
-            <h2 className="font-display text-sm font-bold tracking-wide">{title}</h2>
+            <h2 id={titleId} className="font-display text-sm font-bold whitespace-nowrap">
+              {title}
+            </h2>
           ) : (
             <span />
           )}

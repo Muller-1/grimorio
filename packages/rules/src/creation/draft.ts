@@ -1,6 +1,8 @@
 /**
  * O rascunho do assistente de criação (RF-20) e a validação de cada etapa (RF-22).
  * A ordem das etapas é a do Livro do Jogador (2024): Classe → Origem → Atributos → Detalhes.
+ * Entre Atributos e Detalhes entra Magias, só para quem conjura no nível 1 ou tem o talento
+ * Iniciado em Magia (cap. 3: "Conjuração"; cap. 5: Iniciado em Magia).
  *
  * O motor devolve CÓDIGOS de problema; a interface traduz (plano v2, 9.4).
  */
@@ -35,10 +37,32 @@ import {
   type SpeciesDef,
   type WeaponId,
 } from './content';
+import { CLASS_PROGRESSIONS } from '../classes';
 import { masteryOptions } from './mastery';
 
-export const CREATION_STEPS = ['class', 'origin', 'abilities', 'details'] as const;
+export const CREATION_STEPS = ['class', 'origin', 'abilities', 'spells', 'details'] as const;
 export type CreationStep = (typeof CREATION_STEPS)[number];
+
+/** Listas que o Iniciado em Magia pode usar (cap. 5). */
+export const INITIATE_LISTS = ['cleric', 'druid', 'wizard'] as const;
+export type InitiateList = (typeof INITIATE_LISTS)[number];
+export const INITIATE_ABILITIES = ['int', 'wis', 'cha'] as const;
+export type InitiateAbility = (typeof INITIATE_ABILITIES)[number];
+
+/** Um talento Iniciado em Magia: lista, atributo de conjuração, 2 truques e 1 magia de 1º círculo. */
+export interface InitiateChoice {
+  list: InitiateList | null;
+  ability: InitiateAbility | null;
+  cantrips: string[];
+  spell: string | null;
+}
+
+export const emptyInitiate = (): InitiateChoice => ({
+  list: null,
+  ability: null,
+  cantrips: [],
+  spell: null,
+});
 
 export interface CustomBackground {
   name: string;
@@ -86,7 +110,15 @@ export interface CreationDraft {
   /** Os 6 totais de 4d6 (descartando o menor), quando o método é rolagem. */
   rolled: number[] | null;
   backgroundBonus: Partial<Record<AbilityKey, number>>;
-  // Etapa 4 — Detalhes
+  // Etapa 4 — Magias (ids das magias; só para quem conjura ou tem Iniciado em Magia)
+  cantrips: string[];
+  /** Magias de 1º círculo preparadas (Mago: escolhidas do grimório). */
+  preparedSpells: string[];
+  /** Mago: as 6 magias de 1º círculo do grimório. */
+  spellbook: string[];
+  /** Um por talento Iniciado em Magia, na ordem de `draftOriginFeats`. */
+  initiates: InitiateChoice[];
+  // Etapa 5 — Detalhes
   name: string;
   playerName: string;
   alignment: string;
@@ -118,6 +150,10 @@ export function emptyDraft(): CreationDraft {
     baseScores: { ...EMPTY_SCORES },
     rolled: null,
     backgroundBonus: {},
+    cantrips: [],
+    preparedSpells: [],
+    spellbook: [],
+    initiates: [],
     name: '',
     playerName: '',
     alignment: '',
@@ -197,6 +233,78 @@ export function languageChoiceCount(d: CreationDraft): number {
   return 2 + (draftClass(d)?.languages?.choose ?? 0);
 }
 
+// ---------- magias do nível 1 ----------
+
+/** O antecedente diz a lista do Iniciado em Magia ("Iniciado em Magia (Clérigo)"). */
+const FEAT_NOTE_LIST: Record<string, InitiateList> = {
+  Clérigo: 'cleric',
+  Druida: 'druid',
+  Mago: 'wizard',
+};
+
+export interface SpellNeeds {
+  /** Lista da classe (`null` = a classe não conjura no nível 1). */
+  classList: ClassId | null;
+  cantrips: number;
+  prepared: number;
+  /** Mago: magias do grimório. */
+  spellbook: number;
+  /** Um por Iniciado em Magia; `fixedList` quando o antecedente já define a lista. */
+  initiates: { fixedList: InitiateList | null }[];
+}
+
+/**
+ * Quantas magias o personagem escolhe no nível 1 (tabela da classe, cap. 3): truques, magias
+ * preparadas e, no Mago, o grimório. Clérigo Taumaturgo e Druida Mágico ganham 1 truque a mais.
+ */
+export function spellNeeds(d: CreationDraft): SpellNeeds {
+  const cls = draftClass(d);
+  const def = cls ? CLASS_PROGRESSIONS[cls.id].spellcasting : undefined;
+  const extraCantrip =
+    (cls?.id === 'cleric' && d.classOptionId === 'thaumaturge') ||
+    (cls?.id === 'druid' && d.classOptionId === 'magician')
+      ? 1
+      : 0;
+  const cantrips = def?.cantrips ? def.cantrips[0]! + extraCantrip : 0;
+  const prepared = def ? def.prepared[0]! : 0;
+  const spellbook = def?.spellbook?.initial ?? 0;
+  const bg = draftBackground(d);
+  const feats = draftOriginFeats(d);
+  const initiates = feats.flatMap((feat, i) => {
+    if (feat !== 'magic-initiate') return [];
+    // O 1º talento é o do antecedente; o do antecedente "Outro" e o do Humano escolhem a lista.
+    const fromBackground = i === 0 && d.backgroundId !== CUSTOM_ID;
+    const note = fromBackground ? bg?.featNote : undefined;
+    return [{ fixedList: (note && FEAT_NOTE_LIST[note]) || null }];
+  });
+  return {
+    classList: def && (cantrips || prepared) ? cls!.id : null,
+    cantrips,
+    prepared,
+    spellbook,
+    initiates,
+  };
+}
+
+/** A etapa Magias aparece? (classe que conjura no nível 1 ou Iniciado em Magia) */
+export function hasSpellStep(d: CreationDraft): boolean {
+  const n = spellNeeds(d);
+  return n.classList !== null || n.initiates.length > 0;
+}
+
+/** As etapas deste rascunho, na ordem (Magias só quando faz sentido). */
+export function creationSteps(d: CreationDraft): CreationStep[] {
+  return CREATION_STEPS.filter((s) => s !== 'spells' || hasSpellStep(d));
+}
+
+/** Escolhas de cada Iniciado em Magia (a lista fixa do antecedente já vem preenchida). */
+export function initiateChoices(d: CreationDraft): InitiateChoice[] {
+  return spellNeeds(d).initiates.map((need, i) => {
+    const c = d.initiates[i] ?? emptyInitiate();
+    return need.fixedList ? { ...c, list: need.fixedList } : c;
+  });
+}
+
 // ---------- validação de cada etapa ----------
 
 export type CreationIssue =
@@ -217,6 +325,11 @@ export type CreationIssue =
   | 'languages-count'
   | AbilityIssue
   | BonusIssue
+  | 'spell-cantrips-count'
+  | 'spell-prepared-count'
+  | 'spellbook-count'
+  | 'spell-prepared-not-in-book'
+  | 'initiate-incomplete'
   | 'name-missing'
   | 'expertise-count';
 
@@ -304,6 +417,37 @@ function abilityIssues(d: CreationDraft): CreationIssue[] {
   return validateBackgroundBonus(d.backgroundBonus, bg.abilities, d.baseScores);
 }
 
+const distinct = (ids: string[]) => new Set(ids).size === ids.length;
+
+/**
+ * Magias: só a quantidade e a forma (a lista de cada classe fica no pacote das magias, que a
+ * página carrega sob demanda; o seletor só oferece as magias certas).
+ */
+function spellIssues(d: CreationDraft): CreationIssue[] {
+  if (!hasSpellStep(d)) return [];
+  const n = spellNeeds(d);
+  const issues: CreationIssue[] = [];
+  if (d.cantrips.length !== n.cantrips || !distinct(d.cantrips)) {
+    issues.push('spell-cantrips-count');
+  }
+  if (n.spellbook) {
+    if (d.spellbook.length !== n.spellbook || !distinct(d.spellbook)) {
+      issues.push('spellbook-count');
+    }
+    if (d.preparedSpells.some((id) => !d.spellbook.includes(id))) {
+      issues.push('spell-prepared-not-in-book');
+    }
+  }
+  if (d.preparedSpells.length !== n.prepared || !distinct(d.preparedSpells)) {
+    issues.push('spell-prepared-count');
+  }
+  const incomplete = initiateChoices(d).some(
+    (c) => !c.list || !c.ability || c.cantrips.length !== 2 || !distinct(c.cantrips) || !c.spell,
+  );
+  if (incomplete) issues.push('initiate-incomplete');
+  return issues;
+}
+
 function detailIssues(d: CreationDraft): CreationIssue[] {
   const issues: CreationIssue[] = [];
   if (!d.name.trim()) issues.push('name-missing');
@@ -324,6 +468,8 @@ export function stepIssues(d: CreationDraft, step: CreationStep): CreationIssue[
       return originIssues(d);
     case 'abilities':
       return abilityIssues(d);
+    case 'spells':
+      return spellIssues(d);
     case 'details':
       return detailIssues(d);
   }
@@ -347,6 +493,9 @@ export function withClass(d: CreationDraft, classId: ClassId): CreationDraft {
     weaponMasteries: [],
     expertise: [],
     languages: d.languages.slice(0, 2),
+    cantrips: [],
+    preparedSpells: [],
+    spellbook: [],
   };
 }
 
@@ -359,6 +508,7 @@ export function withBackground(d: CreationDraft, backgroundId: string): Creation
     backgroundBonus: {},
     featSkills: [],
     expertise: [],
+    initiates: [],
   };
 }
 
@@ -374,6 +524,7 @@ export function withSpecies(d: CreationDraft, speciesId: string): CreationDraft 
     speciesFeatId: null,
     featSkills: [],
     expertise: [],
+    initiates: [],
   };
 }
 
@@ -398,6 +549,28 @@ function skills(value: unknown): SkillKey[] {
   return Array.isArray(value)
     ? (value.filter((v) => typeof v === 'string' && SKILL_SET.has(v)).slice(0, 18) as SkillKey[])
     : [];
+}
+const SPELL_ID = /^[a-z0-9-]{1,60}$/;
+function spellIds(value: unknown, max: number): string[] {
+  return Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === 'string' && SPELL_ID.test(v)).slice(0, max)
+    : [];
+}
+function initiates(value: unknown): InitiateChoice[] {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 2).map((raw) => {
+    const r = (raw ?? {}) as Record<string, unknown>;
+    return {
+      list: (INITIATE_LISTS as readonly string[]).includes(r.list as string)
+        ? (r.list as InitiateList)
+        : null,
+      ability: (INITIATE_ABILITIES as readonly string[]).includes(r.ability as string)
+        ? (r.ability as InitiateAbility)
+        : null,
+      cantrips: spellIds(r.cantrips, 2),
+      spell: typeof r.spell === 'string' && SPELL_ID.test(r.spell) ? r.spell : null,
+    };
+  });
 }
 function strings(value: unknown, max: number): string[] {
   return Array.isArray(value)
@@ -486,6 +659,10 @@ export function sanitizeDraft(raw: unknown): CreationDraft {
     backgroundBonus: Object.fromEntries(
       ABILITY_KEYS.flatMap((k) => (bonus[k] === 1 || bonus[k] === 2 ? [[k, bonus[k]]] : [])),
     ) as Partial<Record<AbilityKey, number>>,
+    cantrips: spellIds(r.cantrips, 6),
+    preparedSpells: spellIds(r.preparedSpells, 6),
+    spellbook: spellIds(r.spellbook, 6),
+    initiates: initiates(r.initiates),
     name: str(r.name, 100),
     playerName: str(r.playerName, 80),
     alignment: str(r.alignment, 40),

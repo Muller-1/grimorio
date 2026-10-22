@@ -1,4 +1,4 @@
-import { CREATION_STEPS, type CreationStep } from '@grimorio/rules';
+import type { CreationStep } from '@grimorio/rules';
 import type { SkillKey } from '@grimorio/shared';
 import { Check, CircleHelp } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -12,11 +12,13 @@ import { cn } from '@/lib/utils';
  * na ordem do Livro do Jogador 2024: Classe → Origem → Atributos → Toques Finais.
  */
 export function StepBar({
+  steps,
   current,
   done,
   reachable,
   onSelect,
 }: {
+  steps: readonly CreationStep[];
   current: CreationStep;
   done: (step: CreationStep) => boolean;
   reachable: (step: CreationStep) => boolean;
@@ -25,7 +27,7 @@ export function StepBar({
   return (
     <nav aria-label={tw.stepsLabel} className="mx-auto w-full max-w-3xl">
       <ol className="flex items-center gap-2 sm:gap-3">
-        {CREATION_STEPS.map((step, i) => {
+        {steps.map((step, i) => {
           const active = step === current;
           const finished = done(step) && !active;
           return (
@@ -81,6 +83,7 @@ export function ChoiceCard({
   title,
   subtitle,
   badges,
+  icon,
   children,
   testId,
   className,
@@ -90,6 +93,8 @@ export function ChoiceCard({
   title: string;
   subtitle?: string;
   badges?: ReactNode;
+  /** Ícone antes do título (ex.: o símbolo de cada classe). */
+  icon?: ReactNode;
   children?: ReactNode;
   testId?: string;
   className?: string;
@@ -109,7 +114,10 @@ export function ChoiceCard({
       )}
     >
       <span className="flex items-start justify-between gap-2">
-        <span className="font-display text-base font-bold">{title}</span>
+        <span className="flex items-center gap-2 font-display text-base font-bold">
+          {icon}
+          {title}
+        </span>
         {selected ? (
           <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent text-accent-contrast">
             <Check className="size-3.5" aria-hidden="true" />

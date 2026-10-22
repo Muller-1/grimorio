@@ -1,7 +1,8 @@
-import { ArrowRight, ChevronDown, Dices } from 'lucide-react';
+import { ChevronDown, Dices } from 'lucide-react';
 import { useEffect } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
+import { Ornament } from '@/components/ui/ornament';
 import { t } from '@/lib/i18n';
 
 /** "Primeiros passos" (feedback dos testadores, 14/10): o básico para quem nunca jogou. */
@@ -19,7 +20,6 @@ export default function StartPage() {
         <Button asChild variant="primary" size="lg">
           <Link to="/criar" data-testid="start.create">
             {s.ctaCreate}
-            <ArrowRight className="size-5" />
           </Link>
         </Button>
         <Button asChild variant="outline" size="lg">
@@ -35,8 +35,9 @@ export default function StartPage() {
       <div className="mt-2 divide-y divide-border rounded-xl border border-border bg-surface">
         {s.sections.map((section, i) => (
           <details key={section.title} open={i === 0} className="group px-4">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 font-display text-lg font-bold [&::-webkit-details-marker]:hidden">
-              {section.title}
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 [&::-webkit-details-marker]:hidden">
+              {/* O título é um h2 de verdade: o leitor de tela lista as partes da página. */}
+              <h2 className="font-display text-lg font-bold">{section.title}</h2>
               <ChevronDown
                 className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180"
                 aria-hidden="true"
@@ -51,15 +52,21 @@ export default function StartPage() {
         ))}
       </div>
 
+      <Ornament className="mt-10" />
+
       <section className="mt-10" aria-labelledby="glossario">
         <h2 id="glossario" className="font-display text-xl font-bold">
           {s.glossaryTitle}
         </h2>
         <p className="mt-1 text-sm text-muted">{s.glossaryHint}</p>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+        {/* Uma lista só (antes eram 22 caixinhas iguais), em duas colunas no computador. */}
+        <ul className="mt-3 grid rounded-xl border border-border bg-surface px-4 sm:grid-cols-2 sm:gap-x-8">
           {Object.values(t.glossary).map((entry) => (
-            <li key={entry.term}>
-              <details className="group rounded-lg border border-border bg-surface px-3">
+            <li
+              key={entry.term}
+              className="border-b border-border last:border-b-0 sm:[&:nth-last-child(2):nth-child(odd)]:border-b-0"
+            >
+              <details className="group">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-2 font-semibold [&::-webkit-details-marker]:hidden">
                   {entry.term}
                   <ChevronDown

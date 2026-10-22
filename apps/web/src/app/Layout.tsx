@@ -1,5 +1,5 @@
 import { CircleHelp, Dices, House, ScrollText, Swords } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { D20Icon } from '@/components/ui/d20-icon';
 import { AccountMenu } from '@/features/auth/AccountMenu';
@@ -8,6 +8,7 @@ import { Toaster } from '@/features/toast/Toaster';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { reportLink, siteConfig } from './config';
+import { pageMeta } from './meta';
 
 /** Páginas que contam como "Fichas" na barra (a lista, a ficha, o assistente). */
 const SHEET_PATHS = ['/personagens', '/personagem', '/ficha', '/criar'];
@@ -105,7 +106,7 @@ function Footer() {
   return (
     <footer className="border-t border-border bg-surface">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-        <nav className="flex flex-wrap gap-x-4 gap-y-1">
+        <nav aria-label={t.nav.footerLabel} className="flex flex-wrap gap-x-4 gap-y-1">
           {report ? (
             <a href={report} target="_blank" rel="noreferrer" className={link}>
               {t.footer.report}
@@ -140,7 +141,19 @@ function Footer() {
   );
 }
 
+/** Ao navegar, a descrição da página acompanha (o título, cada página põe o seu). */
+function usePageDescription() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const description = pageMeta(pathname).description;
+    for (const selector of ['meta[name="description"]', 'meta[property="og:description"]']) {
+      document.querySelector(selector)?.setAttribute('content', description);
+    }
+  }, [pathname]);
+}
+
 export function Layout() {
+  usePageDescription();
   return (
     <div className="flex min-h-dvh flex-col">
       <a

@@ -37,7 +37,8 @@ export default function DicePage() {
         <p className="mt-2 max-w-2xl text-muted">{t.dice.pageLead}</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      {/* A 2ª linha (histórico) leva a sobra de altura da coluna dos atalhos: sem buraco no meio. */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[auto_1fr] lg:items-start">
         <div className="space-y-4">
           <Panel>
             <DiceExpressionInput

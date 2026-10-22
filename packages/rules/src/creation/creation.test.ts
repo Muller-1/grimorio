@@ -33,8 +33,12 @@ import {
   stepIssues,
   withBackground,
   withClass,
+  creationSteps,
+  spellNeeds,
   type CreationDraft,
 } from './draft';
+import { RECOMMENDED_SPELLS } from './recommended-spells';
+import { SPELLS } from '../spells/data';
 
 let counter = 0;
 const ctx = { newId: () => `id-${++counter}` };
@@ -62,6 +66,27 @@ function completeDraft(
   if (cls.expertise) d.expertise = d.classSkills.slice(0, cls.expertise);
   if (cls.weaponMastery) d.weaponMasteries = masteryOptions(cls).slice(0, cls.weaponMastery.count);
   edit(d);
+  return fillSpells(d);
+}
+
+/** Etapa Magias com as recomendadas do livro (+ truque extra do Taumaturgo/Mágico). */
+function fillSpells(d: CreationDraft): CreationDraft {
+  const need = spellNeeds(d);
+  const rec = d.classId ? RECOMMENDED_SPELLS[d.classId] : undefined;
+  const extra = d.classId === 'druid' ? 'shillelagh' : 'spare-the-dying';
+  if (rec && d.cantrips.length === 0) {
+    d.cantrips = [...rec.cantrips, extra].slice(0, need.cantrips);
+    d.preparedSpells = rec.prepared.slice(0, need.prepared);
+    if (rec.spellbook) d.spellbook = rec.spellbook;
+  }
+  if (d.initiates.length === 0) {
+    d.initiates = need.initiates.map(() => ({
+      list: 'wizard',
+      ability: 'int',
+      cantrips: ['fire-bolt', 'minor-illusion'],
+      spell: 'shield',
+    }));
+  }
   return d;
 }
 
@@ -477,6 +502,122 @@ describe('Bruxo: Invocação Mística no nível 1', () => {
       'pact-of-the-blade',
       'pact-of-the-chain',
       'pact-of-the-tome',
+    ]);
+  });
+});
+
+describe('etapa Magias (cap. 3, Conjuração; cap. 5, Iniciado em Magia)', () => {
+  it('quantas magias cada classe escolhe no nível 1', () => {
+    const counts = Object.fromEntries(
+      CLASS_ORDER.map((id) => {
+        const n = spellNeeds(completeDraft(id, (x) => (x.classOptionId = null)));
+        return [id, [n.cantrips, n.prepared, n.spellbook]];
+      }),
+    );
+    expect(counts).toEqual({
+      barbarian: [0, 0, 0],
+      bard: [2, 4, 0],
+      cleric: [3, 4, 0],
+      druid: [2, 4, 0],
+      fighter: [0, 0, 0],
+      monk: [0, 0, 0],
+      paladin: [0, 2, 0],
+      ranger: [0, 2, 0],
+      rogue: [0, 0, 0],
+      sorcerer: [4, 2, 0],
+      warlock: [2, 2, 0],
+      wizard: [3, 4, 6],
+    });
+  });
+
+  it('Taumaturgo (Clérigo) e Mágico (Druida) conhecem 1 truque a mais', () => {
+    const cleric = completeDraft('cleric', (x) => (x.classOptionId = 'thaumaturge'));
+    const druid = completeDraft('druid', (x) => (x.classOptionId = 'magician'));
+    expect(spellNeeds(cleric).cantrips).toBe(4);
+    expect(spellNeeds(druid).cantrips).toBe(3);
+    const sheet = buildCharacterSheet(cleric, ctx)!;
+    expect(deriveSheet(sheet).spellcasting?.cantripsMax).toBe(4);
+  });
+
+  it('a etapa só aparece para quem conjura ou tem Iniciado em Magia', () => {
+    expect(creationSteps(completeDraft('fighter'))).not.toContain('spells');
+    expect(creationSteps(completeDraft('wizard'))).toContain('spells');
+    const acolyte = completeDraft('fighter', (x) => {
+      x.backgroundId = 'acolyte';
+      x.backgroundBonus = suggestBackgroundBonus(BACKGROUNDS.acolyte!.abilities, ['str']);
+    });
+    expect(creationSteps(acolyte)).toContain('spells');
+    expect(spellNeeds(acolyte).initiates).toEqual([{ fixedList: 'cleric' }]);
+  });
+
+  it('pendências: quantidade, grimório do Mago e Iniciado em Magia', () => {
+    const d = completeDraft('wizard');
+    expect(stepIssues(d, 'spells')).toEqual([]);
+    expect(stepIssues({ ...d, cantrips: ['light'] }, 'spells')).toContain('spell-cantrips-count');
+    expect(
+      stepIssues({ ...d, preparedSpells: [...d.preparedSpells.slice(1), 'shield'] }, 'spells'),
+    ).toContain('spell-prepared-not-in-book');
+    expect(stepIssues({ ...d, spellbook: d.spellbook.slice(1) }, 'spells')).toContain(
+      'spellbook-count',
+    );
+    const sage = completeDraft('fighter', (x) => {
+      x.backgroundId = 'sage';
+      x.backgroundBonus = suggestBackgroundBonus(BACKGROUNDS.sage!.abilities, ['int']);
+    });
+    expect(stepIssues({ ...sage, initiates: [] }, 'spells')).toEqual(['initiate-incomplete']);
+    expect(firstIncompleteStep({ ...sage, initiates: [] })).toBe('spells');
+  });
+
+  it('as magias escolhidas vão para a ficha; as do Iniciado ficam sempre preparadas', () => {
+    const wizard = buildCharacterSheet(completeDraft('wizard'), ctx)!;
+    expect(wizard.spells.cantrips).toEqual(['light', 'mage-hand', 'ray-of-frost']);
+    expect(wizard.spells.spellbook).toHaveLength(6);
+    expect(wizard.spells.prepared).toHaveLength(4);
+
+    const acolyte = buildCharacterSheet(
+      completeDraft('fighter', (x) => {
+        x.backgroundId = 'acolyte';
+        x.backgroundBonus = suggestBackgroundBonus(BACKGROUNDS.acolyte!.abilities, ['str']);
+        x.initiates = [
+          { list: null, ability: 'wis', cantrips: ['guidance', 'sacred-flame'], spell: 'bless' },
+        ];
+      }),
+      ctx,
+    )!;
+    expect(acolyte.spells.granted).toEqual([
+      { id: 'guidance', source: 'feat', ability: 'wis' },
+      { id: 'sacred-flame', source: 'feat', ability: 'wis' },
+      { id: 'bless', source: 'feat', ability: 'wis', freePerLongRest: 1 },
+    ]);
+    expect(acolyte.features.find((f) => f.name === 'Talento: Iniciado em Magia')?.text).toContain(
+      'Lista de magias: Clérigo. Atributo de conjuração: Sabedoria.',
+    );
+  });
+
+  it('as recomendadas do livro estão na lista da classe e no círculo certo', () => {
+    for (const [classId, rec] of Object.entries(RECOMMENDED_SPELLS)) {
+      const check = (ids: string[], level: number) =>
+        ids.every((id) => {
+          const spell = SPELLS.find((s) => s.id === id);
+          return spell?.level === level && (spell.classes as string[]).includes(classId);
+        });
+      expect(check(rec.cantrips, 0), classId).toBe(true);
+      expect(check(rec.prepared, 1), classId).toBe(true);
+      expect(check(rec.spellbook ?? [], 1), classId).toBe(true);
+      expect(rec.prepared.length, classId).toBe(
+        spellNeeds(completeDraft(classId as ClassId, (x) => (x.classOptionId = null))).prepared,
+      );
+    }
+  });
+
+  it('rascunho salvo: magias com id inválido somem', () => {
+    const d = sanitizeDraft({
+      cantrips: ['light', 'NÃO', 5],
+      initiates: [{ list: 'cleric', ability: 'xyz', cantrips: ['guidance'], spell: 'bless' }],
+    });
+    expect(d.cantrips).toEqual(['light']);
+    expect(d.initiates).toEqual([
+      { list: 'cleric', ability: null, cantrips: ['guidance'], spell: 'bless' },
     ]);
   });
 });

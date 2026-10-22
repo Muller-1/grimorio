@@ -1,12 +1,12 @@
 import {
   buildCharacterSheet,
   CLASSES,
-  CREATION_STEPS,
+  creationSteps,
   stepIssues,
   type CreationStep,
 } from '@grimorio/rules';
 import { ArrowLeft, ArrowRight, BookOpen, Check, Info, RotateCcw } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -27,14 +27,18 @@ import { DetailsStep } from './steps/DetailsStep';
 import { OriginStep } from './steps/OriginStep';
 import { useBuilderStore } from './store';
 
+// A etapa Magias traz a lista das magias: só carrega para quem conjura.
+const SpellsStep = lazy(() => import('./steps/SpellsStep'));
+
 const w = tw;
 
 /** O jogador já viu (e fechou) a explicação de como o assistente funciona. */
 export const WIZARD_INTRO_KEY = 'grimorio.criacao.intro-visto';
 
 /**
- * Assistente de criação (RF-20): Classe → Origem → Atributos → Toques Finais, na ordem do
- * Livro do Jogador 2024. Com conta, o personagem vai para a conta; sem conta, para este navegador.
+ * Assistente de criação (RF-20): Classe → Origem → Atributos → (Magias) → Toques Finais, na ordem
+ * do Livro do Jogador 2024. Magias só aparece para quem conjura no nível 1 ou tem Iniciado em
+ * Magia. Com conta, o personagem vai para a conta; sem conta, para este navegador.
  */
 export default function CreatePage() {
   const step = useBuilderStore((s) => s.step);
@@ -52,14 +56,21 @@ export default function CreatePage() {
   const [introSeen, setIntroSeen] = useState(() => safeStorage.get(WIZARD_INTRO_KEY) === '1');
   const topRef = useRef<HTMLDivElement>(null);
 
-  const index = CREATION_STEPS.indexOf(step);
+  const steps = creationSteps(draft);
+  const index = Math.max(0, steps.indexOf(step));
   const issues = stepIssues(draft, step);
-  const isLast = index === CREATION_STEPS.length - 1;
+  const isLast = index === steps.length - 1;
   const saveTo = authStatus === 'signed-in' ? 'account' : 'local';
 
   useEffect(() => {
     document.title = `${w.pageTitle} · ${t.brand.name}`;
   }, []);
+
+  // Trocou para uma classe que não conjura estando em Magias: volta para Atributos.
+  const stepGone = !steps.includes(step);
+  useEffect(() => {
+    if (stepGone) setStep('abilities');
+  }, [stepGone, setStep]);
 
   const go = (next: CreationStep) => {
     setStep(next);
@@ -68,9 +79,7 @@ export default function CreatePage() {
 
   /** Dá para pular para uma etapa se todas as anteriores estão completas. */
   const reachable = (target: CreationStep) =>
-    CREATION_STEPS.slice(0, CREATION_STEPS.indexOf(target)).every(
-      (s) => stepIssues(draft, s).length === 0,
-    );
+    steps.slice(0, steps.indexOf(target)).every((s) => stepIssues(draft, s).length === 0);
   const done = (s: CreationStep) => stepIssues(draft, s).length === 0;
 
   const closeIntro = () => {
@@ -92,7 +101,7 @@ export default function CreatePage() {
       return;
     }
     if (isLast) void create();
-    else go(CREATION_STEPS[index + 1]!);
+    else go(steps[index + 1]!);
   };
 
   const finishLocal = () => {
@@ -131,6 +140,7 @@ export default function CreatePage() {
     <div ref={topRef} className="mx-auto w-full max-w-6xl scroll-mt-16 px-4 pt-6 pb-32">
       <div className="mb-8 flex items-center gap-3">
         <StepBar
+          steps={steps}
           current={step}
           done={done}
           reachable={reachable}
@@ -171,12 +181,17 @@ export default function CreatePage() {
       )}
 
       <p className="sr-only" aria-live="polite">
-        {w.stepOf(index + 1, CREATION_STEPS.length)}
+        {w.stepOf(index + 1, steps.length)}
       </p>
 
       {step === 'class' ? <ClassStep /> : null}
       {step === 'origin' ? <OriginStep /> : null}
       {step === 'abilities' ? <AbilitiesStep /> : null}
+      {step === 'spells' && !stepGone ? (
+        <Suspense fallback={<p className="py-8 text-center text-muted">{w.spells.loading}</p>}>
+          <SpellsStep />
+        </Suspense>
+      ) : null}
       {step === 'details' ? <DetailsStep saveTo={saveTo} /> : null}
 
       {/* Rodapé fixo: voltar, o que falta e avançar */}
@@ -185,7 +200,7 @@ export default function CreatePage() {
           <Button
             variant="ghost"
             disabled={index === 0}
-            onClick={() => go(CREATION_STEPS[index - 1]!)}
+            onClick={() => go(steps[index - 1]!)}
             data-testid="wizard.back"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />

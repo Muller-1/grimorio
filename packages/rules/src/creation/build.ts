@@ -16,6 +16,7 @@ import {
   type CreationRecord,
   type Feature,
   type FeatureSource,
+  type GrantedSpell,
   type LocalSheet,
   type ProficiencyLevel,
   type SkillKey,
@@ -49,9 +50,23 @@ import {
   draftOriginFeats,
   draftSpecies,
   firstIncompleteStep,
+  initiateChoices,
   proficientSkills,
+  spellNeeds,
   type CreationDraft,
+  type InitiateList,
 } from './draft';
+
+const INITIATE_LIST_NAMES: Record<InitiateList, string> = {
+  cleric: 'Clérigo',
+  druid: 'Druida',
+  wizard: 'Mago',
+};
+const ABILITY_NAMES: Record<string, string> = {
+  int: 'Inteligência',
+  wis: 'Sabedoria',
+  cha: 'Carisma',
+};
 
 export interface BuildContext {
   newId: () => string;
@@ -267,10 +282,18 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
   }
 
   source = 'feat';
+  const initiates = initiateChoices(draft);
+  let initiateIndex = 0;
   for (const [i, featId] of feats.entries()) {
     const feat = ORIGIN_FEATS[featId];
     const source = i === 0 ? `antecedente ${background.name}` : 'Humano (Versátil)';
-    const note = i === 0 && background.featNote ? ` Lista de magias: ${background.featNote}.` : '';
+    // Iniciado em Magia: a lista e o atributo escolhidos (as magias vão para a aba Magias).
+    const choice = featId === 'magic-initiate' ? initiates[initiateIndex++] : undefined;
+    const list = choice?.list ? INITIATE_LIST_NAMES[choice.list] : background.featNote;
+    const note =
+      featId === 'magic-initiate' && list
+        ? ` Lista de magias: ${list}.${choice?.ability ? ` Atributo de conjuração: ${ABILITY_NAMES[choice.ability]}.` : ''}`
+        : '';
     add(`Talento: ${feat.name}`, `${feat.text}${note} (Vem de: ${source}.)`);
   }
 
@@ -366,15 +389,29 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
   sheet.inventory = { coins: { cp: 0, sp: 0, ep: 0, gp: gold, pp: 0 }, items };
   sheet.creation = record;
   sheet.progression = { classId: cls.id, levels: [] };
+  // Magias da classe, escolhidas na etapa Magias (cap. 3, "Conjuração").
+  const unique = (ids: string[]) => [...new Set(ids)];
+  sheet.spells.cantrips = unique(draft.cantrips);
+  sheet.spells.prepared = unique(draft.preparedSpells);
+  if (spellNeeds(draft).spellbook) sheet.spells.spellbook = unique(draft.spellbook);
+  const grant = (id: string, extra: Omit<GrantedSpell, 'id'>) => {
+    if (sheet.spells.cantrips.includes(id) || sheet.spells.granted.some((g) => g.id === id)) return;
+    sheet.spells.granted.push({ id, ...extra });
+  };
+  // Iniciado em Magia: 2 truques e 1 magia sempre preparados; a magia, 1 vez grátis por
+  // Descanso Longo (cap. 5). O atributo de conjuração é o escolhido no talento.
+  for (const c of initiates) {
+    if (!c.list || !c.ability) continue;
+    for (const id of c.cantrips) grant(id, { source: 'feat', ability: c.ability });
+    if (c.spell) grant(c.spell, { source: 'feat', ability: c.ability, freePerLongRest: 1 });
+  }
   // Magias da espécie (truques e, no Gnomo do Bosque, Falar com Animais): sempre preparadas.
-  // As da classe e do Iniciado em Magia o jogador escolhe na aba Magias da ficha.
   for (const id of speciesSpellsAt(
     draft.speciesId ?? undefined,
     draft.speciesOptionId ?? undefined,
     1,
   )) {
-    sheet.spells.granted.push({
-      id,
+    grant(id, {
       source: 'species',
       ...(id === 'speak-with-animals' ? { freePerLongRest: 2 } : {}),
     });

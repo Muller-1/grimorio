@@ -15,6 +15,65 @@ export const ptBR = {
     tagline: 'Fichas e dados para RPG de mesa',
   },
 
+  /**
+   * Título e descrição de cada página (pedido de 22/10): cada uma com o seu, no HTML gerado no
+   * build e ao navegar. A descrição aparece na busca e na prévia do link no WhatsApp.
+   */
+  meta: {
+    default: {
+      title: 'Grimório — fichas e dados para RPG',
+      description:
+        'Ficha de personagem e rolador de dados gratuitos para RPG compatível com a 5ª edição. O site faz as contas por você.',
+    },
+    pages: {
+      '/': {
+        title: 'Grimório — fichas e dados para RPG',
+        description:
+          'Crie seu personagem de RPG compatível com a 5ª edição em 4 passos guiados. Grátis, sem anúncios e em português: a ficha faz as contas e rola os dados.',
+      },
+      '/comecar': {
+        title: 'Primeiros passos · Grimório',
+        description:
+          'Nunca jogou RPG de mesa? O básico em dois minutos: o que é, do que precisa, a ficha, os dados e um glossário das palavras que você vai ouvir.',
+      },
+      '/ficha': {
+        title: 'Ficha de personagem · Grimório',
+        description:
+          'Ficha de personagem que calcula sozinha atributos, perícias, ataques, magias e inventário, e rola os dados com um toque.',
+      },
+      '/dados': {
+        title: 'Rolador de dados · Grimório',
+        description:
+          'Rolador de dados para RPG: 1d20+5, vantagem, desvantagem, 4d6 descartando o menor e atalhos com nome para as rolagens da sua mesa.',
+      },
+      '/criar': {
+        title: 'Criar personagem · Grimório',
+        description:
+          'Assistente de criação de personagem passo a passo: classe, origem, atributos e toques finais, com as regras abertas da 5ª edição explicadas.',
+      },
+      '/personagens': {
+        title: 'Meus personagens · Grimório',
+        description: 'Suas fichas de personagem, neste navegador ou na sua conta.',
+      },
+      '/apoie': {
+        title: 'Apoie o projeto · Grimório',
+        description: 'O Grimório é gratuito e mantido por quem joga. Veja como ajudar.',
+      },
+      '/creditos': {
+        title: 'Créditos · Grimório',
+        description: 'Licenças e créditos: SRD 5.2 (CC BY 4.0), fontes, ícones e bibliotecas.',
+      },
+      '/termos': {
+        title: 'Termos de uso · Grimório',
+        description: 'Termos de uso do Grimório.',
+      },
+      '/privacidade': {
+        title: 'Privacidade · Grimório',
+        description: 'O que o Grimório guarda, onde e por quanto tempo.',
+      },
+    } as Record<string, { title: string; description: string }>,
+  },
+
   nav: {
     home: 'Início',
     sheet: 'Fichas',
@@ -31,6 +90,7 @@ export const ptBR = {
     help: 'Primeiros passos: como jogar e criar o personagem',
     mainLabel: 'Navegação principal',
     skipToContent: 'Pular para o conteúdo',
+    footerLabel: 'Links do site',
   },
 
   theme: {
@@ -59,19 +119,19 @@ export const ptBR = {
   },
 
   home: {
-    eyebrow: 'Grátis · sem anúncios · em português',
     title: 'Crie seu personagem de RPG sem complicação.',
     lead: 'Um assistente guia você passo a passo pela criação, com as regras de 2024 da 5ª edição. Depois, a ficha faz as contas sozinha e rola os dados na hora.',
     ctaCreate: 'Criar personagem',
     ctaDice: 'Rolar dados',
     startLink: 'Nunca jogou? Veja os primeiros passos',
     blankLink: 'Já sabe preencher? Abrir uma ficha em branco',
+    freeNote: 'Grátis, sem anúncios e em português.',
     localNote: 'Nesta versão, a ficha fica salva só neste navegador.',
     accountsNote:
       'Sem conta, tudo fica salvo neste navegador. Entrando com o Google, suas fichas abrem em qualquer aparelho.',
     how: {
       title: 'Novo por aqui? Seu personagem em 4 passos',
-      lead: 'Não precisa saber as regras: em cada passo o assistente explica o que cada opção faz e marca as sugestões do livro.',
+      lead: 'Não precisa saber as regras: em cada passo o assistente explica o que cada opção faz e marca as sugestões do livro. Quem conjura magia ganha um passo a mais, para escolher as magias.',
       steps: [
         {
           title: 'Classe',
@@ -95,38 +155,54 @@ export const ptBR = {
     },
     features: {
       title: 'O que já dá para fazer',
-      items: [
+      /** Agrupado pelo momento do jogo (pedido de 22/10: menos caixas iguais lado a lado). */
+      groups: [
         {
-          title: 'Criação guiada',
-          text: 'Classe, origem e atributos em passos curtos, com as regras abertas do jogo e explicações para iniciantes.',
+          title: 'Criar e evoluir',
+          items: [
+            {
+              title: 'Criação guiada',
+              text: 'Classe, origem e atributos em passos curtos, com as regras abertas do jogo e explicações para iniciantes.',
+            },
+            {
+              title: 'Subida de nível guiada',
+              text: 'Diga quantos níveis subiu e veja, em telas curtas, o que ganhou e o que escolher, do 1 ao 20.',
+            },
+            {
+              title: 'Magias',
+              text: 'As 339 magias das regras abertas em português: CD, espaços para marcar, conjurar rolando o dano e Concentração.',
+            },
+          ],
         },
         {
-          title: 'Contas automáticas e explicadas',
-          text: 'Mudou a Destreza? Iniciativa, CA, perícias e ataques se ajustam sozinhos. Toque num número para ver de onde ele vem.',
+          title: 'Durante a sessão',
+          items: [
+            {
+              title: 'Dados de verdade',
+              text: 'Qualquer expressão: 1d20+5, 4d6kh3, vantagem, desvantagem, até 100d2 da magia inventada da mesa.',
+            },
+            {
+              title: 'Vida em jogo',
+              text: 'Dano, cura, PV temporários, desfazer, dados de vida e salvaguardas contra morte com as regras certas.',
+            },
+            {
+              title: 'Habilidades que fazem as contas',
+              text: 'Ligou a Fúria? Ficou Envenenado? A ficha muda o dano, a CA, a Vantagem e a Desvantagem sozinha.',
+            },
+          ],
         },
         {
-          title: 'Dados de verdade',
-          text: 'Qualquer expressão: 1d20+5, 4d6kh3, vantagem, desvantagem, até 100d2 da magia inventada da mesa.',
-        },
-        {
-          title: 'Vida em jogo',
-          text: 'Dano, cura, PV temporários, desfazer, dados de vida e salvaguardas contra morte com as regras certas.',
-        },
-        {
-          title: 'Magias',
-          text: 'As 339 magias das regras abertas em português: CD, espaços para marcar, conjurar rolando o dano e Concentração.',
-        },
-        {
-          title: 'Subida de nível guiada',
-          text: 'Diga quantos níveis subiu e veja, nível por nível, o que ganhou e o que escolher, do 1 ao 20.',
-        },
-        {
-          title: 'Habilidades que fazem as contas',
-          text: 'Ligou a Fúria? Ficou Envenenado? A ficha muda o dano, a CA, a Vantagem e a Desvantagem sozinha.',
-        },
-        {
-          title: 'Inventário',
-          text: 'Ouro e moedas, itens com peso e a Capacidade de Carga calculada. Arma equipada ataca; a guardada fica na mochila.',
+          title: 'Na ficha',
+          items: [
+            {
+              title: 'Contas explicadas',
+              text: 'Mudou a Destreza? Iniciativa, CA, perícias e ataques se ajustam sozinhos. Toque num número para ver de onde ele vem.',
+            },
+            {
+              title: 'Inventário',
+              text: 'Ouro e moedas, itens com peso e a Capacidade de Carga calculada. Arma equipada ataca; a guardada fica na mochila.',
+            },
+          ],
         },
       ],
       accounts: {
@@ -137,7 +213,7 @@ export const ptBR = {
     next: {
       title: 'O que vem por aí',
       items: [
-        'Escolher as magias já no assistente de criação',
+        'Comprar equipamento com o ouro, pela tabela do capítulo 6',
         'Multiclasse',
         '"Regras da mesa": ajustes opcionais para quem joga diferente',
         'Campanhas com o mestre e o grupo',

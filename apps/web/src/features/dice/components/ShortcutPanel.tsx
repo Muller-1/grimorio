@@ -172,13 +172,13 @@ export function ShortcutPanel({ onNew }: { onNew: () => void }) {
       {shortcuts.length === 0 ? (
         <p className="py-3 text-center text-sm text-muted">{s.empty}</p>
       ) : (
-        <ul className="space-y-1.5">
+        <ul className="-mx-1 divide-y divide-border">
           {shortcuts.map((sc) => (
-            <li key={sc.id} className="flex items-stretch gap-1">
+            <li key={sc.id} className="flex items-stretch gap-1 py-1">
               <button
                 type="button"
                 onClick={() => rollShortcut(sc)}
-                className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg border border-border bg-surface px-2.5 py-2 text-left transition-colors hover:border-accent hover:bg-accent-soft"
+                className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent-soft"
                 data-testid={`shortcut.${sc.id}`}
               >
                 <D20Icon className="size-5 shrink-0 text-accent" />

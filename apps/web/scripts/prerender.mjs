@@ -37,14 +37,31 @@ const MARKER = '<div id="root"><!--app-html--></div>';
 if (!template.includes(MARKER))
   throw new Error(`Marcador ${MARKER} não encontrado em ${distDir}/index.html`);
 
-for (const { path, file, prerender, lazyModule } of STATIC_PAGES) {
+/** Escapa texto para dentro de um atributo HTML. */
+const attr = (text) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+for (const { path, file, prerender, lazyModule, meta } of STATIC_PAGES) {
   const html = render(path);
   // `data-prerendered` diz ao main.tsx que pode hidratar; `data-shell`, que deve desenhar do zero.
   const mark = prerender === 'full' ? 'data-prerendered' : 'data-shell';
   const preloads = (lazyModule ? preloadsFor(lazyModule) : [])
     .map((js) => `<link rel="modulepreload" crossorigin href="/${js}">`)
     .join('\n    ');
+  // Cada página com o seu título e a sua descrição (antes, todas iguais), e a prévia de link
+  // (Open Graph) que o WhatsApp e as redes sociais mostram.
+  const og = [
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:locale" content="pt_BR" />`,
+    `<meta property="og:site_name" content="Grimório" />`,
+    `<meta property="og:title" content="${attr(meta.title)}" />`,
+    `<meta property="og:description" content="${attr(meta.description)}" />`,
+  ].join('\n    ');
   const page = template
+    .replace(/<title>[^<]*<\/title>/, `<title>${attr(meta.title)}</title>\n    ${og}`)
+    .replace(
+      /<meta\s+name="description"\s+content="[^"]*"\s*\/>/,
+      `<meta name="description" content="${attr(meta.description)}" />`,
+    )
     .replace('</head>', preloads ? `  ${preloads}\n  </head>` : '</head>')
     .replace(MARKER, `<div id="root" ${mark}="${path}">${html}</div>`);
   await writeFile(new URL(file, dist), page);

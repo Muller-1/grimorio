@@ -30,6 +30,11 @@ export const ISSUE_TARGETS: Record<CreationIssue, string> = {
   'bonus-wrong-shape': 'wizard-background-bonus',
   'bonus-outside-background': 'wizard-background-bonus',
   'bonus-over-cap': 'wizard-background-bonus',
+  'spell-cantrips-count': 'wizard-spell-cantrips',
+  'spell-prepared-count': 'wizard-spell-prepared',
+  'spellbook-count': 'wizard-spellbook',
+  'spell-prepared-not-in-book': 'wizard-spell-prepared',
+  'initiate-incomplete': 'wizard-initiate',
   'name-missing': 'wizard-name',
   'expertise-count': 'wizard-expertise',
 };

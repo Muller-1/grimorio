@@ -91,6 +91,13 @@ export function spellcastingView(
   const lists = info ? [info.classId] : [];
   if (info?.classId === 'bard' && level >= 10) lists.push('cleric', 'druid', 'wizard');
   const index = Math.min(20, Math.max(1, level)) - 1;
+  // Clérigo Taumaturgo e Druida Mágico (Ordem Divina/Primal, nível 1) conhecem 1 truque a mais.
+  const option = sheet.creation?.classOptionId;
+  const extraCantrip =
+    (info?.classId === 'cleric' && option === 'thaumaturge') ||
+    (info?.classId === 'druid' && option === 'magician')
+      ? 1
+      : 0;
   return {
     ability,
     source: def ? 'class' : 'manual',
@@ -101,7 +108,7 @@ export function spellcastingView(
     slots,
     ...(pact ? { pact } : {}),
     maxCircle,
-    ...(def?.cantrips ? { cantripsMax: def.cantrips[index] } : {}),
+    ...(def?.cantrips ? { cantripsMax: def.cantrips[index]! + extraCantrip } : {}),
     ...(def ? { preparedMax: def.prepared[index] } : {}),
     ...(def?.spellbook
       ? { spellbookMin: def.spellbook.initial + def.spellbook.perLevel * index }

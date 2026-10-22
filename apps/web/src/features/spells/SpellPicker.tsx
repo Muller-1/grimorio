@@ -25,6 +25,10 @@ export function SpellList({
   onToggle,
   disabledIds,
   allowAllLists = true,
+  highlightIds,
+  highlightLabel,
+  disabledLabel = tsp.added,
+  describe = false,
   testId,
 }: {
   lists: string[];
@@ -39,6 +43,13 @@ export function SpellList({
   /** Já na ficha: aparecem marcadas e sem botão. */
   disabledIds?: Set<string>;
   allowAllLists?: boolean;
+  /** Marcadas com `highlightLabel` e no topo da lista (ex.: as recomendadas pelo livro). */
+  highlightIds?: string[] | undefined;
+  highlightLabel?: string;
+  /** Rótulo das que estão em `disabledIds` (padrão: "Na ficha"). */
+  disabledLabel?: string;
+  /** Mostra o começo do texto de cada magia (assistente: ajuda quem nunca jogou a escolher). */
+  describe?: boolean;
   testId?: string;
 }) {
   const [query, setQuery] = useState('');
@@ -61,6 +72,13 @@ export function SpellList({
       query,
     }).filter((s) => !only || only.has(s.id));
   }, [all, lists, circle, accepted, school, query, onlyIds]);
+  const highlighted = new Set(highlightIds ?? []);
+  const ordered = highlighted.size
+    ? [
+        ...results.filter((s) => highlighted.has(s.id)),
+        ...results.filter((s) => !highlighted.has(s.id)),
+      ]
+    : results;
 
   return (
     <div className="space-y-2" data-testid={testId}>
@@ -105,7 +123,7 @@ export function SpellList({
         <p className="py-3 text-center text-sm text-muted">{tsp.noResults}</p>
       ) : (
         <ul className="max-h-[45dvh] space-y-1 overflow-y-auto pr-1">
-          {results.slice(0, LIMIT).map((s) => {
+          {ordered.slice(0, LIMIT).map((s) => {
             const inSheet = disabledIds?.has(s.id) ?? false;
             const on = selected.includes(s.id);
             return (
@@ -125,12 +143,22 @@ export function SpellList({
                   />
                   <span className="min-w-0 flex-1">
                     <span className="font-semibold">{s.name}</span>
+                    {highlightLabel && highlighted.has(s.id) ? (
+                      <span className="ml-1.5 text-xs font-semibold text-gold">
+                        {highlightLabel}
+                      </span>
+                    ) : null}
                     <span className="block text-xs text-muted">
                       {tsp.meta(s.level, tsp.schools[s.school])}
                       {s.concentration ? ` · ${tsp.concentrationTag}` : ''}
                       {s.ritual ? ` · ${tsp.ritualTag}` : ''}
-                      {inSheet ? ` · ${tsp.added}` : ''}
+                      {inSheet ? ` · ${disabledLabel}` : ''}
                     </span>
+                    {describe ? (
+                      <span className="mt-0.5 line-clamp-2 block text-xs text-text/80">
+                        {s.text}
+                      </span>
+                    ) : null}
                   </span>
                 </label>
               </li>

@@ -3,7 +3,17 @@
  * opções ao acaso (com a semente do bot) até o fim, sem conta, e confere a ficha criada com o
  * motor de regras (oráculo).
  */
-import { buildCharacterSheet, deriveSheet, seededRng } from '@grimorio/rules';
+import {
+  BACKGROUNDS,
+  buildCharacterSheet,
+  CLASSES,
+  deriveSheet,
+  emptyDraft,
+  seededRng,
+  suggestBackgroundBonus,
+  withBackground,
+  withClass,
+} from '@grimorio/rules';
 import { expect, openPage, test } from '../support/bot';
 
 test.describe('B2 — assistente de criação', { tag: '@B2' }, () => {
@@ -79,6 +89,30 @@ test.describe('B2 — assistente de criação', { tag: '@B2' }, () => {
     await page.getByRole('button', { name: 'Sugerir pela classe' }).click();
     await page.getByTestId('wizard.next').click();
 
+    // Magias (só para quem conjura ou tem Iniciado em Magia): as recomendadas do livro e,
+    // no que faltar (truque extra, Iniciado em Magia), magias ao acaso.
+    if (await page.getByTestId('wizard.step.spells').count()) {
+      await page.getByRole('heading', { name: 'Escolha suas magias' }).waitFor();
+      const recommended = page.getByTestId('wizard.spells.recommended');
+      if (await recommended.count()) await recommended.click();
+      for (const select of await page.locator('select[data-testid^="wizard.initiate."]').all()) {
+        await select.selectOption({ index: rng.int(1, 3) });
+      }
+      for (const list of await page
+        .locator('[data-testid^="wizard.spells."], [data-testid^="wizard.initiate."]')
+        .filter({ has: page.locator('input[data-testid^="pick."]') })
+        .all()) {
+        for (let guard = 0; guard < 8 && !(await ready('wizard.next')); guard++) {
+          const free = list.locator('input[data-testid^="pick."]:not(:checked):not([disabled])');
+          const n = await free.count();
+          if (n === 0) break;
+          await free.nth(rng.int(0, n - 1)).click();
+        }
+      }
+      await expect(page.getByTestId('wizard.next')).toHaveAttribute('data-ready', 'true');
+      await page.getByTestId('wizard.next').click();
+    }
+
     await page.getByTestId('wizard.name').fill('Bot Aventureiro');
     await fillSkills();
     await expect(page.getByTestId('wizard.finish')).toHaveAttribute('data-ready', 'true');
@@ -88,6 +122,7 @@ test.describe('B2 — assistente de criação', { tag: '@B2' }, () => {
       () => JSON.parse(localStorage.getItem('grimorio.criacao.v1') ?? '{}').draft,
     );
     const expected = deriveSheet(buildCharacterSheet(draft, { newId: () => 'x' })!);
+    const expectedSheet = buildCharacterSheet(draft, { newId: () => 'x' })!;
 
     await page.getByTestId('wizard.finish').click();
     await page.waitForURL(/\/ficha$/);
@@ -103,5 +138,67 @@ test.describe('B2 — assistente de criação', { tag: '@B2' }, () => {
       'data-value',
       String(expected.initiative.value),
     );
+    // As magias escolhidas no assistente estão na ficha.
+    const sheet = await page.evaluate(() => window.__APP_TEST__!.getSheet() as { spells: unknown });
+    expect(sheet.spells).toEqual(expectedSheet.spells);
+  });
+
+  test('Mago Sábio: magias recomendadas do livro e Iniciado em Magia', async ({ page }) => {
+    // Rascunho pronto até Atributos (as etapas anteriores já têm cenário acima).
+    let d = withClass(emptyDraft(), 'wizard');
+    d = withBackground(d, 'sage');
+    d.classSkills = ['investigation', 'medicine'];
+    d.speciesId = 'human';
+    d.speciesSkills = ['perception'];
+    d.speciesFeatId = 'alert';
+    d.languages = ['Anão', 'Élfico'];
+    d.baseScores = { ...CLASSES.wizard.standardArray };
+    d.backgroundBonus = suggestBackgroundBonus(BACKGROUNDS.sage!.abilities, CLASSES.wizard.primary);
+    await page.addInitScript((draft) => {
+      if (!sessionStorage.getItem('bot.seeded')) {
+        localStorage.setItem(
+          'grimorio.criacao.v1',
+          JSON.stringify({ v: 1, step: 'spells', draft }),
+        );
+        localStorage.setItem('grimorio.criacao.intro-visto', '1');
+        sessionStorage.setItem('bot.seeded', '1');
+      }
+    }, d);
+    await openPage(page, '/criar');
+    await page.getByRole('heading', { name: 'Escolha suas magias' }).waitFor();
+    await expect(page.getByTestId('wizard.next')).toHaveAttribute('data-ready', 'false');
+
+    await page.getByTestId('wizard.spells.recommended').click();
+    await expect(page.getByTestId('wizard-spell-cantrips.count')).toHaveText('3 de 3');
+    await expect(page.getByTestId('wizard-spellbook.count')).toHaveText('6 de 6');
+    await expect(page.getByTestId('wizard-spell-prepared.count')).toHaveText('4 de 4');
+
+    // Iniciado em Magia do Sábio: lista do Mago (fixa), atributo, 2 truques e 1 magia.
+    await page.getByTestId('wizard.initiate.0.ability').selectOption('int');
+    const cantrips = page.getByTestId('wizard.initiate.0.cantrips');
+    await cantrips.getByTestId('pick.fire-bolt').check();
+    await cantrips.getByTestId('pick.minor-illusion').check();
+    // Truque que já é da classe não aparece de novo para o talento.
+    await expect(cantrips.getByTestId('pick.light')).toBeDisabled();
+    await page.getByTestId('wizard.initiate.0.spell').getByTestId('pick.shield').check();
+    await expect(page.getByTestId('wizard.next')).toHaveAttribute('data-ready', 'true');
+    await page.getByTestId('wizard.next').click();
+
+    await page.getByTestId('wizard.name').fill('Elara');
+    await page.getByTestId('wizard.finish').click();
+    await page.waitForURL(/\/ficha$/);
+    const sheet = await page.evaluate(
+      () =>
+        window.__APP_TEST__!.getSheet() as {
+          spells: { cantrips: string[]; spellbook: string[]; granted: { id: string }[] };
+        },
+    );
+    expect(sheet.spells.cantrips).toEqual(['light', 'mage-hand', 'ray-of-frost']);
+    expect(sheet.spells.spellbook).toHaveLength(6);
+    expect(sheet.spells.granted.map((g) => g.id)).toEqual([
+      'fire-bolt',
+      'minor-illusion',
+      'shield',
+    ]);
   });
 });
