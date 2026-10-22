@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { CLASS_PROGRESSIONS } from '../classes';
 import { SPECIES_SPELLS } from '../creation/species-spells';
 import { parse } from '../dice';
-import { filterSpells, normalizeSearch, spellById, SPELLS } from './data';
+import { castRoll, filterSpells, normalizeSearch, spellById, spellTarget, SPELLS } from './data';
 import { SPELL_EFFECTS } from './effects';
 import { spellRoll } from './casting';
 import { SPELL_CLASSES, SPELL_SCHOOLS } from './types';
@@ -136,5 +136,38 @@ describe('rolagens das magias', () => {
     const r = at('eldritch-blast', 0, 11);
     expect(r.beams).toBe(3);
     expect(r.damage[0]!.expression).toBe('1d10');
+  });
+});
+
+describe('em quem a magia cai e o que o Conjurar rola', () => {
+  const target = (id: string) => spellTarget(spellById(id)!);
+  const rolls = (id: string) => castRoll(spellById(id)!);
+
+  it('"Em mim" só para magias que ajudam ou curam e aceitam você como alvo', () => {
+    for (const id of ['cure-wounds', 'healing-word', 'bless', 'mage-armor', 'aid', 'haste'])
+      expect(target(id), id).toBe('ally');
+    // Pessoal e as de dano extra do conjurador: sempre em você, sem perguntar.
+    for (const id of ['shield', 'false-life', 'divine-favor', 'hex', 'hunters-mark'])
+      expect(target(id), id).toBe('self');
+    for (const id of ['fire-bolt', 'fireball', 'hold-person', 'warding-bond'])
+      expect(target(id), id).toBe('other');
+  });
+
+  it('nenhuma magia de ataque oferece "Em mim"', () => {
+    for (const spell of SPELLS.filter((s) => s.attack)) {
+      expect(spellTarget(spell), spell.id).not.toBe('ally');
+    }
+  });
+
+  it('Conjurar rola o ataque, o dano de quem resiste, a cura ou os PV temporários', () => {
+    expect(rolls('fire-bolt')).toBe('attack');
+    expect(rolls('fireball')).toBe('damage');
+    expect(rolls('magic-missile')).toBe('damage');
+    expect(rolls('cure-wounds')).toBe('heal');
+    expect(rolls('false-life')).toBe('temp-hp');
+    // Dano extra a cada acerto, não na hora de conjurar.
+    expect(rolls('hex')).toBeNull();
+    expect(rolls('hunters-mark')).toBeNull();
+    expect(rolls('shield')).toBeNull();
   });
 });

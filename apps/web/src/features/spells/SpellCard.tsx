@@ -2,13 +2,16 @@ import {
   SPELL_ACTIVE_PREFIX,
   SPELL_EFFECTS,
   spellRoll,
-  withModifier,
   type SpellcastingView,
 } from '@grimorio/rules';
-import { ChevronDown, Sparkles, Trash2 } from 'lucide-react';
+import { castRoll, spellTarget } from '@grimorio/rules/spells-data';
+import { ChevronDown, Sparkles, Trash2, UserRound, Users } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { D20Icon } from '@/components/ui/d20-icon';
 import { Select } from '@/components/ui/input';
+import { useDiceStore } from '@/features/dice/store';
+import { AdvantageBadge, d20 } from '@/features/sheet/components/AdvantageBadge';
 import { RollButton } from '@/features/sheet/components/RollButton';
 import { useSheet } from '@/features/sheet/hooks';
 import { useSheetStore } from '@/features/sheet/store';
@@ -52,10 +55,18 @@ export function SpellCard({
   const effectKey = `${SPELL_ACTIVE_PREFIX}${spell.id}`;
   const hasEffect = Boolean(SPELL_EFFECTS[spell.id]);
   const onMe = sheet.state.active.includes(effectKey);
-  // Alcance Pessoal = sempre em você; nas outras, o jogador marca se conjurou em si mesmo.
-  const selfOnly = spell.range.startsWith('Pessoal');
-  const [onSelf, setOnSelf] = useState(selfOnly);
-  const selfId = useId();
+  // "Em mim" só existe para magias que ajudam ou curam e aceitam você como alvo; as de alcance
+  // Pessoal (e o dano extra da Marca do Predador) já são sempre suas.
+  const target = spellTarget(spell);
+  const rollKind = castRoll(spell);
+  const [onSelf, setOnSelf] = useState(false);
+  const onCaster = target === 'self' || (target === 'ally' && onSelf);
+  const attack = spell.attack ? derived.spellAttack : null;
+  const attackRoll = attack
+    ? attack.expression.replace(/^1d20/, d20(attack.advantage, attack.disadvantage))
+    : null;
+  const canCast = spell.level === 0 || Boolean(selected?.available);
+  const rollDice = useDiceStore((s) => s.roll);
   const components = [
     spell.components.v ? 'V' : null,
     spell.components.s ? 'S' : null,
@@ -68,6 +79,15 @@ export function SpellCard({
     .filter(Boolean)
     .join(', ');
 
+  /** Rola e devolve o total (ou `null`, com o aviso do erro). */
+  const rollNow = (label: string, expression: string, critRange?: number) => {
+    const outcome = rollDice({ label, expression, ...(critRange ? { critRange } : {}) });
+    if (outcome.ok) return outcome.entry.result.total;
+    toast(t.dice.errors[outcome.error.code], 'danger');
+    return null;
+  };
+
+  /** Gasta o espaço (ou o uso grátis), liga Concentração e efeito e já rola o dado da magia. */
   const cast = () => {
     if (spell.level > 0) {
       if (!selected || !selected.available) return toast(tsp.castNoSlot, 'danger');
@@ -84,12 +104,38 @@ export function SpellCard({
       }
     }
     if (spell.concentration) dispatch({ type: 'set-concentration', spellId: spell.id });
-    // Só vai para "Magias em você" quando foi conjurada em você mesmo.
-    if (hasEffect && onSelf && !useSheetStore.getState().sheet.state.active.includes(effectKey)) {
+    // Só vai para "Magias em você" quando a magia é sua ou foi conjurada em você mesmo.
+    if (hasEffect && onCaster && !useSheetStore.getState().sheet.state.active.includes(effectKey)) {
       dispatch({ type: 'toggle-spell-effect', spellId: spell.id });
     }
-    toast(tsp.castDone(spell.name, slot), 'success');
+
+    const message = [tsp.castDone(spell.name, slot)];
+    if (rollKind === 'attack' && attackRoll) {
+      rollNow(tsp.attackLabel(spell.name), attackRoll, 20);
+    } else if (rollKind === 'damage') {
+      for (const d of roll.damage) {
+        rollNow(tsp.damageLabel(spell.name, t.damageTypes[d.type]), d.expression);
+      }
+    } else if (rollKind === 'heal' && roll.heal) {
+      const total = rollNow(tsp.healLabel(spell.name), roll.heal);
+      if (total !== null && onCaster) {
+        dispatch({ type: 'heal', amount: total });
+        message.push(tsp.healedSelf(total));
+      }
+    } else if (rollKind === 'temp-hp' && spell.tempHp) {
+      const total = rollNow(tsp.tempLabel(spell.name), spell.tempHp);
+      if (total !== null && onCaster) {
+        dispatch({ type: 'set-temp-hp', amount: total });
+        message.push(tsp.tempSelf(total));
+      }
+    }
+    if (spell.save && sc) message.push(tsp.castSave(t.abilities[spell.save], sc.dc));
+    toast(message.join(' '), 'success');
   };
+
+  const castLabel = canCast
+    ? tsp.quickCast(spell.name, slot, rollKind ? (tsp.quickRolls[rollKind] ?? null) : null)
+    : tsp.noSlotLeft;
 
   return (
     <li className="rounded-lg border border-border bg-surface" data-testid={`spell.${spell.id}`}>
@@ -115,14 +161,21 @@ export function SpellCard({
             {granted ? ` · ${tsp.grantedFrom[granted.source]}` : ''}
           </p>
         </div>
-        {spell.attack && sc ? (
-          <RollButton
-            rollLabel={tsp.attackLabel(spell.name)}
-            expression={withModifier('1d20', sc.attack)}
-            ariaLabel={tsp.attackLabel(spell.name)}
-            testId={`spell.${spell.id}.attack`}
-          />
+        {attack ? (
+          <AdvantageBadge advantage={attack.advantage} disadvantage={attack.disadvantage} />
         ) : null}
+        {/* Atalho: conjura com a carta fechada. Tem a cor do Conjurar porque também gasta espaço. */}
+        <button
+          type="button"
+          onClick={cast}
+          disabled={!canCast}
+          aria-label={castLabel}
+          title={castLabel}
+          data-testid={`spell.${spell.id}.quick`}
+          className="grid size-8 shrink-0 place-items-center rounded-md border border-accent/50 bg-accent-soft text-accent transition-colors hover:bg-accent hover:text-accent-contrast focus-visible:bg-accent focus-visible:text-accent-contrast disabled:cursor-not-allowed disabled:border-border disabled:bg-transparent disabled:text-muted disabled:opacity-50"
+        >
+          {rollKind ? <D20Icon className="size-5" /> : <Sparkles className="size-4" />}
+        </button>
       </div>
 
       {open ? (
@@ -184,30 +237,59 @@ export function SpellCard({
                 </Select>
               </>
             ) : null}
-            {hasEffect && !selfOnly ? (
-              <label htmlFor={selfId} className="flex items-center gap-1.5 text-xs">
-                <input
-                  id={selfId}
-                  type="checkbox"
-                  checked={onSelf}
-                  onChange={(e) => setOnSelf(e.target.checked)}
-                  className="size-4 accent-[var(--accent)]"
-                  data-testid={`spell.${spell.id}.on-self`}
-                />
-                {tsp.castOnSelf}
-              </label>
+            {target === 'ally' ? (
+              <div
+                role="group"
+                aria-label={tsp.castTarget(spell.name)}
+                className="inline-flex h-8 divide-x divide-border overflow-hidden rounded-md border border-border text-xs font-semibold"
+              >
+                {[false, true].map((self) => (
+                  <button
+                    key={String(self)}
+                    type="button"
+                    aria-pressed={onSelf === self}
+                    onClick={() => setOnSelf(self)}
+                    className={cn(
+                      'flex items-center gap-1 px-2.5 transition-colors',
+                      onSelf === self
+                        ? 'bg-accent-soft text-accent'
+                        : 'text-muted hover:bg-surface-2 hover:text-text',
+                    )}
+                    data-testid={`spell.${spell.id}.${self ? 'on-self' : 'on-other'}`}
+                  >
+                    {self ? (
+                      <UserRound className="size-3.5" aria-hidden="true" />
+                    ) : (
+                      <Users className="size-3.5" aria-hidden="true" />
+                    )}
+                    {self ? tsp.castOnSelf : tsp.castOnOther}
+                  </button>
+                ))}
+              </div>
             ) : null}
             <Button
               size="sm"
               variant="primary"
               onClick={cast}
-              disabled={spell.level > 0 && !selected?.available}
-              aria-label={tsp.castLabel(spell.name, slot)}
+              disabled={!canCast}
+              aria-label={castLabel}
               data-testid={`spell.${spell.id}.cast`}
             >
               <Sparkles className="size-3.5" />
               {tsp.cast}
             </Button>
+            {attackRoll && sc ? (
+              <RollButton
+                rollLabel={tsp.attackLabel(spell.name)}
+                expression={attackRoll}
+                critRange={20}
+                ariaLabel={tsp.attackLabel(spell.name)}
+                testId={`spell.${spell.id}.attack`}
+                className={btn}
+              >
+                {tsp.attack} {formatModifier(sc.attack)}
+              </RollButton>
+            ) : null}
             {roll.damage.map((d) => (
               <RollButton
                 key={d.type}
@@ -235,11 +317,6 @@ export function SpellCard({
           {hasEffect && onMe ? <p className="text-xs text-accent">{tsp.onMeNow}</p> : null}
           {granted?.freePerLongRest ? (
             <p className="text-xs text-muted">{tsp.freeUses(freeLeft, granted.freePerLongRest)}</p>
-          ) : null}
-          {sc && spell.attack ? (
-            <p className="text-xs text-muted">
-              {tsp.attack}: {formatModifier(sc.attack)}
-            </p>
           ) : null}
 
           {onTogglePrepared || onRemove ? (

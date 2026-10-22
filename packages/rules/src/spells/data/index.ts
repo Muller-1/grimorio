@@ -15,6 +15,8 @@ import { LEVEL_7 } from './level-7';
 import { LEVEL_8 } from './level-8';
 import { LEVEL_9 } from './level-9';
 
+export { castRoll, spellTarget, type CastRoll, type SpellTarget } from './targeting';
+
 /** Todas as magias, por círculo e depois pelo nome em português. */
 export const SPELLS: readonly SpellDef[] = [
   ...LEVEL_0,

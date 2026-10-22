@@ -127,6 +127,8 @@ export interface SheetDerived {
   /** Classe, características, recursos e o que dá para ligar (ADR-010). */
   engine: CharacterEngine;
   spellcasting: SpellcastingView | null;
+  /** Ataque de magia pronto para rolar, como o das armas ("1d20+5+1d4" com Bênção). */
+  spellAttack: { expression: string; advantage: boolean; disadvantage: boolean } | null;
   passivePerception: Explained;
   hpMax: Explained;
   hitDice: { die: HitDieSides; total: number; remaining: number };
@@ -478,6 +480,11 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
   const notes = of('note').map((e) => ({ text: e.effect.text, source: e.source.name }));
   const dcBonus = of('spell-dc-bonus').reduce((sum, e) => sum + value(e.effect.value), 0);
   const spellcasting = spellcastingView(sheet, engine.info, mods, prof, dcBonus);
+  const spellAttack = spellcasting && {
+    expression: `${withModifier('1d20', spellcasting.attack)}${attackDice}`,
+    advantage: attackAdvantage,
+    disadvantage: attackDisadvantage,
+  };
 
   return {
     level,
@@ -500,6 +507,7 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
     notes,
     engine,
     spellcasting,
+    spellAttack,
     warnings,
   };
 }

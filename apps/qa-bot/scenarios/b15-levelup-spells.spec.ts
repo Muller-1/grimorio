@@ -2,8 +2,9 @@
  * B15 — Subida de nível, magias e habilidades (ADR-010): sobe um Bárbaro de 2 para 4 pelas
  * telas curtas de cada nível (subclasse, o que ganhou, uma escolha por tela), liga Fúria +
  * Ataque Imprudente e confere o Frenesi; num Mago, adiciona uma magia pela aba Magias, conjura
- * gastando espaço e confere a Concentração. O oráculo é o motor
- * de regras (mesmas contas que a ficha usa).
+ * gastando espaço e confere a Concentração; num Clérigo, o Conjurar já rola o ataque e o
+ * "Em mim" da cura cura a própria ficha. O oráculo é o motor de regras (mesmas contas que a
+ * ficha usa).
  */
 import { createBlankSheet, type LocalSheet } from '@grimorio/shared';
 import type { Page } from '@playwright/test';
@@ -168,5 +169,45 @@ test.describe('B15 — subida de nível, magias e habilidades', { tag: '@B15' },
     expect(sheet.state.slotsSpent.slice(0, 2)).toEqual([0, 1]);
     expect(sheet.spells.spellbook.sort()).toEqual(['magic-missile', 'web']);
     expect(await seriousA11yViolations(page)).toEqual([]);
+  });
+
+  test('Clérigo: Conjurar gasta o espaço e já rola o ataque; "Em mim" só na cura', async ({
+    page,
+  }) => {
+    await withSheet(page, sheetOf('cleric', 3, { wis: 16 }));
+    await openColumn(page, 'Ações');
+    await page.getByRole('tab', { name: 'Magias' }).click();
+    await page.getByTestId('spells.add').click();
+    await page.getByTestId('picker.search').fill('raio guia');
+    await page.getByTestId('pick.guiding-bolt').check();
+    await page.getByTestId('picker.search').fill('curar ferimentos');
+    await page.getByTestId('pick.cure-wounds').check();
+    await page.getByTestId('picker.add').click();
+
+    // Atalho com a carta fechada: gasta o espaço de 1º círculo e rola o ataque de magia.
+    await page.getByTestId('spell.guiding-bolt.quick').click();
+    let sheet = await sheetNow(page);
+    expect(sheet.state.slotsSpent[0]).toBe(1);
+    const attack = await page.evaluate(() => window.__APP_TEST__!.getLastRoll());
+    expect(attack?.expression).toBe('1d20+5');
+
+    // Magia de ataque não pergunta "Em mim"; a de cura pergunta e cura a própria ficha.
+    await page.getByRole('button', { name: 'Detalhes de Raio Guia' }).click();
+    await expect(page.getByTestId('spell.guiding-bolt.on-self')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Detalhes de Curar Ferimentos' }).click();
+    await page.getByTestId('spell.cure-wounds.on-self').click();
+    await expect(page.getByTestId('spell.cure-wounds.on-self')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(await seriousA11yViolations(page)).toEqual([]);
+    await page.getByTestId('spell.cure-wounds.cast').click();
+    const heal = await page.evaluate(() => window.__APP_TEST__!.getLastRoll());
+    const derived = (await page.evaluate(() => window.__APP_TEST__!.getDerived())) as {
+      hpMax: { value: number };
+    };
+    sheet = await sheetNow(page);
+    expect(sheet.state.slotsSpent[0]).toBe(2);
+    expect(sheet.state.hp.current).toBe(Math.min(derived.hpMax.value, 1 + heal!.total));
   });
 });
