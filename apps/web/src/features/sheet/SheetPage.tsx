@@ -1,6 +1,6 @@
 import { createBlankSheet } from '@grimorio/shared';
 import { ArrowLeft, FilePlus2, HardDriveDownload, Sparkles, Wand2 } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -14,8 +14,12 @@ import { CombatColumn, SkillsPanel } from './components/CombatColumn';
 import { safeStorage } from '@/ports/storage';
 import { exampleSheet } from './example';
 import { useSheetStore } from './store';
+import { useSwipeTabs } from './swipe';
 
 type Column = 'character' | 'combat' | 'actions';
+
+/** Ordem das abas no celular (a mesma da barra de abas): o deslizar anda por ela. */
+const COLUMN_ORDER: Column[] = ['character', 'combat', 'actions'];
 
 /** O jogador disse que prefere preencher a ficha em branco à mão (não mostra mais a dica). */
 const WIZARD_HINT_KEY = 'grimorio.ficha.dica-assistente';
@@ -84,6 +88,13 @@ export default function SheetPage({
   const toast = useToastStore((s) => s.push);
   const [column, setColumn] = useState<Column>('character');
   const [confirm, setConfirm] = useState<Confirm>(null);
+
+  // Celular: deslizar para os lados troca de aba (nas pontas, fica onde está).
+  const columnsRef = useRef<HTMLDivElement>(null);
+  const swipe = useCallback((dir: 1 | -1) => {
+    setColumn((now) => COLUMN_ORDER[COLUMN_ORDER.indexOf(now) + dir] ?? now);
+  }, []);
+  useSwipeTabs(columnsRef, swipe);
 
   useEffect(() => {
     document.title = `${name || t.sheet.unnamed} · ${t.brand.name}`;
@@ -180,7 +191,10 @@ export default function SheetPage({
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div
+        ref={columnsRef}
+        className="grid grid-cols-1 gap-3 max-md:min-h-[60svh] max-md:touch-pan-y max-md:touch-pinch-zoom md:grid-cols-2 xl:grid-cols-3"
+      >
         <section
           id="col-character"
           aria-label={t.sheet.columns.character}
