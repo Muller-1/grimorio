@@ -166,8 +166,9 @@ export function spellRoll(
   const tier = spell.level === 0 && spell.cantripScaling ? cantripTier(opts.characterLevel) : 1;
   const damage = (spell.damage ?? []).map((d, i) => {
     let dice = multiplyDice(d.dice, tier);
-    // Dados por círculo: só no primeiro tipo de dano (como no texto das magias).
-    if (spell.perSlot && i === 0) dice = addPerSlot(dice, spell.perSlot, extra);
+    // Dados por círculo: só no primeiro tipo de dano (como no texto das magias), salvo `perSlotAll`.
+    if (spell.perSlot && (i === 0 || spell.perSlotAll))
+      dice = addPerSlot(dice, spell.perSlot, extra);
     return { expression: d.addMod ? withMod(dice, opts.mod) : dice, type: d.type };
   });
   let heal: string | undefined;

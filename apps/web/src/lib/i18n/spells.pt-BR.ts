@@ -92,6 +92,8 @@ export const spellsPtBR = {
   duration: 'Duração',
   concentrationTag: 'Concentração',
   ritualTag: 'Ritual',
+  /** Magia que está no livro mas não no SRD (regras do livro, texto do site). */
+  bookTag: 'Do livro',
   higher: 'Em círculos maiores',
   cantripUpgrade: 'Aprimoramento de truque',
   save: (ability: string, dc: number) => `Salvaguarda de ${ability} CD ${dc}`,
@@ -153,7 +155,7 @@ export const spellsPtBR = {
   // ---------- outra magia ----------
   customTitle: 'Outra magia (do livro)',
   customHint:
-    'Para magias que não estão nas regras abertas (SRD). Escreva com as suas palavras o que ela faz.',
+    'Para uma magia que o site ainda não traz (de outro livro, por exemplo). Escreva com as suas palavras o que ela faz.',
   customName: 'Nome',
   customLevel: 'Círculo',
   customText: 'O que ela faz',
@@ -169,5 +171,6 @@ export const spellsPtBR = {
   customNameRequired: 'Dê um nome à magia.',
   customInvalidDice: 'Dados de dano inválidos.',
 
-  credits: 'Magias: SRD 5.2 (CC BY 4.0), com textos escritos para o site.',
+  credits:
+    'Magias: SRD 5.2 (CC BY 4.0), com textos escritos para o site. As marcadas "Do livro" seguem as regras do Livro do Jogador, descritas com palavras próprias.',
 } as const;

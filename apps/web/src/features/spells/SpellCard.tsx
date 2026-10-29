@@ -158,6 +158,7 @@ export function SpellCard({
             {tsp.meta(spell.level, school)}
             {spell.concentration ? ` · ${tsp.concentrationTag}` : ''}
             {spell.ritual ? ` · ${tsp.ritualTag}` : ''}
+            {spell.source === 'book' ? ` · ${tsp.bookTag}` : ''}
             {granted ? ` · ${tsp.grantedFrom[granted.source]}` : ''}
           </p>
         </div>

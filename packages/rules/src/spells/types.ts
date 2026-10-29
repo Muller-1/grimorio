@@ -2,7 +2,8 @@ import type { AbilityKey, DamageType } from '@grimorio/shared';
 import type { Effect } from '../classes/types';
 
 /**
- * Magias do SRD 5.2 (CC BY 4.0) — ADR-010.
+ * Magias do SRD 5.2 (CC BY 4.0) — ADR-010 — e, à parte, as do livro que o SRD não traz
+ * (`source: 'book'`, em `data/book.ts`, descritas com palavras nossas).
  *
  * Os dados ficam no código (`./data`, uma lista por círculo) e o navegador só baixa quando
  * abre a parte de magias. Nomes e termos seguem o Livro do Jogador 2024 em português
@@ -46,8 +47,10 @@ export interface SpellDamage {
 }
 
 export interface SpellDef {
-  /** Id estável, do nome em inglês do SRD (ex.: "fireball"). */
+  /** Id estável, do nome em inglês (ex.: "fireball"). */
   id: string;
+  /** De onde vem: ausente = SRD; `book` = só no livro (regras fiéis, texto nosso). */
+  source?: 'srd' | 'book';
   name: string;
   /** 0 = truque. */
   level: SpellLevel;
@@ -75,6 +78,8 @@ export interface SpellDef {
   heal?: { dice: string; addMod: boolean };
   /** Dados a mais por círculo acima do base (Bola de Fogo: "1d6"). */
   perSlot?: string;
+  /** O `perSlot` vale para todos os tipos de dano (Flecha Relâmpago), não só para o primeiro. */
+  perSlotAll?: boolean;
   /** Truque cujo dano cresce nos níveis 5, 11 e 17. */
   cantripScaling?: boolean;
   /** Rajada Mística: mais raios (não mais dados) nos níveis 5, 11 e 17. */

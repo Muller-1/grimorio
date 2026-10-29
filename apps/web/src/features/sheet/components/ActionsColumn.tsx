@@ -30,7 +30,7 @@ type TabKey = 'weapons' | 'spells' | 'inventory' | 'features';
 /** A ficha não cresce sem fim: a lista de cada aba rola por dentro. */
 const LIST_AREA = 'px-3 pb-3 md:max-h-[70dvh] md:overflow-y-auto';
 
-// A aba Magias traz a lista das 339 magias: só carrega quando o jogador abre a aba.
+// A aba Magias traz a lista das 391 magias: só carrega quando o jogador abre a aba.
 const SpellsTab = lazy(() => import('@/features/spells/SpellsTab'));
 const InventoryTab = lazy(() => import('@/features/inventory/InventoryTab'));
 const WeaponEditor = lazy(() => import('./Editors').then((m) => ({ default: m.WeaponEditor })));

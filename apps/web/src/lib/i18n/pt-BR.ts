@@ -175,7 +175,7 @@ export const ptBR = {
             },
             {
               title: 'Magias',
-              text: 'As 339 magias das regras abertas em português: CD, espaços para marcar, conjurar rolando o dano e Concentração.',
+              text: 'As 391 magias (339 das regras abertas e 52 do livro) em português: CD, espaços para marcar, conjurar rolando o dano e Concentração.',
             },
           ],
         },
@@ -513,11 +513,11 @@ export const ptBR = {
       ] as [string, string][],
       rulesTitle: 'Regras do jogo',
       rules:
-        'O site é compatível com a 5ª edição (regras de 2024). O assistente de criação, a progressão das classes do nível 1 ao 20, a subida de nível e as 339 magias usam o conteúdo das regras abertas, o System Reference Document 5.2, publicado sob a licença Creative Commons Atribuição 4.0:',
+        'O site é compatível com a 5ª edição (regras de 2024). O assistente de criação, a progressão das classes do nível 1 ao 20, a subida de nível e 339 das magias usam o conteúdo das regras abertas, o System Reference Document 5.2, publicado sob a licença Creative Commons Atribuição 4.0:',
       srdAttribution:
         'This work includes material from the System Reference Document 5.2 ("SRD 5.2") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.',
       srdNote:
-        'Os nomes de regras seguem a edição brasileira do Livro do Jogador; as descrições, resumos e textos das magias foram escritos para o site a partir do SRD 5.2 e foram adaptados (resumidos, traduzidos e com as medidas em metros). Nenhum texto dos livros é reproduzido. O que não está no SRD entra como "Outro (do livro)", preenchido pelo jogador.',
+        'Os nomes de regras seguem a edição brasileira do Livro do Jogador; as descrições, resumos e textos das magias foram escritos para o site a partir do SRD 5.2 e foram adaptados (resumidos, traduzidos e com as medidas em metros). Além do SRD, o site traz magias do Livro do Jogador que ele não inclui (marcadas "Do livro"): as regras — círculo, alcance, dados, salvaguardas — seguem o livro, mas cada texto foi escrito com palavras próprias, e nenhum texto dos livros é reproduzido. O que o site ainda não traz entra como "Outro (do livro)", preenchido pelo jogador.',
       trademark:
         'Projeto independente, sem vínculo com a Wizards of the Coast nem com as editoras dos livros no Brasil.',
     },

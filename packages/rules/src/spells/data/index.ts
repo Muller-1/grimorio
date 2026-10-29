@@ -1,9 +1,10 @@
 /**
- * Lista completa das magias do SRD 5.2 (ADR-010). Ponto de entrada próprio
+ * Lista completa: as magias do SRD 5.2 (ADR-010) e as do livro (`./book`). Ponto de entrada próprio
  * (`@grimorio/rules/spells-data`) para o site baixar este arquivo só quando abre a parte de
  * magias. O resto do pacote não importa nada daqui.
  */
 import type { SpellClass, SpellDef, SpellLevel } from '../types';
+import { BOOK_SPELLS } from './book';
 import { LEVEL_0 } from './level-0';
 import { LEVEL_1 } from './level-1';
 import { LEVEL_2 } from './level-2';
@@ -29,6 +30,7 @@ export const SPELLS: readonly SpellDef[] = [
   ...LEVEL_7,
   ...LEVEL_8,
   ...LEVEL_9,
+  ...BOOK_SPELLS,
 ].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name, 'pt-BR'));
 
 const BY_ID: ReadonlyMap<string, SpellDef> = new Map(SPELLS.map((s) => [s.id, s]));

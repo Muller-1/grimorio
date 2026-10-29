@@ -8,16 +8,21 @@ import { SPELL_EFFECTS } from './effects';
 import { spellRoll } from './casting';
 import { SPELL_CLASSES, SPELL_SCHOOLS } from './types';
 
+const SRD_SPELLS = SPELLS.filter((s) => s.source !== 'book');
+const BOOK = SPELLS.filter((s) => s.source === 'book');
+
 describe('lista de magias (SRD 5.2)', () => {
-  it('339 magias, ids únicos no formato da ficha', () => {
-    expect(SPELLS).toHaveLength(339);
+  it('339 do SRD + 52 do livro, ids únicos no formato da ficha', () => {
+    expect(SRD_SPELLS).toHaveLength(339);
+    expect(BOOK).toHaveLength(52);
+    expect(SPELLS).toHaveLength(339 + 52);
     const ids = SPELLS.map((s) => s.id);
-    expect(new Set(ids).size).toBe(339);
+    expect(new Set(ids).size).toBe(339 + 52);
     for (const id of ids) expect(id).toMatch(/^[a-z0-9-]{1,60}$/);
   });
 
   it('quantidade por círculo e por lista de classe igual ao SRD', () => {
-    const byLevel = SPELLS.reduce<Record<number, number>>(
+    const byLevel = SRD_SPELLS.reduce<Record<number, number>>(
       (acc, s) => ({ ...acc, [s.level]: (acc[s.level] ?? 0) + 1 }),
       {},
     );
@@ -34,7 +39,7 @@ describe('lista de magias (SRD 5.2)', () => {
       9: 16,
     });
     const byClass = Object.fromEntries(
-      SPELL_CLASSES.map((c) => [c, SPELLS.filter((s) => s.classes.includes(c)).length]),
+      SPELL_CLASSES.map((c) => [c, SRD_SPELLS.filter((s) => s.classes.includes(c)).length]),
     );
     expect(byClass).toEqual({
       bard: 130,
@@ -99,6 +104,19 @@ describe('lista de magias (SRD 5.2)', () => {
       expect(e.name).toBe(s.name);
       expect(e.concentration).toBe(s.concentration);
     }
+  });
+
+  it('magias do livro: marcadas, com o mesmo nível de detalhe e sem repetir nomes do SRD', () => {
+    const srdNames = new Set(SRD_SPELLS.map((s) => normalizeSearch(s.name)));
+    for (const s of BOOK) {
+      expect(srdNames.has(normalizeSearch(s.name)), s.name).toBe(false);
+      expect(s.text.length, s.id).toBeGreaterThan(60);
+    }
+    const byLevel = BOOK.reduce<Record<number, number>>(
+      (acc, s) => ({ ...acc, [s.level]: (acc[s.level] ?? 0) + 1 }),
+      {},
+    );
+    expect(byLevel).toEqual({ 0: 7, 1: 7, 2: 6, 3: 10, 4: 7, 5: 10, 6: 3, 7: 1, 8: 1 });
   });
 
   it('busca sem acento e filtros por classe e círculo', () => {

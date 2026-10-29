@@ -152,6 +152,7 @@ export function SpellList({
                       {tsp.meta(s.level, tsp.schools[s.school])}
                       {s.concentration ? ` · ${tsp.concentrationTag}` : ''}
                       {s.ritual ? ` · ${tsp.ritualTag}` : ''}
+                      {s.source === 'book' ? ` · ${tsp.bookTag}` : ''}
                       {inSheet ? ` · ${disabledLabel}` : ''}
                     </span>
                     {describe ? (

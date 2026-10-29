@@ -72,6 +72,7 @@ export default [
     name: 'Subir de nível (sob demanda, com a lista de magias)',
     path: inDist(lazyChunk('LevelUpDialog', sheet)),
     gzip: true,
-    limit: '100 kB',
+    // 100 → 105 kB: entraram as 52 magias do livro (~8 kB na lista de magias).
+    limit: '105 kB',
   },
 ];
