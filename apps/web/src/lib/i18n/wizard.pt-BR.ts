@@ -40,7 +40,9 @@ export const wizardPtBR = {
     string
   >,
   srdNote:
-    'O site traz o conteúdo das regras abertas do Livro do Jogador 2024 (SRD 5.2). Antecedentes e espécies que não estão nelas entram em "Outro (do livro)".',
+    'O site traz o conteúdo das regras abertas do Livro do Jogador 2024 (SRD 5.2) e, marcados "Do livro", antecedentes, talentos e Estilos de Luta que o SRD não inclui: as regras seguem o livro e os textos são resumos nossos. Espécies e o que ainda não estiver aqui entram em "Outro (do livro)".',
+  /** Marca o que está no livro mas não no SRD. */
+  bookTag: 'Do livro',
 
   class: {
     title: 'Escolha uma classe',

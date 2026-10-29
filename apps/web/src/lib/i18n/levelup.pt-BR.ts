@@ -82,6 +82,8 @@ export const levelUpPtBR = {
   featAbility: 'Atributo que o talento aumenta (+1)',
   featAbilityNone: 'Nenhum',
   featRequires: (names: string) => `Exige ${names} 13 ou mais`,
+  featPrerequisite: (text: string) => `Pré-requisito: ${text}.`,
+  featBook: 'do livro',
   boon: 'Dádiva Épica',
   noOptions: 'Nenhuma opção disponível.',
   styleTitle: 'Estilo de Luta',

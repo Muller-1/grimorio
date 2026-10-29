@@ -57,10 +57,11 @@ export default [
   {
     // ADR-010: a ficha agora traz o motor das habilidades e a progressão das 12 classes
     // (≈ 29 kB). A lista de magias e a subida de nível ficam fora (orçamentos abaixo).
+    // 115 → 120 kB: entraram os talentos, estilos de luta e antecedentes do livro (~2 kB).
     name: 'Página /ficha (sob demanda)',
     path: inDist(sheet),
     gzip: true,
-    limit: '115 kB',
+    limit: '120 kB',
   },
   {
     name: 'Aba Magias (sob demanda, com a lista de magias)',
@@ -72,7 +73,7 @@ export default [
     name: 'Subir de nível (sob demanda, com a lista de magias)',
     path: inDist(lazyChunk('LevelUpDialog', sheet)),
     gzip: true,
-    // 100 → 105 kB: entraram as 52 magias do livro (~8 kB na lista de magias).
-    limit: '105 kB',
+    // 100 → 108 kB: entraram as 52 magias (~8 kB) e os talentos do livro (~3 kB).
+    limit: '108 kB',
   },
 ];

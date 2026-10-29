@@ -22,6 +22,7 @@ import {
   type BonusIssue,
 } from './abilities';
 import {
+  FIGHTING_STYLES,
   BACKGROUNDS,
   CLASSES,
   CUSTOM_ID,
@@ -598,11 +599,10 @@ export function sanitizeDraft(raw: unknown): CreationDraft {
     ...base,
     classId: classId && classId in CLASSES ? (classId as ClassId) : null,
     classOptionId: idOrNull(r.classOptionId),
-    fightingStyleId: (['archery', 'defense', 'great-weapon', 'two-weapon'] as const).includes(
-      r.fightingStyleId as FightingStyleId,
-    )
-      ? (r.fightingStyleId as FightingStyleId)
-      : null,
+    fightingStyleId:
+      typeof r.fightingStyleId === 'string' && Object.hasOwn(FIGHTING_STYLES, r.fightingStyleId)
+        ? (r.fightingStyleId as FightingStyleId)
+        : null,
     classSkills: skills(r.classSkills),
     classEquipment: oneOf(r.classEquipment, ['A', 'B', 'C'] as const, 'A'),
     weaponMasteries: Array.isArray(r.weaponMasteries)

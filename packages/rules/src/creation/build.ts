@@ -363,6 +363,9 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     ...(draft.alignment ? { alignment: draft.alignment } : {}),
   };
 
+  // PV a mais por nível: da espécie (Anão: 1) e do talento Vigoroso (2 por talento).
+  const hpPerLevel = (species?.hpPerLevel ?? 0) + 2 * feats.filter((f) => f === 'tough').length;
+
   const sheet = createBlankSheet();
   sheet.identity = {
     name: draft.name.trim().slice(0, 100),
@@ -381,7 +384,7 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     hitDie: cls.hitDie,
     speedFt,
     ...(ac.value === undefined ? {} : { armorClassOverride: ac.value }),
-    ...(species?.hpPerLevel ? { hpBonusPerLevel: species.hpPerLevel } : {}),
+    ...(hpPerLevel ? { hpBonusPerLevel: hpPerLevel } : {}),
     ...(feats.includes('alert') ? { initiativeProficiency: true } : {}),
   };
   sheet.weapons = weapons;

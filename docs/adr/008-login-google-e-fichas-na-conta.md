@@ -78,12 +78,15 @@ O navegador fala só com o site; o servidor do site repassa `/api/*` para a API.
 
 - Ordem do Livro do Jogador 2024 (cap. 2): **Classe → Origem → Atributos → Toques Finais**.
 - Conteúdo em `packages/rules/src/creation/content.ts`: as **12 classes no nível 1**, **9
-  espécies**, **4 antecedentes** (Acólito, Criminoso, Sábio, Soldado), os talentos de Origem e os
-  estilos de luta do SRD 5.2, armas e armaduras do equipamento inicial. Os números foram
+  espécies**, **antecedentes** (os 4 do SRD 5.2 mais os 12 do livro, marcados "Do livro"), os talentos de
+  Origem e os estilos de luta (SRD 5.2 e livro), armas e armaduras do equipamento inicial. Os números foram
   conferidos com o livro (cap. 2 a 6); as descrições são **resumos escritos para o site**.
-- O que o livro tem e o SRD não (outros antecedentes, Aasimar…) entra pela opção
-  **"Outro (do livro)"**, preenchida pelo jogador (RF-24). Mudar isso é decisão de licença do dono
-  do projeto (plano v2, 3.1).
+- O conteúdo do livro que não está no SRD (magias, talentos, estilos de luta, antecedentes) entra
+  com **regras fiéis e texto próprio**, em arquivos separados com `source: 'book'`
+  (`spells/data/book.ts`, `classes/book-feats.ts`, `creation/book-origins.ts`) e marcado "Do
+  livro" na tela; para tirar, basta apagar o arquivo e a linha que o junta. Espécies e subclasses
+  do livro continuam pela opção **"Outro (do livro)"** (RF-24). A revisão de licença (#4) segue
+  em aberto.
 - Atributos: Conjunto Padrão (com a sugestão do livro por classe), Compra de Pontos (27), Rolagem
   4d6 descartando o menor (pela porta `Rng`; o bot fixa a semente) e Manual; depois o bônus do
   antecedente (+2/+1 ou +1/+1/+1, máximo 20).

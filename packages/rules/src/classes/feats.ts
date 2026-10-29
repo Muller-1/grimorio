@@ -1,9 +1,11 @@
 import type { AbilityKey } from '@grimorio/shared';
+import { BOOK_LEVEL_FEATS } from './book-feats';
 
 /**
- * Talentos que a subida de nível oferece (SRD 5.2): os Gerais, os de Estilo de Luta (no
- * conteúdo da criação) e as Dádivas Épicas. Os outros talentos do livro entram como
- * "Outro talento (do livro)", escrito pelo jogador.
+ * Talentos que a subida de nível oferece: os do SRD 5.2 e, à parte (`./book-feats`), os
+ * Gerais e as Dádivas Épicas do livro que o SRD não traz. Os de Estilo de Luta ficam no
+ * conteúdo da criação. O que ainda faltar entra como "Outro talento (do livro)", escrito pelo
+ * jogador.
  */
 export interface LevelFeatDef {
   id: string;
@@ -17,11 +19,17 @@ export interface LevelFeatDef {
   requiresAbility?: AbilityKey[];
   /** Só para quem conjura magias. */
   requiresSpellcasting?: boolean;
+  /** Outro pré-requisito, só para ler (o site não confere): "Treinamento com Armadura Leve". */
+  prerequisite?: string;
+  /** Pode ser pego mais de uma vez (os outros somem da lista depois de escolhidos). */
+  repeatable?: boolean;
+  /** `book`: está no livro mas não no SRD (regras do livro, texto do site). */
+  source?: 'srd' | 'book';
 }
 
 const ALL: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
-export const LEVEL_FEATS: LevelFeatDef[] = [
+const SRD_LEVEL_FEATS: LevelFeatDef[] = [
   {
     id: 'grappler',
     name: 'Imobilizador',
@@ -89,3 +97,6 @@ export const LEVEL_FEATS: LevelFeatDef[] = [
     text: '+1 num atributo (máximo 30). Visão Verdadeira de 18 m.',
   },
 ];
+
+/** Todos os talentos oferecidos na subida de nível: SRD e livro. */
+export const LEVEL_FEATS: LevelFeatDef[] = [...SRD_LEVEL_FEATS, ...BOOK_LEVEL_FEATS];

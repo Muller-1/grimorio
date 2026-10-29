@@ -1,17 +1,20 @@
 /**
  * Conteúdo de criação de personagem — regras de 2024 (Livro do Jogador, cap. 2 a 6).
  *
- * O QUE ENTRA AQUI (plano v2, 3.1 e 3.2): só o que também está nas regras abertas (SRD 5.2,
+ * O QUE ENTRA AQUI (plano v2, 3.1 e 3.2): o que também está nas regras abertas (SRD 5.2,
  * CC BY 4.0): as 12 classes no nível 1, 9 espécies, 4 antecedentes e os talentos de Origem do
- * SRD. O restante do livro entra pela opção "Outro (do livro)", que o jogador preenche (RF-24).
+ * SRD. Os antecedentes, talentos de Origem e Estilos de Luta do livro que o SRD não traz ficam
+ * em `./book-origins` (regras fiéis, texto nosso). O resto do livro entra pela opção
+ * "Outro (do livro)", que o jogador preenche (RF-24).
  *
  * Nomes e termos seguem a edição brasileira (ADR-004). As descrições são RESUMOS escritos para
  * o site, com as nossas palavras — nunca cópia do texto do livro.
  */
 import type { AbilityKey, DamageType, HitDieSides, SkillKey } from '@grimorio/shared';
+import { BOOK_BACKGROUNDS, BOOK_FIGHTING_STYLES, BOOK_ORIGIN_FEATS } from './book-origins';
 
 /** Muda quando uma regra/errata muda números (vai no registro da criação). */
-export const CREATION_CONTENT_VERSION = 'srd52-ptbr-1';
+export const CREATION_CONTENT_VERSION = 'srd52-ptbr-2';
 
 export interface TextEntry {
   name: string;
@@ -601,17 +604,23 @@ const goldOnly = (option: 'B' | 'C', gold: number): EquipmentPack => ({
 
 // ---------- talentos de Origem e estilos de luta (cap. 5) ----------
 
-export type OriginFeatId = 'alert' | 'magic-initiate' | 'savage-attacker' | 'skilled';
+type SrdOriginFeatId = 'alert' | 'magic-initiate' | 'savage-attacker' | 'skilled';
+/** Talentos de Origem do livro que o SRD não traz (`./book-origins`). */
+export type BookOriginFeatId =
+  'crafter' | 'healer' | 'lucky' | 'musician' | 'tavern-brawler' | 'tough';
+export type OriginFeatId = SrdOriginFeatId | BookOriginFeatId;
 
 export interface FeatDef extends TextEntry {
   id: OriginFeatId;
+  /** `book`: está no livro mas não no SRD (regras do livro, texto do site). */
+  source?: 'book';
   /** Quantas perícias o talento deixa escolher (Habilidoso: 3). */
   skillChoices?: number;
   /** Alerta: soma o Bônus de Proficiência à Iniciativa. */
   initiativeProficiency?: boolean;
 }
 
-export const ORIGIN_FEATS: Record<OriginFeatId, FeatDef> = {
+const SRD_ORIGIN_FEATS: Record<SrdOriginFeatId, FeatDef> = {
   alert: {
     id: 'alert',
     name: 'Alerta',
@@ -636,13 +645,24 @@ export const ORIGIN_FEATS: Record<OriginFeatId, FeatDef> = {
   },
 };
 
-export type FightingStyleId = 'archery' | 'defense' | 'great-weapon' | 'two-weapon';
+export const ORIGIN_FEATS: Record<OriginFeatId, FeatDef> = {
+  ...SRD_ORIGIN_FEATS,
+  ...BOOK_ORIGIN_FEATS,
+};
+
+type SrdFightingStyleId = 'archery' | 'defense' | 'great-weapon' | 'two-weapon';
+/** Estilos de Luta do livro que o SRD não traz (`./book-origins`). */
+export type BookFightingStyleId =
+  'thrown-weapon' | 'unarmed' | 'dueling' | 'interception' | 'blind-fighting' | 'protection';
+export type FightingStyleId = SrdFightingStyleId | BookFightingStyleId;
 
 export interface FightingStyleDef extends TextEntry {
   id: FightingStyleId;
+  /** `book`: está no livro mas não no SRD (regras do livro, texto do site). */
+  source?: 'book';
 }
 
-export const FIGHTING_STYLES: Record<FightingStyleId, FightingStyleDef> = {
+const SRD_FIGHTING_STYLES: Record<SrdFightingStyleId, FightingStyleDef> = {
   archery: {
     id: 'archery',
     name: 'Arquearia',
@@ -663,6 +683,11 @@ export const FIGHTING_STYLES: Record<FightingStyleId, FightingStyleDef> = {
     name: 'Combate com Duas Armas',
     text: 'Ao fazer o ataque extra com uma arma Leve, some o modificador de atributo ao dano desse ataque.',
   },
+};
+
+export const FIGHTING_STYLES: Record<FightingStyleId, FightingStyleDef> = {
+  ...SRD_FIGHTING_STYLES,
+  ...BOOK_FIGHTING_STYLES,
 };
 
 // ---------- classes (cap. 3, nível 1) ----------
@@ -1441,6 +1466,8 @@ export const CLASS_ORDER: ClassId[] = [
 export interface BackgroundDef {
   id: string;
   name: string;
+  /** `book`: está no livro mas não no SRD (regras do livro, texto do site). */
+  source?: 'book';
   summary: string;
   abilities: [AbilityKey, AbilityKey, AbilityKey];
   feat: OriginFeatId;
@@ -1451,7 +1478,7 @@ export interface BackgroundDef {
   equipment: [EquipmentPack, EquipmentPack];
 }
 
-export const BACKGROUNDS: Record<string, BackgroundDef> = {
+const SRD_BACKGROUNDS: Record<string, BackgroundDef> = {
   acolyte: {
     id: 'acolyte',
     name: 'Acólito',
@@ -1560,6 +1587,13 @@ export const BACKGROUNDS: Record<string, BackgroundDef> = {
     ],
   },
 };
+
+/** Os antecedentes (SRD + livro) em ordem alfabética. */
+export const BACKGROUNDS: Record<string, BackgroundDef> = Object.fromEntries(
+  Object.values({ ...SRD_BACKGROUNDS, ...BOOK_BACKGROUNDS })
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    .map((b) => [b.id, b]),
+);
 
 /** Antecedente "Outro (do livro)": o jogador preenche; o equipamento vira 50 PO. */
 export const CUSTOM_ID = 'custom';

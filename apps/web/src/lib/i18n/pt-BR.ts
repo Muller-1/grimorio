@@ -517,7 +517,7 @@ export const ptBR = {
       srdAttribution:
         'This work includes material from the System Reference Document 5.2 ("SRD 5.2") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.',
       srdNote:
-        'Os nomes de regras seguem a edição brasileira do Livro do Jogador; as descrições, resumos e textos das magias foram escritos para o site a partir do SRD 5.2 e foram adaptados (resumidos, traduzidos e com as medidas em metros). Além do SRD, o site traz magias do Livro do Jogador que ele não inclui (marcadas "Do livro"): as regras — círculo, alcance, dados, salvaguardas — seguem o livro, mas cada texto foi escrito com palavras próprias, e nenhum texto dos livros é reproduzido. O que o site ainda não traz entra como "Outro (do livro)", preenchido pelo jogador.',
+        'Os nomes de regras seguem a edição brasileira do Livro do Jogador; as descrições, resumos e textos das magias foram escritos para o site a partir do SRD 5.2 e foram adaptados (resumidos, traduzidos e com as medidas em metros). Além do SRD, o site traz do Livro do Jogador, marcados "Do livro", magias, talentos (Origem, Gerais, Estilo de Luta e Dádivas Épicas) e antecedentes que ele não inclui: as regras — círculos, alcances, dados, salvaguardas, pré-requisitos, atributos — seguem o livro, mas cada texto foi escrito com palavras próprias, e nenhum texto dos livros é reproduzido. O que o site ainda não traz entra como "Outro (do livro)", preenchido pelo jogador.',
       trademark:
         'Projeto independente, sem vínculo com a Wizards of the Coast nem com as editoras dos livros no Brasil.',
     },

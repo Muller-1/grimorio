@@ -282,6 +282,11 @@ function ClassDetails({ cls }: { cls: ClassDef }) {
                   onSelect={() => update((d) => void (d.fightingStyleId = id))}
                   title={FIGHTING_STYLES[id].name}
                   subtitle={FIGHTING_STYLES[id].text}
+                  badges={
+                    FIGHTING_STYLES[id].source === 'book' ? (
+                      <Badge tone="gold">{tw.bookTag}</Badge>
+                    ) : undefined
+                  }
                   testId={`wizard.fighting-style.${id}`}
                 />
               ))}

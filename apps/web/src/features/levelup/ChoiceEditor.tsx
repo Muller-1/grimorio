@@ -298,7 +298,14 @@ function FeatPick({
   const nameId = useId();
   const abilityId = useId();
   const pick = ctx.draft.picks[slot.key]?.[0];
-  const feats = LEVEL_FEATS.filter((f) => f.category === category && f.minLevel <= ctx.level);
+  // Talento que a ficha já tem só volta à lista se puder ser repetido.
+  const taken = new Set(ctx.sheet.features.map((f) => f.name));
+  const feats = LEVEL_FEATS.filter(
+    (f) =>
+      f.category === category &&
+      f.minLevel <= ctx.level &&
+      (f.repeatable || !taken.has(`Talento: ${f.name}`) || f.id === pick?.id),
+  );
   const feat = feats.find((f) => f.id === pick?.id);
   const meetsReq = (f: (typeof feats)[number]) =>
     !f.requiresAbility || f.requiresAbility.some((a) => ctx.scores[a] >= 13);
@@ -320,6 +327,7 @@ function FeatPick({
           {feats.map((f) => (
             <option key={f.id} value={f.id} disabled={!meetsReq(f)}>
               {f.name}
+              {f.source === 'book' ? ` · ${tl.featBook}` : ''}
               {!meetsReq(f) && f.requiresAbility
                 ? ` — ${tl.featRequires(f.requiresAbility.map((a) => t.abilities[a]).join(' ou '))}`
                 : ''}
@@ -327,7 +335,12 @@ function FeatPick({
           ))}
           <option value="custom">{tl.featOther}</option>
         </Select>
-        {feat ? <p className="mt-1 text-xs text-muted">{feat.text}</p> : null}
+        {feat ? (
+          <p className="mt-1 text-xs text-muted">
+            {feat.prerequisite ? `${tl.featPrerequisite(feat.prerequisite)} ` : ''}
+            {feat.text}
+          </p>
+        ) : null}
       </div>
       {pick?.id === 'custom' ? (
         <div>
@@ -601,7 +614,7 @@ export function ChoiceEditor({
       const options = [
         ...Object.values(FIGHTING_STYLES).map((s) => ({
           id: s.id as string,
-          name: s.name,
+          name: s.source === 'book' ? `${s.name} · ${tl.featBook}` : s.name,
           text: s.text,
         })),
         ...(def.alternatives ?? []),

@@ -345,6 +345,11 @@ function SpeciesDetails() {
                 }
                 title={ORIGIN_FEATS[id].name}
                 subtitle={ORIGIN_FEATS[id].text}
+                badges={
+                  ORIGIN_FEATS[id].source === 'book' ? (
+                    <Badge tone="gold">{tw.bookTag}</Badge>
+                  ) : undefined
+                }
                 testId={`wizard.species-feat.${id}`}
               />
             ))}
@@ -466,9 +471,16 @@ export function OriginStep() {
               onSelect={() => update((d) => withBackground(d, bg.id))}
               title={bg.name}
               testId={`wizard.option.background.${bg.id}`}
-              badges={bg.abilities.map((a) => (
-                <Badge key={a}>{t.abilitiesShort[a]}</Badge>
-              ))}
+              badges={[
+                ...bg.abilities.map((a) => <Badge key={a}>{t.abilitiesShort[a]}</Badge>),
+                ...(bg.source === 'book'
+                  ? [
+                      <Badge key="book" tone="gold">
+                        {tw.bookTag}
+                      </Badge>,
+                    ]
+                  : []),
+              ]}
             />
           ))}
           <ChoiceCard
