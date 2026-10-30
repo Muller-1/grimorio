@@ -483,6 +483,23 @@ describe('invariantes', () => {
     expect(checkSheetInvariants(sheet)).toEqual([]);
   });
 
+  it('efeito repetido em "ligado" (ficha antiga ou editada à mão) conta uma vez', () => {
+    const once = thalia();
+    once.state.active = ['spell:shield-of-faith'];
+    const twice = thalia();
+    twice.state.active = ['spell:shield-of-faith', 'spell:shield-of-faith'];
+    expect(deriveSheet(twice).armorClass.value).toBe(deriveSheet(once).armorClass.value);
+  });
+
+  it('normalizeSheet tira o que está ligado repetido, e a invariante acusa', () => {
+    const s = thalia();
+    s.state.active = ['cond:poisoned', 'cond:poisoned'];
+    expect(checkSheetInvariants(s)).toContain('duplicate-active');
+    const { sheet } = normalizeSheet(s);
+    expect(sheet.state.active).toEqual(['cond:poisoned']);
+    expect(checkSheetInvariants(sheet)).toEqual([]);
+  });
+
   it('qualquer sequência de ações mantém as invariantes', () => {
     const arbAction: fc.Arbitrary<SheetAction> = fc.oneof(
       fc.record({

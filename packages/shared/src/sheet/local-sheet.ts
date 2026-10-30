@@ -254,8 +254,14 @@ export const LocalSheetSchema = z.object({
     pactSlotsSpent: int().min(0).max(9),
     /** Usos gastos de cada recurso (ex.: { rage: 1 }). O máximo vem das regras. */
     resources: z.record(z.string().min(1).max(60), int().min(0).max(99)),
-    /** Habilidades ligadas agora (ex.: ["rage", "reckless-attack"]). */
-    active: z.array(z.string().min(1).max(60)).max(30),
+    /**
+     * Habilidades ligadas agora (ex.: ["rage", "reckless-attack"]). Cada id aparece uma vez:
+     * uma ficha importada ou editada à mão com repetição é corrigida ao abrir.
+     */
+    active: z
+      .array(z.string().min(1).max(60))
+      .max(30)
+      .transform((ids) => [...new Set(ids)]),
     /** Magia em que o personagem está concentrado. */
     concentration: z.string().max(60).optional(),
   }),

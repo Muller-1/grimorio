@@ -12,7 +12,8 @@ export type Violation =
   | 'death-saves-out-of-range'
   | 'death-saves-while-conscious'
   | 'hit-dice-out-of-range'
-  | 'hp-log-too-long';
+  | 'hp-log-too-long'
+  | 'duplicate-active';
 
 export function checkSheetInvariants(sheet: LocalSheet): Violation[] {
   const d = deriveSheet(sheet);
@@ -29,6 +30,7 @@ export function checkSheetInvariants(sheet: LocalSheet): Violation[] {
   }
   if (hitDiceSpent < 0 || hitDiceSpent > d.level) v.push('hit-dice-out-of-range');
   if (hpLog.length > 50) v.push('hp-log-too-long');
+  if (new Set(sheet.state.active).size !== sheet.state.active.length) v.push('duplicate-active');
   return v;
 }
 
@@ -59,10 +61,14 @@ export function normalizeSheet(sheet: LocalSheet): { sheet: LocalSheet; warnings
   if (state.hp.current > 0 && (state.deathSaves.successes > 0 || state.deathSaves.failures > 0)) {
     state.deathSaves = { successes: 0, failures: 0 };
   }
+  // O mesmo efeito ligado duas vezes contaria dobrado em quem percorre a lista.
+  if (new Set(state.active).size !== state.active.length) state.active = [...new Set(state.active)];
 
   return {
     sheet:
-      warnings.length > 0 || state.deathSaves !== sheet.state.deathSaves
+      warnings.length > 0 ||
+      state.deathSaves !== sheet.state.deathSaves ||
+      state.active !== sheet.state.active
         ? { ...sheet, state }
         : sheet,
     warnings,

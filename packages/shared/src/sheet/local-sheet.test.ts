@@ -18,6 +18,12 @@ describe('LocalSheet', () => {
     broken.build.level = 42;
     expect(parseLocalSheet(broken)).toBeNull();
   });
+
+  it('o que está ligado aparece uma vez só, mesmo se vier repetido', () => {
+    const raw = createBlankSheet();
+    raw.state.active = ['spell:shield-of-faith', 'rage', 'spell:shield-of-faith', 'rage'];
+    expect(parseLocalSheet(raw)?.state.active).toEqual(['spell:shield-of-faith', 'rage']);
+  });
 });
 
 // Fichas salvas por versões antigas do site (ADR-010): precisam continuar abrindo.
