@@ -28,7 +28,8 @@ export function exampleSheet(): LocalSheet {
       'sleight-of-hand': 2,
     },
   };
-  s.combat = { hitDie: 8, speedFt: 30, armorClassOverride: 15 };
+  // CA 15 = Armadura de Couro Batido 12 + Destreza 3 (a armadura vestida está no Inventário).
+  s.combat = { hitDie: 8, speedFt: 30 };
   s.state.hp = { current: 24, temp: 0 };
   s.state.inspiration = 1;
   // ADR-010: com a classe, a ficha mostra Ataque Furtivo e o resto em Habilidades.
@@ -44,6 +45,8 @@ export function exampleSheet(): LocalSheet {
       magicBonus: 0,
       critRange: 20,
       properties: 'Acuidade',
+      range: 'melee',
+      finesse: true,
     },
     {
       id: 'ex-adaga',
@@ -55,6 +58,11 @@ export function exampleSheet(): LocalSheet {
       magicBonus: 0,
       critRange: 20,
       properties: 'Acuidade, Leve, Arremesso (6/18 m)',
+      range: 'melee',
+      finesse: true,
+      light: true,
+      thrown: true,
+      rangeM: { normal: 6, long: 18 },
     },
     {
       id: 'ex-arco',
@@ -66,6 +74,10 @@ export function exampleSheet(): LocalSheet {
       magicBonus: 0,
       critRange: 20,
       properties: 'Duas Mãos, Munição (24/96 m)',
+      range: 'ranged',
+      finesse: false,
+      twoHanded: true,
+      rangeM: { normal: 24, long: 96 },
     },
   ];
   s.features = [
@@ -81,17 +93,17 @@ export function exampleSheet(): LocalSheet {
       text: 'Com uma Ação Bônus: Correr, Desengajar ou Esconder.',
       source: 'class',
     },
-    {
-      id: 'ex-armadura',
-      name: 'CA 15',
-      text: 'Armadura de Couro Batido (12) + Destreza (+3).',
-      source: 'training',
-    },
   ];
   s.inventory = {
     coins: { cp: 8, sp: 12, ep: 0, gp: 15, pp: 0 },
     items: [
-      { id: 'ex-armadura-item', name: 'Armadura de Couro Batido', quantity: 1, weightKg: 6.5 },
+      {
+        id: 'ex-armadura-item',
+        name: 'Armadura de Couro Batido',
+        quantity: 1,
+        weightKg: 6.5,
+        armor: { kind: 'light', base: 12 },
+      },
       { id: 'ex-flechas', name: 'Flechas', quantity: 20, weightKg: 0.025 },
       { id: 'ex-aljava', name: 'Aljava', quantity: 1, weightKg: 0.5 },
       { id: 'ex-ladrao', name: 'Ferramentas de Ladrão', quantity: 1, weightKg: 0.5 },
