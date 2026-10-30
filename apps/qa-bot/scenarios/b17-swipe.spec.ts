@@ -43,13 +43,46 @@ async function expectTab(page: Page, name: Tab) {
   }
 }
 
-/** Um ponto de toque dentro da área das colunas, visível na tela. */
+/** O que o deslizar ignora de propósito (o mesmo de apps/web/src/features/sheet/swipe.ts). */
+const NO_SWIPE =
+  'input, textarea, select, [role="slider"], [contenteditable="true"], [data-no-swipe]';
+
+/**
+ * Um ponto de toque dentro da área das colunas, visível na tela e longe de campos: o gesto vai
+ * de lá até 220 px à esquerda, e os dois pontos precisam ser "chão". Longe mesmo: o Chrome puxa
+ * o toque para o campo mais próximo (uns 15 px), e começar num campo não troca de aba (isso tem
+ * teste próprio).
+ */
 async function inColumns(page: Page): Promise<Point> {
-  const grid = page.locator('#col-character').locator('..');
+  const grid = page.getByTestId('sheet.columns');
   await grid.scrollIntoViewIfNeeded();
   const box = (await grid.boundingBox())!;
   const viewport = page.viewportSize()!;
-  return { x: viewport.width * 0.8, y: Math.min(box.y + 120, viewport.height - 80) };
+  const x = viewport.width * 0.8;
+  for (let dy = 120; box.y + dy < viewport.height - 80; dy += 10) {
+    const y = box.y + dy;
+    const free = await page.evaluate(
+      ({ x, y, ignore }) =>
+        [x, x - 220].every((px) =>
+          [-20, 0, 20].every((ox) =>
+            [-20, 0, 20].every((oy) => {
+              const el = document.elementFromPoint(px + ox, y + oy);
+              const root = el?.closest('[data-testid="sheet.columns"]');
+              if (!el || !root || el.closest(ignore)) return false;
+              // Nem dentro de algo que rola para os lados (o deslizar deixa essa rolagem em paz).
+              for (let e: Element | null = el; e && e !== root; e = e.parentElement) {
+                const sideways = /auto|scroll/.test(getComputedStyle(e).overflowX);
+                if (sideways && e.scrollWidth > e.clientWidth) return false;
+              }
+              return true;
+            }),
+          ),
+        ),
+      { x, y, ignore: NO_SWIPE },
+    );
+    if (free) return { x, y };
+  }
+  throw new Error('nenhum ponto livre de campos na área das colunas');
 }
 
 async function centerOf(field: Locator): Promise<Point> {
@@ -76,22 +109,26 @@ test.describe('B17 — deslizar para trocar de aba', { tag: '@B17' }, () => {
   test('para a esquerda avança, para a direita volta, e nas pontas fica onde está', async ({
     page,
   }) => {
-    const p = await inColumns(page);
-    const left = { x: p.x - 220, y: p.y };
+    // Cada aba tem outro conteúdo: o ponto de partida é escolhido de novo a cada gesto.
+    const swipe = async (dir: 'left' | 'right') => {
+      const p = await inColumns(page);
+      const left = { x: p.x - 220, y: p.y };
+      await (dir === 'left' ? touchSwipe(page, p, left) : touchSwipe(page, left, p));
+    };
     await expectTab(page, 'Personagem');
 
-    await touchSwipe(page, p, left);
+    await swipe('left');
     await expectTab(page, 'Combate');
-    await touchSwipe(page, p, left);
+    await swipe('left');
     await expectTab(page, 'Ações');
-    await touchSwipe(page, p, left); // já é a última
+    await swipe('left'); // já é a última
     await expectTab(page, 'Ações');
 
-    await touchSwipe(page, left, p);
+    await swipe('right');
     await expectTab(page, 'Combate');
-    await touchSwipe(page, left, p);
+    await swipe('right');
     await expectTab(page, 'Personagem');
-    await touchSwipe(page, left, p); // já é a primeira
+    await swipe('right'); // já é a primeira
     await expectTab(page, 'Personagem');
   });
 

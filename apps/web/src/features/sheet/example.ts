@@ -11,7 +11,7 @@ export function exampleSheet(): LocalSheet {
     name: 'Kaela Ventoleve',
     className: 'Ladina',
     playerName: 'Você',
-    origin: 'Humana · Criminosa',
+    origin: 'Criminosa · Humana',
     description:
       'Cresceu nos telhados do porto e conhece cada beco da cidade. Fala pouco, observa muito e nunca senta de costas para a porta.',
   };

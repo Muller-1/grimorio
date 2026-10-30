@@ -1,21 +1,13 @@
 import { critical, parse, stringify, type AttackOption } from '@grimorio/rules';
 import { FEATURE_SOURCES, type Feature, type Weapon } from '@grimorio/shared';
-import {
-  Backpack,
-  ChevronDown,
-  Pencil,
-  Plus,
-  ScrollText,
-  Search,
-  Swords,
-  Trash2,
-  WandSparkles,
-} from 'lucide-react';
+import { ChevronDown, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { Tabs } from 'radix-ui';
-import { lazy, Suspense, useId, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { D20Icon } from '@/components/ui/d20-icon';
 import { Panel } from '@/components/ui/panel';
+import { StrokeIcon, type IconName } from '@/components/ui/stroke-icon';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -28,7 +20,21 @@ import { RollButton } from './RollButton';
 type TabKey = 'weapons' | 'spells' | 'inventory' | 'features';
 
 /** A ficha não cresce sem fim: a lista de cada aba rola por dentro. */
-const LIST_AREA = 'px-3 pb-3 md:max-h-[70dvh] md:overflow-y-auto';
+const LIST_AREA = 'px-3.5 pb-3.5 md:max-h-[70dvh] md:overflow-y-auto';
+
+/** O d20 que aparece no botão ao passar o mouse (no toque, sempre): "isto rola". */
+const ROLL_HINT =
+  'pointer-events-none absolute top-1/2 left-2.5 size-[15px] -translate-y-1/2 text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100';
+const ROLL_CELL =
+  'group relative h-10 w-auto shrink-0 rounded-lg border border-border-strong bg-field text-base font-bold text-text hover:bg-surface-2 hover:text-text';
+/** Larguras das colunas da tabela de armas (cabeçalho e linhas iguais). */
+const COL = {
+  name: 'flex-[0_0_160px]',
+  props: 'min-w-0 flex-[1_1_180px]',
+  crit: 'flex-[0_0_64px] text-center',
+  toHit: 'flex-[0_0_96px] max-md:flex-1',
+  damage: 'flex-[0_0_128px] max-md:flex-[1.4_1_0px]',
+};
 
 // A aba Magias traz a lista das 391 magias: só carrega quando o jogador abre a aba.
 const SpellsTab = lazy(() => import('@/features/spells/SpellsTab'));
@@ -73,48 +79,78 @@ function WeaponCard({
     .map((x) => `${x.name} ${x.dice}${x.oncePerTurn ? ` (${a.oncePerTurn})` : ''}`)
     .join(', ');
 
+  const props = [weapon.properties, typeLabel].filter(Boolean).join(' · ');
+
   return (
-    <li className="rounded-lg border border-border bg-surface" data-testid={`attack.${weapon.id}`}>
-      <div className="flex items-center gap-2 p-2">
+    <li
+      className="rounded-[10px] border border-border-soft bg-field"
+      data-testid={`attack.${weapon.id}`}
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3.5 py-2.5">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-controls={detailsId}
           aria-label={a.expand(weapon.name)}
-          className="grid size-7 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-2"
+          className={cn(COL.name, 'flex min-w-0 items-center gap-1.5 rounded-md text-left')}
         >
+          <span className="truncate font-display text-lg font-bold">{weapon.name}</span>
           <ChevronDown
-            className={cn('size-4 transition-transform', open ? 'rotate-0' : '-rotate-90')}
+            className={cn(
+              'size-4 shrink-0 text-muted transition-transform',
+              open ? 'rotate-0' : '-rotate-90',
+            )}
+            aria-hidden="true"
           />
         </button>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-base font-bold">{weapon.name}</p>
-          <p className="text-xs text-muted">
-            <span data-testid={`attack.${weapon.id}.tohit`} data-value={toHit}>
-              {a.toHit(formatModifier(toHit))}
-            </span>
-            {' · '}
-            <span className={cn(!dmg && 'text-danger')}>
-              {dmg ? a.damage(dmg) : a.invalidDamage}
-            </span>
-            {typeLabel ? ` ${typeLabel}` : ''}
-            {' · '}
-            {a.crit(attack.critRange)}
-          </p>
-        </div>
-        <AdvantageBadge advantage={attack.advantage} disadvantage={attack.disadvantage} />
+        <span className={cn(COL.props, 'text-sm text-muted')}>{props}</span>
+        <span
+          className={cn(
+            COL.crit,
+            'font-display text-[1.0625rem] font-bold max-md:flex max-md:flex-col max-md:items-center',
+          )}
+          aria-label={a.critLabel(attack.critRange)}
+          title={a.critLabel(attack.critRange)}
+        >
+          {/* No celular a tabela não tem cabeçalho: o número leva o nome da coluna. */}
+          <span className="label-caps font-sans text-xs md:hidden">{a.columns.crit}</span>
+          {a.critShort(attack.critRange)}
+        </span>
         <RollButton
           rollLabel={a.attackRollLabel(weapon.name)}
           expression={mainRoll}
           critRange={attack.critRange}
           ariaLabel={a.rollAttack(weapon.name)}
           testId={`attack.${weapon.id}.roll`}
-        />
+          className={cn(ROLL_CELL, COL.toHit)}
+        >
+          <D20Icon className={ROLL_HINT} />
+          <span data-testid={`attack.${weapon.id}.tohit`} data-value={toHit}>
+            {formatModifier(toHit)}
+          </span>
+          <AdvantageBadge advantage={attack.advantage} disadvantage={attack.disadvantage} />
+        </RollButton>
+        {dmg ? (
+          <RollButton
+            rollLabel={a.damageRollLabel(weapon.name)}
+            expression={dmg}
+            ariaLabel={a.rollDamageOf(weapon.name, dmg)}
+            testId={`attack.${weapon.id}.damage`}
+            className={cn(ROLL_CELL, COL.damage)}
+          >
+            <D20Icon className={ROLL_HINT} />
+            {dmg}
+          </RollButton>
+        ) : (
+          <span className={cn(COL.damage, 'text-center text-sm text-danger')}>
+            {a.invalidDamage}
+          </span>
+        )}
       </div>
 
       {open ? (
-        <div id={detailsId} className="space-y-3 border-t border-border p-3 text-sm">
+        <div id={detailsId} className="space-y-3 border-t border-border-soft p-3.5 text-sm">
           <dl className="grid grid-cols-2 gap-x-3 gap-y-1">
             <dt className="text-muted">{a.attack}</dt>
             <dd>
@@ -159,17 +195,6 @@ function WeaponCard({
             >
               {a.disadvantage}
             </RollButton>
-            {dmg ? (
-              <RollButton
-                rollLabel={a.damageRollLabel(weapon.name)}
-                expression={dmg}
-                ariaLabel={a.damageRollLabel(weapon.name)}
-                testId={`attack.${weapon.id}.damage`}
-                className="h-8 w-auto gap-1 border border-border px-2 text-xs text-text"
-              >
-                {a.rollDamage}
-              </RollButton>
-            ) : null}
             {first ? (
               <RollButton
                 rollLabel={a.firstHitLabel(weapon.name, extras)}
@@ -225,7 +250,7 @@ function FeatureCard({ feature, onEdit }: { feature: Feature; onEdit: () => void
   const [open, setOpen] = useState(false);
   const detailsId = useId();
   return (
-    <li className="rounded-lg border border-border bg-surface">
+    <li className="rounded-[10px] border border-border-soft bg-field">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -271,17 +296,17 @@ function FeatureCard({ feature, onEdit }: { feature: Feature; onEdit: () => void
 // Coluna
 // ---------------------------------------------------------------------------
 
-const TABS: { key: TabKey; icon: ReactNode; label: string }[] = [
-  { key: 'weapons', icon: <Swords className="size-5" />, label: a.tabs.weapons },
-  { key: 'spells', icon: <WandSparkles className="size-5" />, label: a.tabs.spells },
-  { key: 'inventory', icon: <Backpack className="size-5" />, label: a.tabs.inventory },
-  { key: 'features', icon: <ScrollText className="size-5" />, label: a.tabs.features },
+const TABS: { key: TabKey; icon: IconName; label: string }[] = [
+  { key: 'weapons', icon: 'swords', label: a.tabs.weapons },
+  { key: 'spells', icon: 'sparkles', label: a.tabs.spells },
+  { key: 'inventory', icon: 'backpack', label: a.tabs.inventory },
+  { key: 'features', icon: 'book2', label: a.tabs.features },
 ];
 
 type Editing =
   { kind: 'weapon'; item: Weapon | null } | { kind: 'feature'; item: Feature | null } | null;
 
-export function ActionsColumn() {
+export function ActionsColumn({ className }: { className?: string }) {
   const { sheet, derived } = useSheet();
   const [tab, setTab] = useState<TabKey>('weapons');
   const [query, setQuery] = useState('');
@@ -305,19 +330,30 @@ export function ActionsColumn() {
   const current = TABS.find((x) => x.key === tab)!;
 
   return (
-    <Panel bodyClassName="p-0">
-      <Tabs.Root value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-        <div className="flex items-stretch overflow-hidden rounded-t-xl border-b border-border">
-          <Tabs.List className="flex flex-1" aria-label={t.sheet.columns.actions}>
+    <Panel
+      as="div"
+      className={cn('flex flex-col', className)}
+      bodyClassName="flex flex-1 flex-col p-0"
+    >
+      <Tabs.Root
+        value={tab}
+        onValueChange={(v) => setTab(v as TabKey)}
+        className="flex flex-1 flex-col"
+      >
+        <div className="flex items-end gap-1 rounded-t-[11px] border-b border-border bg-surface-2 px-2.5 pt-2">
+          <Tabs.List
+            className="flex min-w-0 flex-1 flex-wrap items-end gap-1"
+            aria-label={t.sheet.columns.actions}
+          >
             {TABS.map((x) => (
               <Tabs.Trigger
                 key={x.key}
                 value={x.key}
-                aria-label={x.label}
                 title={x.label}
-                className="grid h-12 flex-1 place-items-center border-r border-border text-muted transition-colors hover:bg-surface-2 data-[state=active]:bg-accent-soft data-[state=active]:text-accent"
+                className="-mb-px inline-flex min-h-11 items-center gap-2 rounded-t-lg border border-transparent px-3 text-sm font-medium text-muted transition-colors hover:bg-field/70 hover:text-text data-[state=active]:border-border data-[state=active]:border-b-transparent data-[state=active]:bg-surface data-[state=active]:font-bold data-[state=active]:text-accent data-[state=active]:shadow-[inset_0_3px_0_var(--ornament)] sm:px-4"
               >
-                {x.icon}
+                <StrokeIcon name={x.icon} className="size-[18px] shrink-0" />
+                <span className="max-sm:sr-only">{x.label}</span>
               </Tabs.Trigger>
             ))}
           </Tabs.List>
@@ -335,21 +371,20 @@ export function ActionsColumn() {
             disabled={!canAdd}
             aria-label={`${a.tabs.add}: ${current.label}`}
             title={`${a.tabs.add}: ${current.label}`}
-            className="grid h-12 w-14 place-items-center text-muted transition-colors hover:bg-surface-2 hover:text-accent disabled:opacity-40"
+            className="mb-1 grid size-9 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-field hover:text-accent disabled:opacity-40"
             data-testid="actions.add"
           >
             <Plus className="size-5" />
           </button>
         </div>
 
-        <div className="space-y-2 p-3">
-          <h2 className="text-center font-display text-sm font-bold">{current.label}</h2>
+        <div className="space-y-3 p-3.5">
           <div className="relative">
             <label htmlFor={searchId} className="sr-only">
               {a.searchLabel}
             </label>
             <Search
-              className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
               aria-hidden="true"
             />
             <Input
@@ -357,10 +392,22 @@ export function ActionsColumn() {
               type="search"
               value={query}
               onChange={(ev) => setQuery(ev.target.value)}
-              placeholder={a.search}
-              className="pl-8"
+              placeholder={a.searchIn(current.label)}
+              className="h-[42px] border-border pl-9 shadow-none"
             />
           </div>
+          {tab === 'weapons' && weapons.length ? (
+            <div
+              aria-hidden="true"
+              className="label-caps flex gap-3 px-3.5 text-xs tracking-[0.12em] max-md:hidden"
+            >
+              <span className={COL.name}>{a.columns.weapon}</span>
+              <span className={COL.props}>{a.columns.properties}</span>
+              <span className={COL.crit}>{a.columns.crit}</span>
+              <span className={cn(COL.toHit, 'text-center')}>{a.columns.toHit}</span>
+              <span className={cn(COL.damage, 'text-center')}>{a.columns.damage}</span>
+            </div>
+          ) : null}
         </div>
 
         <Tabs.Content value="weapons" className={LIST_AREA}>

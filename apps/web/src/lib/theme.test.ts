@@ -16,6 +16,11 @@ describe('temas: public/theme.js', () => {
     const list = /\^\(([a-z|]+)\)\$/.exec(themeJs)?.[1]?.split('|');
     expect(list).toEqual(THEMES.filter((id) => id !== 'auto'));
   });
+
+  it('marca o escuro do sistema com o atributo que o CSS usa no "Automático"', () => {
+    expect(themeJs).toContain("'(prefers-color-scheme: dark)'");
+    expect(themeJs).toContain("'data-system-dark'");
+  });
 });
 
 // ---------- escolha e memória ----------
@@ -71,13 +76,13 @@ describe('temas: escolha', () => {
   it('escolher marca o <html>, guarda e avisa quem está ouvindo', () => {
     let calls = 0;
     const stop = subscribeTheme(() => calls++);
-    setTheme('arcane');
-    expect(browser.attrs.get('data-theme')).toBe('arcane');
-    expect(browser.storage.get(THEME_STORAGE_KEY)).toBe('arcane');
-    expect(currentTheme()).toBe('arcane');
+    setTheme('dark');
+    expect(browser.attrs.get('data-theme')).toBe('dark');
+    expect(browser.storage.get(THEME_STORAGE_KEY)).toBe('dark');
+    expect(currentTheme()).toBe('dark');
     expect(calls).toBe(1);
     stop();
-    setTheme('forest');
+    setTheme('light');
     expect(calls).toBe(1);
   });
 
@@ -93,10 +98,10 @@ describe('temas: escolha', () => {
     subscribeTheme(() => calls++);
     const storageEvent = (newValue: string | null, key = THEME_STORAGE_KEY) =>
       window.dispatchEvent(Object.assign(new Event('storage'), { key, newValue }));
-    storageEvent('contrast');
-    expect(currentTheme()).toBe('contrast');
+    storageEvent('dark');
+    expect(currentTheme()).toBe('dark');
     storageEvent('outra-chave', 'grimorio.ficha');
-    expect(currentTheme()).toBe('contrast');
+    expect(currentTheme()).toBe('dark');
     storageEvent('<script>');
     expect(currentTheme()).toBe('auto');
     expect(calls).toBe(2);
@@ -113,13 +118,14 @@ describe('temas: escolha', () => {
         },
       },
     });
-    expect(() => setTheme('forest')).not.toThrow();
-    expect(currentTheme()).toBe('forest');
+    expect(() => setTheme('light')).not.toThrow();
+    expect(currentTheme()).toBe('light');
   });
 
-  it('só aceita temas conhecidos', () => {
+  it('só aceita temas conhecidos (os antigos viram automático)', () => {
     expect(isThemeId('light')).toBe(true);
     expect(isThemeId('sepia')).toBe(false);
+    for (const old of ['arcane', 'forest', 'contrast']) expect(isThemeId(old)).toBe(false);
     expect(isThemeId(null)).toBe(false);
   });
 });

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/input';
 import { ServerStatus } from '@/features/auth/ServerStatus';
 import { useAuthStore } from '@/features/auth/store';
+import { InlineLoader } from '@/features/screens/LoadingScreen';
 import type { ApiResult } from '@/lib/api';
 import { t } from '@/lib/i18n';
 import { tcp } from '@/lib/i18n/campaign';
@@ -155,7 +156,7 @@ export default function CampaignsPage() {
       ) : null}
 
       {campaigns === null ? (
-        <p className="text-muted">{tcp.loading}</p>
+        <InlineLoader label={tcp.loading} />
       ) : campaigns.length === 0 ? (
         <p className="rounded-xl border border-border bg-surface px-4 py-6 text-center text-muted">
           {tcp.empty}

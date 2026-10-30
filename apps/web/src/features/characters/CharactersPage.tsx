@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { ServerStatus } from '@/features/auth/ServerStatus';
 import { useAuthStore } from '@/features/auth/store';
+import { InlineLoader } from '@/features/screens/LoadingScreen';
 import { useToastStore } from '@/features/toast/store';
 import { formatDateTime } from '@/lib/format';
 import { t } from '@/lib/i18n';
@@ -147,7 +148,7 @@ export default function CharactersPage() {
   let body;
   if (status === 'signed-in' && user) {
     if (list.kind === 'loading') {
-      body = <p className="py-10 text-center text-muted">{c.loading}</p>;
+      body = <InlineLoader label={c.loading} />;
     } else if (list.kind === 'failed') {
       body = (
         <div className="py-10 text-center">
@@ -173,7 +174,7 @@ export default function CharactersPage() {
       );
     } else {
       body = (
-        <ul className="grid gap-3 sm:grid-cols-2" data-testid="characters.list">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2" data-testid="characters.list">
           {list.items.map((item) => (
             <CharacterCard
               key={item.id}
@@ -187,9 +188,9 @@ export default function CharactersPage() {
     }
   } else if (status === 'loading') {
     body = (
-      <div className="py-10 text-center text-muted">
-        <p>{c.loading}</p>
-        <ServerStatus className="mx-auto mt-3 max-w-md justify-center text-left" />
+      <div>
+        <InlineLoader label={c.loading} className="pb-6" />
+        <ServerStatus className="mx-auto max-w-md justify-center text-left" />
       </div>
     );
   } else {

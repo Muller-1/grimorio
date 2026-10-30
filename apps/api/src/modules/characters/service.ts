@@ -9,6 +9,7 @@
  *   colunas da lista (nome, nível, classe) são atualizadas.
  */
 import { normalizeSheet } from '@grimorio/rules';
+import { partySummary } from '@grimorio/rules/campaign';
 import {
   initialSectionRevs,
   MAX_CHARACTERS_PER_ACCOUNT,
@@ -79,7 +80,32 @@ export function toDocument(row: CharacterRow): CharacterDocument {
   };
 }
 
-function toSummary(row: Pick<CharacterRow, keyof CharacterSummary> & { updatedAt: Date }) {
+/**
+ * CA, PV e origem para o cartão da tela inicial. A ficha chega sem o retrato (pesado e inútil
+ * aqui). Ficha que não abre fica sem cartão, em vez de derrubar a lista.
+ */
+export function cardOf(data: unknown): CharacterSummary['card'] {
+  const parsed = SheetInputSchema.safeParse(data);
+  if (!parsed.success) return undefined;
+  try {
+    const summary = partySummary(parsed.data);
+    return {
+      origin: parsed.data.identity.origin,
+      ac: summary.ac,
+      hp: { current: summary.hp.current, max: summary.hp.max },
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function toSummary(
+  row: Pick<CharacterRow, Exclude<keyof CharacterSummary, 'card'>> & {
+    updatedAt: Date;
+    card?: unknown;
+  },
+): CharacterSummary {
+  const card = row.card === undefined ? undefined : cardOf(row.card);
   return {
     id: row.id,
     name: row.name,
@@ -88,7 +114,8 @@ function toSummary(row: Pick<CharacterRow, keyof CharacterSummary> & { updatedAt
     rulesEdition: row.rulesEdition,
     version: row.version,
     updatedAt: row.updatedAt.toISOString(),
-  } satisfies CharacterSummary;
+    ...(card ? { card } : {}),
+  };
 }
 
 const active = (ownerId: string, id?: string) =>
@@ -110,6 +137,8 @@ export function characterService(orm: Orm, ports: Ports) {
           rulesEdition: characters.rulesEdition,
           version: characters.version,
           updatedAt: characters.updatedAt,
+          // A ficha sem o retrato: só para calcular CA e PV do cartão.
+          card: sql<unknown>`${characters.data} #- '{identity,portraitData}'`,
         })
         .from(characters)
         .where(active(ownerId))

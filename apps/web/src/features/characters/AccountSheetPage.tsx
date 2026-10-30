@@ -10,11 +10,13 @@ import { getCharacter } from './api';
 import { startOffline, startSync, stopSync } from './sync';
 import { SyncIndicator } from './SyncIndicator';
 import { TableBar } from '@/features/campaigns/TableBar';
+import { ForbiddenScreen } from '@/features/screens/ForbiddenScreen';
+import { InlineLoader, LoadingScreen } from '@/features/screens/LoadingScreen';
 
 // Carregada sob demanda, como na rota /ficha: a ficha continua sendo um pedaço separado do site.
 const SheetPage = lazy(() => import('@/features/sheet/SheetPage'));
 
-type Load = 'loading' | 'ready' | 'not-found' | 'need-sign-in' | 'unavailable';
+type Load = 'loading' | 'ready' | 'not-found' | 'forbidden' | 'need-sign-in' | 'unavailable';
 
 /** Ficha da conta: /personagem?id=… (um HTML só, sem rota dinâmica na hospedagem estática). */
 export default function AccountSheetPage() {
@@ -53,6 +55,9 @@ export default function AccountSheetPage() {
         next = 'ready';
       } else if (result.status === 401) {
         next = 'need-sign-in';
+      } else if (result.status === 403) {
+        // Ficha de outra pessoa da campanha: só quem a criou e o Mestre veem a ficha inteira.
+        next = 'forbidden';
       } else {
         next = isUnreachable(result) ? 'unavailable' : 'not-found';
       }
@@ -69,51 +74,61 @@ export default function AccountSheetPage() {
   if (load === 'ready') {
     return (
       <Suspense
-        fallback={<p className="min-h-dvh p-8 text-center text-muted">{t.common.loading}</p>}
+        fallback={
+          <div className="min-h-dvh">
+            <LoadingScreen />
+          </div>
+        }
       >
         <SheetPage mode="account" status={<SyncIndicator />} banner={<TableBar id={id} />} />
       </Suspense>
     );
   }
 
+  if (load === 'forbidden') return <ForbiddenScreen />;
+  if (load === 'loading') {
+    return (
+      <div className="min-h-[60dvh]">
+        <InlineLoader label={t.sync.loadingSheet} />
+        <ServerStatus className="mx-auto max-w-md" />
+      </div>
+    );
+  }
+
   const message =
-    load === 'loading'
-      ? t.sync.loadingSheet
-      : load === 'need-sign-in'
-        ? t.sync.needSignIn
-        : load === 'unavailable'
-          ? t.sync.unavailable
-          : t.sync.notFound;
+    load === 'need-sign-in'
+      ? t.sync.needSignIn
+      : load === 'unavailable'
+        ? t.sync.unavailable
+        : t.sync.notFound;
 
   return (
     <div className="mx-auto max-w-xl px-4 py-16 text-center">
       <h1 className="font-display text-xl font-bold">{message}</h1>
       <ServerStatus className="mx-auto mt-4 max-w-md text-left" />
-      {load !== 'loading' ? (
-        <div className="mt-4 flex justify-center gap-2">
-          {load === 'need-sign-in' ? (
-            <Button asChild variant="primary">
-              <Link to={`/entrar?voltar=${encodeURIComponent(`/personagem?id=${id}`)}`}>
-                {t.auth.signIn}
-              </Link>
-            </Button>
-          ) : null}
-          {load === 'unavailable' && status === 'signed-in' ? (
-            <Button
-              variant="primary"
-              onClick={() => {
-                setFetched(null);
-                setAttempt((n) => n + 1);
-              }}
-            >
-              {t.common.retry}
-            </Button>
-          ) : null}
-          <Button asChild>
-            <Link to="/personagens">{t.sync.backToList}</Link>
+      <div className="mt-4 flex justify-center gap-2">
+        {load === 'need-sign-in' ? (
+          <Button asChild variant="primary">
+            <Link to={`/entrar?voltar=${encodeURIComponent(`/personagem?id=${id}`)}`}>
+              {t.auth.signIn}
+            </Link>
           </Button>
-        </div>
-      ) : null}
+        ) : null}
+        {load === 'unavailable' && status === 'signed-in' ? (
+          <Button
+            variant="primary"
+            onClick={() => {
+              setFetched(null);
+              setAttempt((n) => n + 1);
+            }}
+          >
+            {t.common.retry}
+          </Button>
+        ) : null}
+        <Button asChild>
+          <Link to="/personagens">{t.sync.backToList}</Link>
+        </Button>
+      </div>
     </div>
   );
 }

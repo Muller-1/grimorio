@@ -353,7 +353,7 @@ export function ClassStep() {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)] lg:items-start">
-        <div className="space-y-3 text-[15px] leading-relaxed">
+        <div className="space-y-3 text-sm leading-relaxed">
           <h1 className="font-display text-2xl font-bold">{w.title}</h1>
           {w.intro.map((p) => (
             <p key={p}>{p}</p>

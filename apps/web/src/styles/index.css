@@ -1,186 +1,181 @@
 @import 'tailwindcss';
-@import '@fontsource/cinzel/600.css';
-@import '@fontsource/cinzel/700.css';
+/* Palavras do código (`lista.filter`, `const table`, `variant: 'outline'`…) que o Tailwind lia
+   como classes: nenhuma é usada como classe, e cortá-las tira CSS que ninguém usa. */
+@source not inline('container filter inline outline ring sepia static table transform visible');
+/* Só o alfabeto latino (português cabe nele): menos @font-face e nada de baixar o que não usamos. */
+@import '@fontsource/alegreya-sans/latin-400.css';
+@import '@fontsource/alegreya-sans/latin-500.css';
+@import '@fontsource/alegreya-sans/latin-700.css';
+@import '@fontsource/cinzel/latin-600.css';
+@import '@fontsource/cinzel/latin-700.css';
+@import './motion.css';
 
 /*
- * Tokens de cor (temas). Pergaminho (claro) é o padrão; Taverna (escuro) vem da preferência do
- * sistema quando o jogador deixa em "Automático". `data-theme` no <html> força um tema; o
- * public/theme.js aplica a escolha salva antes de desenhar a página.
+ * Dois temas (docs/design.md): Pergaminho (claro, ouro nos detalhes) e Obsidiana (escuro,
+ * prata nos detalhes). Pergaminho é o padrão; Obsidiana vem da preferência do sistema quando o
+ * jogador deixa em "Automático". `data-theme` no <html> força um tema; o public/theme.js aplica
+ * a escolha salva antes de desenhar a página e marca `data-system-dark` enquanto o aparelho
+ * estiver no escuro (assim cada bloco escuro aparece uma vez só, sem repetir numa @media).
  *
- * - Cada tema define TODAS as variáveis (o teste src/lib/theme.test.ts confere, e também o
- *   contraste AA dos pares de cor que o site usa).
+ * - Cada tema define TODAS as variáveis (build/themes.test.ts confere, e também o contraste AA
+ *   dos pares de cor que o site usa).
  * - O seletor é `[data-theme=…]` (não só `:root`) para a amostra do seletor de tema poder
  *   mostrar as cores de verdade dentro de um <span data-theme="…">.
- * - O bloco escuro aparece duas vezes (preferência do sistema e escolha explícita): mude os dois.
+ *
+ * Nomes: `surface-2` é a faixa do título dos painéis; `field` é o fundo dos cartões e campos
+ * dentro de um painel; `sunken` é o trilho das barras e o botão desligado; `rule` é o filete
+ * dourado/prateado do cabeçalho e dos ornamentos; `ornament` pinta losangos, anéis e selos;
+ * `gold` é o texto dos rótulos em caixa-alta; `seal` e `seal-line` são o d20 da marca.
+ * `die-1…10` são as faces do d20 ilustrado e `metal-1…4` o degradê das arestas dele.
  */
 :root,
 [data-theme='light'] {
-  --bg: #f4eee2;
-  --surface: #fffcf6;
-  --surface-2: #efe6d5;
-  --border: #d8c9ae;
-  --border-strong: #b9a482;
-  --text: #2a2118;
-  --muted: #6b5c4a;
-  --accent: #8e2a2a;
-  --accent-hover: #7a2222;
-  --accent-soft: #f3dcd6;
-  --accent-contrast: #fff8f0;
-  --gold: #855d10;
-  --gold-soft: #f6e7c4;
+  --bg: #f3ede2;
+  --surface: #fbf8f2;
+  --surface-2: #efe5d1;
+  --sunken: #e9e0cf;
+  --field: #fffdf8;
+  --border: #d8ccb6;
+  --border-soft: #e2d6bf;
+  --border-strong: #9a7426;
+  --rule: #d2be93;
+  --text: #2a1e18;
+  --muted: #6a5649;
+  --accent: #7a2e1e;
+  --accent-hover: #5e2216;
+  --accent-border: #5e2216;
+  --accent-soft: #f6ede6;
+  --accent-contrast: #fbf8f2;
+  --gold: #7d5e1c;
+  --gold-soft: #f6e9c8;
+  --ornament: #b8913a;
+  --seal: #7a2e1e;
+  --seal-line: #efd48e;
   --success: #2f6b3a;
-  --success-soft: #dcefdc;
+  --success-soft: #e6eee3;
   --danger: #a3261f;
   --danger-soft: #f7dcd9;
-  --focus: #a5720f;
-  --shadow: 0 1px 2px rgb(60 40 20 / 0.08), 0 2px 8px rgb(60 40 20 / 0.06);
+  --focus: #9a7426;
+  --shadow: 0 1px 2px rgb(42 30 24 / 0.06);
+  --accent-inset: rgb(239 212 142 / 0.3);
+  --die-1: #a04a33;
+  --die-2: #8e3a27;
+  --die-3: #7a2e1e;
+  --die-4: #6a2719;
+  --die-5: #5e2216;
+  --die-6: #4e1c12;
+  --die-7: #5a2015;
+  --die-8: #481a11;
+  --die-9: #64251a;
+  --die-10: #9a4530;
+  --die-face: #f6f1e7;
+  --metal-1: #f6e3a8;
+  --metal-2: #c39a45;
+  --metal-3: #efd48e;
+  --metal-4: #8e6a22;
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    --bg: #15120e;
-    --surface: #1f1a15;
-    --surface-2: #29231c;
-    --border: #3b3228;
-    --border-strong: #56493a;
-    --text: #efe6d6;
-    --muted: #ad9d89;
-    --accent: #e0685d;
-    --accent-hover: #ea7c72;
-    --accent-soft: #3a1f1b;
-    --accent-contrast: #1a0f0d;
-    --gold: #e0b252;
-    --gold-soft: #3a2e17;
-    --success: #7cc98a;
-    --success-soft: #1d3322;
-    --danger: #f07a70;
-    --danger-soft: #3b1c19;
-    --focus: #e0b252;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
-    color-scheme: dark;
-  }
-}
-
-/* Taverna (escuro) */
+/* Obsidiana (escuro): preto com petróleo, verdete e prata. Escolhido ou automático. */
+:root[data-system-dark]:not([data-theme]),
 [data-theme='dark'] {
-  --bg: #15120e;
-  --surface: #1f1a15;
-  --surface-2: #29231c;
-  --border: #3b3228;
-  --border-strong: #56493a;
-  --text: #efe6d6;
-  --muted: #ad9d89;
-  --accent: #e0685d;
-  --accent-hover: #ea7c72;
-  --accent-soft: #3a1f1b;
-  --accent-contrast: #1a0f0d;
-  --gold: #e0b252;
-  --gold-soft: #3a2e17;
+  --bg: #090e10;
+  --surface: #111a1d;
+  --surface-2: #1a2a2f;
+  --sunken: #1e2f33;
+  --field: #0e171a;
+  --border: #26383b;
+  --border-soft: #1f3034;
+  --border-strong: #8c939c;
+  --rule: #3a4a4e;
+  --text: #e7ecec;
+  --muted: #9fb0b0;
+  --accent: #5cc2ae;
+  --accent-hover: #7fd3c2;
+  --accent-border: #3e9c8a;
+  --accent-soft: #12302e;
+  --accent-contrast: #06100f;
+  --gold: #b8bdc6;
+  --gold-soft: #1a2a2c;
+  --ornament: #c7cbd3;
+  --seal: #1e3e3f;
+  --seal-line: #e7ecec;
   --success: #7cc98a;
-  --success-soft: #1d3322;
-  --danger: #f07a70;
+  --success-soft: #132820;
+  --danger: #f08a80;
   --danger-soft: #3b1c19;
-  --focus: #e0b252;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  --focus: #5cc2ae;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  --accent-inset: rgb(255 255 255 / 0.25);
+  --die-1: #2f5b5c;
+  --die-2: #234647;
+  --die-3: #1e3e3f;
+  --die-4: #18393a;
+  --die-5: #143032;
+  --die-6: #102728;
+  --die-7: #132d2e;
+  --die-8: #0e2324;
+  --die-9: #17383a;
+  --die-10: #2a5455;
+  --die-face: #eef2f2;
+  --metal-1: #ffffff;
+  --metal-2: #b8bdc6;
+  --metal-3: #f1f2f5;
+  --metal-4: #8c939c;
   color-scheme: dark;
 }
 
-/* Arcano (escuro, azul-noite e violeta) */
-[data-theme='arcane'] {
-  --bg: #11121f;
-  --surface: #1a1b2e;
-  --surface-2: #24253c;
-  --border: #34365a;
-  --border-strong: #4c4f7d;
-  --text: #e8e6f6;
-  --muted: #a6a4c8;
-  --accent: #a78bfa;
-  --accent-hover: #b9a3fb;
-  --accent-soft: #2c2350;
-  --accent-contrast: #120c24;
-  --gold: #f0c674;
-  --gold-soft: #3a3020;
-  --success: #7dd3a0;
-  --success-soft: #19322a;
-  --danger: #f58b8b;
-  --danger-soft: #3d1f2a;
-  --focus: #f0c674;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.45);
-  color-scheme: dark;
-}
-
-/* Floresta (claro, verde-musgo) */
-[data-theme='forest'] {
-  --bg: #edf1e6;
-  --surface: #fbfcf7;
-  --surface-2: #e2e9d6;
-  --border: #c3d0ae;
-  --border-strong: #9cae80;
-  --text: #1d2617;
-  --muted: #556149;
-  --accent: #34622f;
-  --accent-hover: #2a5126;
-  --accent-soft: #dbe8d2;
-  --accent-contrast: #f7fbf2;
-  --gold: #7a5a12;
-  --gold-soft: #f1e6c4;
-  --success: #1f6b5a;
-  --success-soft: #d5ece5;
-  --danger: #a3261f;
-  --danger-soft: #f6dcd8;
-  --focus: #8a6510;
-  --shadow: 0 1px 2px rgb(30 45 20 / 0.08), 0 2px 8px rgb(30 45 20 / 0.06);
-  color-scheme: light;
-}
-
-/* Alto contraste (claro, preto no branco) */
-[data-theme='contrast'] {
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #f0f0f0;
-  --border: #595959;
-  --border-strong: #000000;
-  --text: #000000;
-  --muted: #333333;
-  --accent: #8a0000;
-  --accent-hover: #6a0000;
-  --accent-soft: #ffe3e3;
-  --accent-contrast: #ffffff;
-  --gold: #5c4000;
-  --gold-soft: #fff0c2;
-  --success: #0b5a1c;
-  --success-soft: #ddf5e1;
-  --danger: #9a0000;
-  --danger-soft: #ffe3e3;
-  --focus: #0050c8;
-  --shadow: none;
-  color-scheme: light;
+/* `dark:` vale no Obsidiana escolhido e no automático com o sistema escuro. */
+@custom-variant dark {
+  &:where(
+    [data-theme='dark'],
+    [data-theme='dark'] *,
+    :root[data-system-dark]:not([data-theme]),
+    :root[data-system-dark]:not([data-theme]) *
+  ) {
+    @slot;
+  }
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-sunken: var(--sunken);
+  --color-field: var(--field);
   --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
   --color-border-strong: var(--border-strong);
+  --color-rule: var(--rule);
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-border: var(--accent-border);
   --color-accent-soft: var(--accent-soft);
   --color-accent-contrast: var(--accent-contrast);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
+  --color-ornament: var(--ornament);
+  --color-seal: var(--seal);
+  --color-seal-line: var(--seal-line);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-focus: var(--focus);
   --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
-  --font-sans:
-    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-sans: 'Alegreya Sans', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
   --shadow-card: var(--shadow);
+}
+
+/* A Alegreya Sans desenha menor que a fonte do sistema: os tamanhos pequenos sobem um pouco. */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.45;
 }
 
 @layer base {
@@ -190,10 +185,15 @@
   body {
     @apply bg-bg text-text font-sans antialiased;
     min-height: 100dvh;
+    font-variant-numeric: lining-nums;
   }
   :focus-visible {
     outline: 2px solid var(--focus);
     outline-offset: 2px;
+  }
+  ::placeholder {
+    color: var(--muted);
+    opacity: 0.85;
   }
   /* Números sem as setinhas do navegador: usamos botões próprios. */
   input[type='number']::-webkit-inner-spin-button,
@@ -209,8 +209,22 @@
 
 @layer utilities {
   .tabular {
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: tabular-nums lining-nums;
   }
+}
+
+/* Rótulo em caixa-alta dos painéis e cartões ("Combate", "Classe", "Dica"). */
+@utility label-caps {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* Botão principal: brilho dourado (prateado) por dentro da borda. */
+@utility inset-gleam {
+  box-shadow: inset 0 0 0 1px var(--accent-inset);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -219,6 +233,7 @@
   *::after {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

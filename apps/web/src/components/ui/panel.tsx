@@ -2,6 +2,7 @@ import { Component, useId, type ErrorInfo, type ReactNode } from 'react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
+import { Diamond } from './d20-icon';
 
 /** Barreira de erro: um problema num painel não derruba a ficha inteira (plano v2, 8). */
 class PanelErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -59,21 +60,19 @@ export function Panel({
     <Tag
       id={id}
       {...(title && as === 'section' ? { 'aria-labelledby': titleId } : {})}
-      className={cn(
-        'scroll-mt-24 rounded-xl border border-border bg-surface shadow-card',
-        className,
-      )}
+      className={cn('scroll-mt-24 rounded-xl border border-border bg-surface', className)}
     >
       {title || actions ? (
-        <header className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-border px-3 py-2">
+        <header className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-t-[11px] border-b border-border bg-surface-2 py-1.5 pr-2.5 pl-4">
           {/* O título nunca fica mais estreito que a sua maior palavra: se as ações não cabem ao
               lado, descem para a linha de baixo. */}
           {title ? (
             <h2
               id={titleId}
-              className="flex-1 font-display text-sm font-bold text-balance break-words"
+              className="label-caps flex flex-1 items-center gap-2 text-[0.875rem] text-balance break-words"
             >
-              {title}
+              <Diamond className="size-2.5 shrink-0 text-ornament" />
+              <span className="min-w-0">{title}</span>
             </h2>
           ) : (
             <span />
@@ -83,7 +82,7 @@ export function Panel({
           ) : null}
         </header>
       ) : null}
-      <div className={cn('p-3', bodyClassName)}>
+      <div className={cn('p-3.5', bodyClassName)}>
         <PanelErrorBoundary>{children}</PanelErrorBoundary>
       </div>
     </Tag>

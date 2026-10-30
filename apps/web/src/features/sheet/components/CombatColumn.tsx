@@ -1,22 +1,16 @@
 import { withModifier, type SheetNotice } from '@grimorio/rules';
-import { HIT_DIE_SIDES, SKILL_KEYS, type HitDieSides, type SkillKey } from '@grimorio/shared';
-import {
-  Coffee,
-  HeartMinus,
-  HeartPlus,
-  Moon,
-  ScrollText,
-  Shield,
-  ShieldPlus,
-  Undo2,
-} from 'lucide-react';
+import { HIT_DIE_SIDES, type HitDieSides } from '@grimorio/shared';
+import { Undo2 } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { D20Icon } from '@/components/ui/d20-icon';
 import { Dialog } from '@/components/ui/dialog';
-import { Input, Label, Select } from '@/components/ui/input';
+import { Input, Label } from '@/components/ui/input';
+import { NumberField } from '@/components/ui/number-field';
 import { Panel } from '@/components/ui/panel';
 import { Popover } from '@/components/ui/popover';
+import { StrokeIcon, type IconName } from '@/components/ui/stroke-icon';
+import { SwitchTrack } from '@/components/ui/switch-track';
 import { useDiceStore } from '@/features/dice/store';
 import { useToastStore } from '@/features/toast/store';
 import { feetToMeters, metersToFeet } from '@/lib/format';
@@ -24,12 +18,8 @@ import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
-import { ExplainButton } from './Explain';
-import { NumberField } from '@/components/ui/number-field';
 import { AdvantageBadge, d20 } from './AdvantageBadge';
-import { PowersPanel } from './PowersPanel';
-import { ProficiencyToggle } from './ProficiencyToggle';
-import { RollButton } from './RollButton';
+import { ExplainButton } from './Explain';
 
 /** Mostra os avisos do motor (códigos) como mensagens. */
 function useNotify() {
@@ -47,14 +37,31 @@ function useNotify() {
   };
 }
 
-function StatTile({ label, children }: { label: string; children: ReactNode }) {
+/** Cartão da grade de combate: ícone, número grande e o rótulo embaixo. */
+function StatTile({
+  icon,
+  label,
+  children,
+  aside,
+}: {
+  icon: IconName;
+  label: string;
+  children: ReactNode;
+  aside?: ReactNode;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-border-strong bg-surface-2/60 px-2 py-2 text-center">
-      <p className="text-xs font-semibold text-muted">{label}</p>
-      <div className="mt-0.5 flex min-h-10 items-center gap-1">{children}</div>
+    <div className="relative flex min-h-[60px] items-center gap-3 rounded-[10px] border border-border-soft bg-field px-2.5 py-2">
+      <StrokeIcon name={icon} className="size-[26px] shrink-0 text-border-strong" />
+      <div className="flex min-w-0 flex-col items-start">
+        <div className="flex items-center gap-1">{children}</div>
+        <span className="text-xs text-muted">{label}</span>
+      </div>
+      {aside}
     </div>
   );
 }
+
+const BIG = 'font-display text-[1.625rem] leading-[1.05] font-bold';
 
 function CombatStats() {
   const { sheet, derived } = useSheet();
@@ -62,37 +69,38 @@ function CombatStats() {
   const acId = useId();
   const speedId = useId();
   const override = sheet.combat.armorClassOverride;
+  const c = t.sheet.combat;
+  const inspired = sheet.state.inspiration > 0;
 
   return (
-    <div className="grid grid-cols-3 gap-2">
-      <StatTile label={t.sheet.combat.ac}>
-        <Shield className="size-5 text-muted" aria-hidden="true" />
+    <div className="grid grid-cols-2 gap-2.5">
+      <StatTile icon="shield" label={c.acLong}>
         <ExplainButton
           explained={derived.armorClass}
-          title={t.sheet.combat.acLong}
+          title={c.acLong}
           signed={false}
           testId="stat.ac"
-          className="font-display text-2xl font-bold"
+          className={cn(BIG, '-mx-1')}
           extra={
             <div className="space-y-1.5">
-              <Label htmlFor={acId}>{t.sheet.combat.acManual}</Label>
+              <Label htmlFor={acId}>{c.acManual}</Label>
               <NumberField
                 id={acId}
                 value={override ?? derived.armorClass.value}
                 min={0}
                 max={50}
                 onCommit={(v) => edit((d) => void (d.combat.armorClassOverride = v))}
-                label={t.sheet.combat.acManual}
+                label={c.acManual}
                 className="h-9 border-border text-left"
               />
-              <p className="text-xs text-muted">{t.sheet.combat.acManualHint}</p>
+              <p className="text-xs text-muted">{c.acManualHint}</p>
               {override !== undefined ? (
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => edit((d) => void delete d.combat.armorClassOverride)}
                 >
-                  {t.sheet.combat.acAuto}
+                  {c.acAuto}
                 </Button>
               ) : null}
             </div>
@@ -100,44 +108,44 @@ function CombatStats() {
         />
       </StatTile>
 
-      <StatTile label={t.sheet.combat.initiative}>
+      <StatTile
+        icon="zap"
+        label={c.initiative}
+        aside={
+          <RollInitiative
+            advantage={derived.initiativeAdvantage}
+            disadvantage={derived.initiativeDisadvantage}
+            bonus={derived.initiative.value}
+          />
+        }
+      >
         <ExplainButton
           explained={derived.initiative}
-          title={t.sheet.combat.initiative}
+          title={c.initiative}
           testId="stat.initiative"
-          className="font-display text-2xl font-bold"
+          className={cn(BIG, '-mx-1')}
         />
         <AdvantageBadge
           advantage={derived.initiativeAdvantage}
           disadvantage={derived.initiativeDisadvantage}
         />
-        <RollButton
-          rollLabel={t.sheet.combat.initiative}
-          expression={withModifier(
-            d20(derived.initiativeAdvantage, derived.initiativeDisadvantage),
-            derived.initiative.value,
-          )}
-          ariaLabel={t.sheet.combat.rollInitiative}
-          className="size-7"
-        />
       </StatTile>
 
-      <StatTile label={t.sheet.combat.speed}>
+      <StatTile icon="footprints" label={c.speed}>
         <Popover
           trigger={
             <button
               type="button"
-              className="tabular rounded-md px-1 font-display text-2xl font-bold hover:bg-surface-2"
+              className={cn('tabular -mx-1 rounded-md px-1 hover:bg-surface-2', BIG)}
               data-testid="stat.speed"
               data-value={derived.speedFt}
-              aria-label={`${t.sheet.combat.speed}: ${t.sheet.combat.speedValue(feetToMeters(derived.speedFt))}`}
+              aria-label={`${c.speed}: ${c.speedValue(feetToMeters(derived.speedFt))}`}
             >
-              {feetToMeters(derived.speedFt)}
-              <span className="ml-0.5 font-sans text-base">{t.sheet.combat.speedUnit}</span>
+              {c.speedValue(feetToMeters(derived.speedFt))}
             </button>
           }
         >
-          <Label htmlFor={speedId}>{t.sheet.combat.speedEdit}</Label>
+          <Label htmlFor={speedId}>{c.speedEdit}</Label>
           <Input
             id={speedId}
             type="number"
@@ -157,13 +165,71 @@ function CombatStats() {
           {derived.speedFt !== sheet.combat.speedFt ? (
             <p className="mt-1.5 max-w-56 text-xs text-muted" data-testid="stat.speed.why">
               {derived.load.over
-                ? t.sheet.combat.speedLoaded(feetToMeters(derived.speedFt))
-                : t.sheet.combat.speedNow(feetToMeters(derived.speedFt))}
+                ? c.speedLoaded(feetToMeters(derived.speedFt))
+                : c.speedNow(feetToMeters(derived.speedFt))}
             </p>
           ) : null}
         </Popover>
       </StatTile>
+
+      {/* Inspiração Heroica (2024): ou você tem, ou não tem. */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={inspired}
+        aria-label={inspired ? t.sheet.identity.inspirationOn : t.sheet.identity.inspirationOff}
+        onClick={() => edit((d) => void (d.state.inspiration = inspired ? 0 : 1))}
+        className={cn(
+          'flex min-h-[60px] items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left',
+          inspired
+            ? 'border-[1.5px] border-ornament bg-gold-soft'
+            : 'border border-border-soft bg-field hover:bg-surface-2',
+        )}
+        data-testid="stat.inspiration"
+        data-value={sheet.state.inspiration}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 shrink-0">
+          <path
+            d="M12 2 14.2 9.8 22 12 14.2 14.2 12 22 9.8 14.2 2 12 9.8 9.8Z"
+            strokeWidth="1"
+            strokeLinejoin="round"
+            className={inspired ? 'fill-ornament stroke-gold' : 'fill-none stroke-border-strong'}
+          />
+        </svg>
+        <span className="min-w-0 flex-1 text-sm leading-tight font-bold">
+          {t.sheet.identity.inspiration}
+        </span>
+        <SwitchTrack on={inspired} check />
+      </button>
     </div>
+  );
+}
+
+function RollInitiative({
+  advantage,
+  disadvantage,
+  bonus,
+}: {
+  advantage: boolean;
+  disadvantage: boolean;
+  bonus: number;
+}) {
+  const roll = useDiceStore((s) => s.roll);
+  return (
+    <button
+      type="button"
+      aria-label={t.sheet.combat.rollInitiative}
+      title={t.sheet.combat.rollInitiative}
+      onClick={() =>
+        roll({
+          label: t.sheet.combat.initiative,
+          expression: withModifier(d20(advantage, disadvantage), bonus),
+        })
+      }
+      className="ml-auto grid size-9 shrink-0 place-items-center self-start rounded-md text-accent hover:bg-accent-soft"
+    >
+      <D20Icon className="size-[18px]" />
+    </button>
   );
 }
 
@@ -174,10 +240,16 @@ function HpHistoryDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
-  const log = useSheetStore((s) => s.sheet.state.hpLog);
+  const { sheet, derived } = useSheet();
+  const log = sheet.state.hpLog;
   const h = t.sheet.hp.historyItem;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title={t.sheet.hp.history}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t.sheet.hp.history}
+      description={t.sheet.hp.totals(derived.hpTotals.healed, derived.hpTotals.received)}
+    >
       {log.length === 0 ? (
         <p className="text-sm text-muted">{t.sheet.hp.historyEmpty}</p>
       ) : (
@@ -211,16 +283,25 @@ function HpHistoryDialog({
   );
 }
 
-function HpPanel() {
+const iconButton =
+  'grid size-9 place-items-center rounded-lg border border-border-soft text-gold hover:bg-surface-2 disabled:opacity-40';
+
+/** Pontos de Vida: o número grande, a barra, dano/cura/temporários, Dados de Vida e descansos. */
+function HitPoints() {
   const { sheet, derived } = useSheet();
   const dispatch = useSheetStore((s) => s.dispatch);
   const edit = useSheetStore((s) => s.edit);
+  const roll = useDiceStore((s) => s.roll);
   const notify = useNotify();
   const [amount, setAmount] = useState('');
   const [critical, setCritical] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const titleId = useId();
   const amountId = useId();
   const maxId = useId();
+  const dieId = useId();
+  const hp = t.sheet.hp;
+  const hd = t.sheet.hitDice;
 
   const { current, temp } = sheet.state.hp;
   const max = derived.hpMax.value;
@@ -228,6 +309,7 @@ function HpPanel() {
   const lastUndoable = [...sheet.state.hpLog].reverse().find((e) => !e.undone);
   const n = Number(amount);
   const validAmount = amount.trim() !== '' && Number.isInteger(n) && n > 0 && n <= 9999;
+  const { die, total, remaining } = derived.hitDice;
 
   const apply = (type: 'damage' | 'heal' | 'set-temp-hp') => {
     if (!validAmount) return;
@@ -236,264 +318,265 @@ function HpPanel() {
     setCritical(false);
   };
 
+  const spendHitDie = () => {
+    if (remaining <= 0) return notify(['no-hit-dice']);
+    if (current < 1) return notify(['needs-1-hp']);
+    const outcome = roll({ label: hd.rollName, expression: `1d${die}` });
+    if (outcome.ok) notify(dispatch({ type: 'spend-hit-die', rolled: outcome.entry.result.total }));
+  };
+
+  const hpButton = 'h-10 min-w-0 flex-1 px-2.5';
+
   return (
-    <Panel
-      title={t.sheet.hp.title}
-      actions={
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => notify(dispatch({ type: 'short-rest' }))}
-            title={t.sheet.hp.shortRestHint}
-            data-testid="rest.short"
-          >
-            <Coffee className="size-4" />
-            {t.sheet.hp.shortRest}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => notify(dispatch({ type: 'long-rest' }))}
-            title={t.sheet.hp.longRestHint}
-            data-testid="rest.long"
-          >
-            <Moon className="size-4" />
-            {t.sheet.hp.longRest}
-          </Button>
-        </div>
-      }
-      bodyClassName="space-y-3"
+    <section
+      aria-labelledby={titleId}
+      className="flex flex-col gap-3 rounded-[10px] border border-border-soft bg-field p-3.5"
     >
-      <div className="flex items-center gap-2">
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          disabled={!lastUndoable}
-          onClick={() =>
-            lastUndoable &&
-            notify(dispatch({ type: 'undo-hp', targetActionId: lastUndoable.actionId }))
-          }
-          aria-label={lastUndoable ? t.sheet.hp.undo : t.sheet.hp.undoNothing}
-          title={lastUndoable ? t.sheet.hp.undo : t.sheet.hp.undoNothing}
-          data-testid="hp.undo"
-        >
-          <Undo2 className="size-4" />
-        </Button>
-        <div className="flex-1 text-center">
-          <p className="tabular font-display text-lg font-bold">
-            <span data-testid="hp.current" data-value={current}>
-              {t.sheet.hp.summary(current, max, pct)}
-            </span>
-          </p>
-          <div
-            className="mt-1 h-2 overflow-hidden rounded-full bg-surface-2"
-            role="img"
-            aria-label={t.sheet.hp.bar(pct)}
-          >
-            <div
-              className={cn(
-                'h-full rounded-full transition-[width]',
-                pct > 50 ? 'bg-success' : pct > 20 ? 'bg-gold' : 'bg-danger',
-              )}
-              style={{ width: `${Math.min(100, pct)}%` }}
-            />
-          </div>
-        </div>
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={() => setHistoryOpen(true)}
-          aria-label={t.sheet.hp.history}
-          title={t.sheet.hp.history}
-        >
-          <ScrollText className="size-4" />
-        </Button>
-      </div>
-
-      {/* Uma faixa com divisórias (antes, quatro caixinhas dentro do painel). */}
-      <div className="grid grid-cols-4 divide-x divide-border rounded-md bg-surface-2/70 py-1 text-center">
-        {(
-          [
-            [t.sheet.hp.temp, temp, 'hp.temp'],
-            [t.sheet.hp.healed, derived.hpTotals.healed, 'hp.healed'],
-            [t.sheet.hp.received, derived.hpTotals.received, 'hp.received'],
-          ] as const
-        ).map(([label, value, testId]) => (
-          <div key={testId} className="px-1 py-0.5">
-            <p className="truncate text-[11px] font-semibold text-muted">{label}</p>
-            <p className="tabular text-xl font-bold" data-testid={testId} data-value={value}>
-              {value}
-            </p>
-          </div>
-        ))}
-        <div className="px-1 py-0.5">
-          <p className="truncate text-[11px] font-semibold text-muted">{t.sheet.hp.max}</p>
-          <ExplainButton
-            explained={derived.hpMax}
-            title={t.sheet.hp.max}
-            signed={false}
-            testId="hp.max"
-            className="text-xl font-bold"
-            extra={
-              <div className="space-y-1.5">
-                <Label htmlFor={maxId}>{t.sheet.hp.maxManual}</Label>
-                <NumberField
-                  id={maxId}
-                  value={sheet.combat.hpMaxOverride ?? max}
-                  min={1}
-                  max={999}
-                  onCommit={(v) => edit((d) => void (d.combat.hpMaxOverride = v))}
-                  label={t.sheet.hp.maxManual}
-                  className="h-9 border-border text-left"
-                />
-                <p className="text-xs text-muted">{t.sheet.hp.maxHint}</p>
-                {sheet.combat.hpMaxOverride !== undefined ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => edit((d) => void delete d.combat.hpMaxOverride)}
-                  >
-                    {t.sheet.hp.maxAuto}
-                  </Button>
-                ) : null}
-              </div>
+      <div className="flex items-center justify-between gap-2">
+        <h3 id={titleId} className="font-bold">
+          {hp.title}
+        </h3>
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            className={iconButton}
+            disabled={!lastUndoable}
+            onClick={() =>
+              lastUndoable &&
+              notify(dispatch({ type: 'undo-hp', targetActionId: lastUndoable.actionId }))
             }
-          />
+            aria-label={lastUndoable ? hp.undo : hp.undoNothing}
+            title={lastUndoable ? hp.undo : hp.undoNothing}
+            data-testid="hp.undo"
+          >
+            <Undo2 className="size-[18px]" strokeWidth={1.8} />
+          </button>
+          <button
+            type="button"
+            className={iconButton}
+            onClick={() => setHistoryOpen(true)}
+            aria-label={hp.history}
+            title={hp.history}
+          >
+            <StrokeIcon name="scroll" className="size-[18px]" />
+          </button>
         </div>
       </div>
 
-      {/* Campo + 3 botões numa linha só, também no celular (antes o "Temp." caía sozinho embaixo). */}
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span
+          className="tabular font-display text-[2.75rem] leading-none font-bold"
+          data-testid="hp.current"
+          data-value={current}
+        >
+          {current}
+        </span>
+        <ExplainButton
+          explained={derived.hpMax}
+          title={hp.max}
+          signed={false}
+          testId="hp.max"
+          className="font-display text-[1.375rem] font-semibold text-muted"
+          extra={
+            <div className="space-y-1.5">
+              <Label htmlFor={maxId}>{hp.maxManual}</Label>
+              <NumberField
+                id={maxId}
+                value={sheet.combat.hpMaxOverride ?? max}
+                min={1}
+                max={999}
+                onCommit={(v) => edit((d) => void (d.combat.hpMaxOverride = v))}
+                label={hp.maxManual}
+                className="h-9 border-border text-left"
+              />
+              <p className="text-xs text-muted">{hp.maxHint}</p>
+              {sheet.combat.hpMaxOverride !== undefined ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => edit((d) => void delete d.combat.hpMaxOverride)}
+                >
+                  {hp.maxAuto}
+                </Button>
+              ) : null}
+            </div>
+          }
+        >
+          {hp.ofMax(max)}
+        </ExplainButton>
+        <span className="flex-1" />
+        <span className="text-sm text-muted">
+          {hp.temp}{' '}
+          <strong className="tabular text-text" data-testid="hp.temp" data-value={temp}>
+            {temp}
+          </strong>
+        </span>
+      </div>
+      <div
+        role="img"
+        aria-label={hp.bar(pct)}
+        className="h-2.5 overflow-hidden rounded-[5px] bg-sunken"
+      >
+        <div
+          className={cn(
+            'h-full transition-[width]',
+            pct > 50 ? 'bg-success' : pct > 20 ? 'bg-ornament' : 'bg-danger',
+          )}
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </div>
+
       <form
-        className="grid grid-cols-[4.5rem_repeat(3,minmax(0,1fr))] items-end gap-1.5 sm:gap-2"
+        className="flex flex-wrap items-center gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           apply('damage');
         }}
       >
-        <div>
-          <Label htmlFor={amountId}>{t.sheet.hp.amount}</Label>
-          <Input
-            id={amountId}
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={9999}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="tabular mt-0.5 text-center"
-            data-testid="hp.amount"
-          />
-        </div>
+        <label htmlFor={amountId} className="sr-only">
+          {hp.amount}
+        </label>
+        <Input
+          id={amountId}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={9999}
+          value={amount}
+          placeholder={hp.amountShort}
+          onChange={(e) => setAmount(e.target.value)}
+          className="tabular h-10 w-16 shrink-0 px-2 text-center"
+          data-testid="hp.amount"
+        />
         <Button
           variant="danger"
-          size="md"
-          className="w-full px-1.5"
+          className={hpButton}
           disabled={!validAmount}
           onClick={() => apply('damage')}
           data-testid="hp.damage"
         >
-          <HeartMinus className="size-4 max-[380px]:hidden" />
-          {t.sheet.hp.damage}
+          {hp.damage}
         </Button>
-        <Button
-          variant="success"
-          size="md"
-          className="w-full px-1.5"
-          disabled={!validAmount}
-          onClick={() => apply('heal')}
-          data-testid="hp.heal"
-        >
-          <HeartPlus className="size-4 max-[380px]:hidden" />
-          {t.sheet.hp.heal}
-        </Button>
-        <Button
-          variant="subtle"
-          size="md"
-          className="w-full px-1.5"
-          disabled={!validAmount}
-          onClick={() => apply('set-temp-hp')}
-          title={t.sheet.hp.tempLong}
-          data-testid="hp.temp.add"
-        >
-          <ShieldPlus className="size-4 max-[380px]:hidden" />
-          {t.sheet.hp.addTemp}
-        </Button>
+        <div className="flex min-w-0 flex-[2_1_0px]">
+          <Button
+            variant="success"
+            className={cn(hpButton, 'rounded-r-none')}
+            disabled={!validAmount}
+            onClick={() => apply('heal')}
+            data-testid="hp.heal"
+          >
+            {hp.heal}
+          </Button>
+          <Button
+            variant="outline"
+            className={cn(hpButton, 'rounded-l-none border-l-0 text-gold')}
+            disabled={!validAmount}
+            onClick={() => apply('set-temp-hp')}
+            title={hp.tempLong}
+            data-testid="hp.temp.add"
+          >
+            {hp.addTemp}
+          </Button>
+        </div>
         {current === 0 ? (
-          <label className="col-span-4 flex items-center gap-1.5 text-sm">
+          <label className="flex w-full items-center gap-1.5 text-sm">
             <input
               type="checkbox"
               checked={critical}
               onChange={(e) => setCritical(e.target.checked)}
               className="size-4 accent-[var(--accent)]"
             />
-            {t.sheet.hp.critical}
+            {hp.critical}
           </label>
         ) : null}
       </form>
-      <HpHistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
-    </Panel>
-  );
-}
 
-function HitDicePanel() {
-  const { sheet, derived } = useSheet();
-  const dispatch = useSheetStore((s) => s.dispatch);
-  const edit = useSheetStore((s) => s.edit);
-  const roll = useDiceStore((s) => s.roll);
-  const notify = useNotify();
-  const dieId = useId();
-  const { die, total, remaining } = derived.hitDice;
+      <div aria-hidden="true" className="h-px bg-border-soft" />
 
-  const spend = () => {
-    if (remaining <= 0) return notify(['no-hit-dice']);
-    if (sheet.state.hp.current < 1) return notify(['needs-1-hp']);
-    const outcome = roll({ label: t.sheet.hitDice.rollName, expression: `1d${die}` });
-    if (outcome.ok) notify(dispatch({ type: 'spend-hit-die', rolled: outcome.entry.result.total }));
-  };
-
-  return (
-    <Panel title={t.sheet.hitDice.title} bodyClassName="flex flex-col items-center gap-2">
-      <p
-        className="tabular text-2xl font-bold"
-        data-testid="hitdice.remaining"
-        data-value={remaining}
-      >
-        {t.sheet.hitDice.remaining(remaining, total, die)}
-      </p>
-      <div className="flex items-center gap-2">
-        <label htmlFor={dieId} className="sr-only">
-          {t.sheet.hitDice.die}
-        </label>
-        <Select
-          id={dieId}
-          value={die}
-          onChange={(e) =>
-            edit((d) => void (d.combat.hitDie = Number(e.target.value) as HitDieSides))
-          }
-          className="h-8 w-20"
-        >
-          {HIT_DIE_SIDES.map((s) => (
-            <option key={s} value={s}>
-              {`d${s}`}
-            </option>
-          ))}
-        </Select>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-baseline gap-2.5">
+          <span className="text-sm font-bold">{hd.title}</span>
+          <span
+            className="tabular font-display text-xl font-bold"
+            data-testid="hitdice.remaining"
+            data-value={remaining}
+          >
+            {hd.remaining(remaining, total)}
+          </span>
+          <label htmlFor={dieId} className="sr-only">
+            {hd.die}
+          </label>
+          <select
+            id={dieId}
+            value={die}
+            onChange={(e) =>
+              edit((d) => void (d.combat.hitDie = Number(e.target.value) as HitDieSides))
+            }
+            className="rounded-md bg-transparent px-0.5 text-sm text-muted hover:bg-surface-2"
+          >
+            {HIT_DIE_SIDES.map((s) => (
+              <option key={s} value={s}>
+                {`d${s}`}
+              </option>
+            ))}
+          </select>
+        </div>
         <Button
-          size="sm"
           variant="outline"
-          onClick={spend}
-          aria-label={t.sheet.hitDice.rollLabel}
-          title={t.sheet.hitDice.rollLabel}
+          className="group gap-1.5 px-3.5"
+          onClick={spendHitDie}
+          title={hd.rollLabel}
         >
-          {t.sheet.hitDice.roll}
+          <D20Icon className="size-4 text-accent" />
+          {hd.spend(die)}
         </Button>
       </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          onClick={() => notify(dispatch({ type: 'short-rest' }))}
+          title={hp.shortRestHint}
+          data-testid="rest.short"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[18px] text-border-strong">
+            <circle cx="12" cy="14" r="8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <path d="M12 6a8 8 0 0 1 0 16Z" fill="currentColor" />
+            <path
+              d="M10 2h4M12 2v4M18.5 7.5 20 6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+          </svg>
+          {hp.shortRest}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => notify(dispatch({ type: 'long-rest' }))}
+          title={hp.longRestHint}
+          data-testid="rest.long"
+        >
+          <StrokeIcon name="moon" className="size-[18px] text-border-strong" />
+          {hp.longRest}
+        </Button>
+      </div>
+      <HpHistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
+    </section>
+  );
+}
+
+/** Combate: CA, iniciativa, deslocamento, Inspiração Heroica e os Pontos de Vida. */
+export function CombatPanel() {
+  return (
+    <Panel title={t.sheet.combat.title} bodyClassName="flex flex-col gap-3.5">
+      <CombatStats />
+      <HitPoints />
     </Panel>
   );
 }
 
-function DeathSavesPanel() {
+export function DeathSavesPanel({ className }: { className?: string }) {
   const { sheet } = useSheet();
   const dispatch = useSheetStore((s) => s.dispatch);
   const roll = useDiceStore((s) => s.roll);
@@ -515,9 +598,14 @@ function DeathSavesPanel() {
   };
 
   const row = (kind: 'successes' | 'failures', label: string, value: number) => (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-sm">{label}</span>
-      <div className="flex gap-1" data-testid={`deathsaves.${kind}`} data-value={value}>
+    <div className="flex items-center justify-between gap-2 text-sm">
+      <span>{label}</span>
+      <div
+        className="flex gap-2"
+        data-testid={`deathsaves.${kind}`}
+        data-value={value}
+        aria-label={ds.count(value)}
+      >
         {[1, 2, 3].map((i) => (
           <button
             key={i}
@@ -529,12 +617,9 @@ function DeathSavesPanel() {
             title={dying ? undefined : ds.onlyAtZero}
             onClick={() => setCount(kind, i)}
             className={cn(
-              'size-5 rounded border transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-              value >= i
-                ? kind === 'successes'
-                  ? 'border-success bg-success'
-                  : 'border-danger bg-danger'
-                : 'border-border-strong bg-surface',
+              'size-[18px] rounded-full border-[1.5px] transition-colors disabled:cursor-not-allowed',
+              kind === 'successes' ? 'border-success' : 'border-danger',
+              value >= i && (kind === 'successes' ? 'bg-success' : 'bg-danger'),
             )}
           />
         ))}
@@ -546,96 +631,23 @@ function DeathSavesPanel() {
     <Panel
       title={ds.title}
       actions={
-        <button
-          type="button"
+        <Button
+          size="sm"
+          variant="outline"
+          className={cn('group gap-1.5 px-3 text-sm', !dying && 'opacity-60')}
           onClick={rollSave}
           aria-label={ds.roll}
           title={dying ? ds.roll : ds.onlyAtZero}
-          className={cn(
-            'grid size-7 place-items-center rounded-md text-muted hover:bg-accent-soft hover:text-accent',
-            !dying && 'opacity-50',
-          )}
         >
-          <D20Icon className="size-5" />
-        </button>
+          <D20Icon className="size-[15px] text-accent" />
+          {ds.rollShort}
+        </Button>
       }
-      bodyClassName="space-y-1.5"
+      className={cn('flex flex-col', className)}
+      bodyClassName="flex flex-1 flex-col justify-center gap-2.5 px-4 py-3"
     >
       {row('successes', ds.success, successes)}
       {row('failures', ds.failure, failures)}
     </Panel>
-  );
-}
-
-function SkillRow({ skill }: { skill: SkillKey }) {
-  const { derived } = useSheet();
-  const edit = useSheetStore((s) => s.edit);
-  const s = derived.skills[skill];
-  const name = t.skills[skill];
-  return (
-    <li className="flex items-center gap-1.5 py-0.5" title={`${name} (${t.abilities[s.ability]})`}>
-      <ProficiencyToggle
-        value={s.proficiency}
-        onChange={(v) =>
-          edit((d) => {
-            if (v === 0) delete d.build.skillProficiencies[skill];
-            else d.build.skillProficiencies[skill] = v;
-          })
-        }
-        name={name}
-        testId={`skill.${skill}.prof`}
-      />
-      <span className="min-w-0 flex-1 truncate text-sm">{name}</span>
-      <AdvantageBadge advantage={s.advantage} disadvantage={s.disadvantage} />
-      <ExplainButton
-        explained={s.bonus}
-        title={name}
-        testId={`skill.${skill}`}
-        className="text-sm"
-      />
-      <RollButton
-        rollLabel={name}
-        expression={withModifier(d20(s.advantage, s.disadvantage), s.bonus.value)}
-        ariaLabel={t.sheet.rollSkill(name)}
-        className="size-7 max-xl:size-8"
-      />
-    </li>
-  );
-}
-
-export function SkillsPanel() {
-  const { derived } = useSheet();
-  const sorted = [...SKILL_KEYS].sort((a, b) => t.skills[a].localeCompare(t.skills[b], 'pt-BR'));
-  return (
-    <Panel title={t.sheet.skillsTitle}>
-      <ul className="grid grid-cols-1 gap-x-4 min-[480px]:grid-cols-2">
-        {sorted.map((skill) => (
-          <SkillRow key={skill} skill={skill} />
-        ))}
-      </ul>
-      <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-sm">
-        <span className="text-muted">{t.sheet.passivePerception}</span>
-        <ExplainButton
-          explained={derived.passivePerception}
-          title={t.sheet.passivePerception}
-          signed={false}
-          testId="stat.passive-perception"
-        />
-      </div>
-    </Panel>
-  );
-}
-
-export function CombatColumn() {
-  return (
-    <div className="space-y-3">
-      <CombatStats />
-      <HpPanel />
-      <div className="grid grid-cols-2 gap-3">
-        <HitDicePanel />
-        <DeathSavesPanel />
-      </div>
-      <PowersPanel />
-    </div>
   );
 }

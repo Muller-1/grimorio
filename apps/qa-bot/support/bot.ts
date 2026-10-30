@@ -135,10 +135,22 @@ export async function seriousA11yViolations(page: Page): Promise<string[]> {
     .map((v) => `${v.id}: ${v.help} (${v.nodes.map((n) => n.target.join(' ')).join(', ')})`);
 }
 
-/** Carrega a ficha de exemplo pela interface. */
+/** Carrega a ficha de exemplo pela interface (fica no menu "…" da ficha). */
 export async function loadExampleSheet(page: Page): Promise<void> {
+  await page.getByTestId('sheet.menu').click();
   await page.getByRole('button', { name: 'Carregar exemplo' }).click();
   await page.getByRole('button', { name: 'Sim, continuar' }).click();
+}
+
+/**
+ * Abre a escolha de tema: no computador, pela paleta da barra; no celular a paleta some e as
+ * opções ficam no menu (☰).
+ */
+export async function openThemeOptions(page: Page): Promise<void> {
+  const trigger = page.getByTestId('theme.trigger');
+  if (await trigger.isVisible()) await trigger.click();
+  else await page.getByTestId('nav.menu').click();
+  await expect(page.getByTestId('theme.picker')).toBeVisible();
 }
 
 /** Páginas públicas do R1 (+ ficha). */

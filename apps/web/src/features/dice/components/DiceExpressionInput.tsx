@@ -9,12 +9,19 @@ import { useDiceStore } from '../store';
 interface DiceExpressionInputProps {
   /** Abre o editor de atalho já com esta expressão. */
   onSaveAsShortcut?: (expression: string) => void;
+  /** Versão curta (tela inicial): rótulo só para o leitor de tela e botão sem ícone. */
+  compact?: boolean;
+  initial?: string;
 }
 
 /** Campo de expressão livre (RF-70). Mostra o erro e onde ele está. */
-export function DiceExpressionInput({ onSaveAsShortcut }: DiceExpressionInputProps) {
+export function DiceExpressionInput({
+  onSaveAsShortcut,
+  compact = false,
+  initial = '1d20',
+}: DiceExpressionInputProps) {
   const roll = useDiceStore((s) => s.roll);
-  const [text, setText] = useState('1d20');
+  const [text, setText] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const inputId = useId();
   const errorId = useId();
@@ -31,13 +38,15 @@ export function DiceExpressionInput({ onSaveAsShortcut }: DiceExpressionInputPro
 
   return (
     <form onSubmit={submit} className="space-y-1.5" noValidate>
-      <Label htmlFor={inputId}>{t.dice.expression}</Label>
+      <Label htmlFor={inputId} className={compact ? 'sr-only' : undefined}>
+        {t.dice.expression}
+      </Label>
       <div className="flex gap-2">
         <Input
           id={inputId}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="h-11 font-mono text-base"
+          className="h-11 min-w-0 font-mono text-base"
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
@@ -46,8 +55,14 @@ export function DiceExpressionInput({ onSaveAsShortcut }: DiceExpressionInputPro
           aria-describedby={error ? errorId : undefined}
           data-testid="dice.input"
         />
-        <Button type="submit" variant="primary" size="lg" data-testid="dice.submit">
-          <D20Icon className="size-5" />
+        <Button
+          type="submit"
+          variant="primary"
+          size={compact ? 'md' : 'lg'}
+          className={compact ? 'h-11 px-[18px] text-base' : undefined}
+          data-testid="dice.submit"
+        >
+          {compact ? null : <D20Icon className="size-5" />}
           {t.dice.roll}
         </Button>
       </div>

@@ -449,7 +449,7 @@ export function OriginStep() {
 
   return (
     <div className="space-y-6">
-      <div className="max-w-3xl space-y-3 text-[15px] leading-relaxed">
+      <div className="max-w-3xl space-y-3 text-sm leading-relaxed">
         <h1 className="font-display text-2xl font-bold">{tw.origin.title}</h1>
         {o.intro.map((p) => (
           <p key={p}>{p}</p>

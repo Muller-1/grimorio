@@ -439,7 +439,7 @@ export function AbilitiesStep() {
         id="wizard-abilities"
         className="grid scroll-mt-24 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center"
       >
-        <div className="space-y-4 text-[15px] leading-relaxed">
+        <div className="space-y-4 text-sm leading-relaxed">
           <h1 className="font-display text-2xl font-bold">{a.title}</h1>
           {a.intro.map((p) => (
             <p key={p}>{p}</p>

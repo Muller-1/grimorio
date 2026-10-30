@@ -6,6 +6,7 @@ import {
   expect,
   loadExampleSheet,
   openPage,
+  openThemeOptions,
   PAGES,
   seriousA11yViolations,
   test,
@@ -38,8 +39,8 @@ test.describe('B12 — acessibilidade', { tag: '@B12' }, () => {
     expect(await seriousA11yViolations(page)).toEqual([]);
   });
 
-  // Temas de cor (14/10): o contraste vale em todos, não só no padrão.
-  for (const theme of ['dark', 'arcane', 'forest', 'contrast']) {
+  // O contraste vale também no tema escuro, não só no claro (o padrão).
+  for (const theme of ['dark']) {
     test(`axe no tema ${theme} (início, assistente e ficha de exemplo)`, async ({ page }) => {
       await page.addInitScript((id) => localStorage.setItem('grimorio.tema', id), theme);
       await openPage(page, '/');
@@ -51,8 +52,7 @@ test.describe('B12 — acessibilidade', { tag: '@B12' }, () => {
       await openPage(page, '/ficha');
       await loadExampleSheet(page);
       expect(await seriousA11yViolations(page)).toEqual([]);
-      await page.getByTestId('theme.trigger').click();
-      await expect(page.getByTestId('theme.picker')).toBeVisible();
+      await openThemeOptions(page);
       expect(await seriousA11yViolations(page)).toEqual([]);
     });
   }

@@ -1,8 +1,9 @@
-import { LogOut, ScrollText } from 'lucide-react';
+import { CircleHelp, LogOut, ScrollText } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Popover } from '@/components/ui/popover';
+import { ThemeOptions } from '@/features/theme/ThemePicker';
 import { useToastStore } from '@/features/toast/store';
 import { t } from '@/lib/i18n';
 import { Avatar } from './Avatar';
@@ -25,11 +26,11 @@ export default function AccountPopover() {
       trigger={
         <button
           type="button"
-          className="rounded-full p-0.5 hover:bg-surface-2"
+          className="grid size-11 place-items-center rounded-full hover:bg-surface-2"
           aria-label={t.auth.accountMenu(user.displayName)}
           data-testid="account.menu"
         >
-          <Avatar name={user.displayName} image={user.image} />
+          <Avatar name={user.displayName} image={user.image} ringed />
         </button>
       }
     >
@@ -45,6 +46,13 @@ export default function AccountPopover() {
           <Link to="/personagens">
             <ScrollText className="size-4" aria-hidden="true" />
             {t.auth.myCharacters}
+          </Link>
+        </Button>
+        {/* No celular, ajuda e tema saem da barra e ficam aqui. */}
+        <Button asChild variant="ghost" size="sm" className="justify-start md:hidden">
+          <Link to="/comecar">
+            <CircleHelp className="size-4" aria-hidden="true" />
+            {t.footer.start}
           </Link>
         </Button>
         <Button
@@ -65,6 +73,7 @@ export default function AccountPopover() {
           {leaving ? t.auth.signingOut : t.auth.signOut}
         </Button>
       </div>
+      <ThemeOptions className="mt-3 border-t border-border pt-3 md:hidden" />
     </Popover>
   );
 }

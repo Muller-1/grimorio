@@ -63,13 +63,13 @@ export function EffectsOnYou() {
   });
 
   return (
-    <div className="space-y-2 border-t border-border pt-3" data-testid="on-you">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-sm font-semibold">{o.title}</p>
-          <p className="text-xs text-muted">{o.hint}</p>
+    <div className="space-y-2 border-t border-border-soft pt-3" data-testid="on-you">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <div className="min-w-0" title={o.hint}>
+          <p className="text-sm font-bold">{o.title}</p>
+          {chips.length ? null : <p className="text-sm text-muted">{o.none}</p>}
         </div>
-        <Button size="sm" variant="outline" onClick={() => setOpen(true)} data-testid="on-you.open">
+        <Button variant="outline" onClick={() => setOpen(true)} data-testid="on-you.open">
           <Plus className="size-4" />
           {o.add}
         </Button>
@@ -96,9 +96,7 @@ export function EffectsOnYou() {
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="text-xs text-muted">{o.none}</p>
-      )}
+      ) : null}
       {open ? (
         <Suspense fallback={null}>
           <EffectsDialog onClose={() => setOpen(false)} />

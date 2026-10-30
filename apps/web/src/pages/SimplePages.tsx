@@ -1,6 +1,6 @@
 import { HandHeart } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router';
+import { useLocation } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { reportLink, siteConfig } from '@/app/config';
 import { t } from '@/lib/i18n';
@@ -177,18 +177,5 @@ export function PrivacyPage() {
       <Sections sections={siteConfig.accountsEnabled ? p.accountSections : p.sections} />
       <Contact />
     </PageShell>
-  );
-}
-
-export function NotFoundPage() {
-  const n = t.pages.notFound;
-  return (
-    <div className="mx-auto max-w-xl space-y-4 px-4 py-20 text-center">
-      <h1 className="font-display text-3xl font-bold">{n.title}</h1>
-      <p className="text-muted">{n.text}</p>
-      <Button asChild variant="primary">
-        <Link to="/">{n.back}</Link>
-      </Button>
-    </div>
   );
 }

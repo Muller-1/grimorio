@@ -97,6 +97,15 @@ export const SectionRevsSchema = z.preprocess(
   z.object(sectionRevsShape),
 );
 
+/** O que o cartão do personagem na tela inicial mostra além do nome (calculado no servidor). */
+export const CharacterCardSchema = z.object({
+  /** "Antecedente · Espécie" (do assistente) ou o que o jogador escreveu. */
+  origin: z.string(),
+  ac: z.number().int(),
+  hp: z.object({ current: z.number().int(), max: z.number().int() }),
+});
+export type CharacterCard = z.infer<typeof CharacterCardSchema>;
+
 export const CharacterSummarySchema = z.object({
   id: z.uuid(),
   name: z.string(),
@@ -105,6 +114,8 @@ export const CharacterSummarySchema = z.object({
   rulesEdition: z.string(),
   version: z.number().int(),
   updatedAt: z.string(),
+  /** Servidores de antes da tela inicial nova não mandam (o cartão fica sem CA e PV). */
+  card: CharacterCardSchema.optional(),
 });
 export type CharacterSummary = z.infer<typeof CharacterSummarySchema>;
 

@@ -1,0 +1,501 @@
+/*
+ * Animações das cenas ilustradas (docs/design.md): carregamento, telas de erro, ilustração da
+ * página inicial e o d20 que rola. "Reduzir movimento" do sistema desliga tudo (regra em
+ * index.css).
+ *
+ * Regra para ficar leve: o que se mexe é uma camada inteira (um <svg> ou <div> por cima do
+ * desenho), e só com `transform` e `opacity`. Assim o navegador move a camada pronta, sem
+ * redesenhar nada, nem as sombras e brilhos (filtros), que são caros. Peças pequenas usam o
+ * `ArtLayer` (features/screens/scene.tsx). Filtro nunca vai em algo que gira: o brilho fica numa
+ * camada parada por baixo, ou num degradê redondo que gira junto sem mudar de cara.
+ */
+
+@keyframes gr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes gr-spin-rev {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+/* Cintilar: opacidade entre --lo e --hi (glifos, nós, estrelas, brilho da rachadura). */
+@keyframes gr-flicker {
+  0%,
+  100% {
+    opacity: var(--lo, 0.3);
+  }
+  50% {
+    opacity: var(--hi, 1);
+  }
+}
+/* Texto que troca (frase do carregamento, resultado): sobe um pouco e aparece. */
+@keyframes gr-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* A tela de carregamento só aparece se demorar: carregamentos rápidos não piscam. */
+@keyframes gr-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* Losango que corre de um lado ao outro do filete: a faixa tem a largura do filete, então
+   100% é o filete inteiro (menos o losango, de 10 px). */
+@keyframes gr-corridor {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(calc(100% - 10px));
+  }
+}
+@keyframes gr-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* ---------- carregamento: d20 lançado e o círculo arcano ---------- */
+
+@keyframes gr-throw {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  18% {
+    transform: translateY(-22px) rotate(60deg) scale(0.97);
+  }
+  45% {
+    transform: translateY(-30px) rotate(250deg) scale(0.93);
+  }
+  68% {
+    transform: translateY(0) rotate(352deg) scale(1.04);
+  }
+  78% {
+    transform: translateY(-5px) rotate(364deg) scale(1);
+  }
+  88%,
+  100% {
+    transform: translateY(0) rotate(360deg) scale(1);
+  }
+}
+@keyframes gr-throw-shadow {
+  0%,
+  88%,
+  100% {
+    transform: scale(1);
+    opacity: var(--hi, 0.55);
+  }
+  45% {
+    transform: scale(0.62);
+    opacity: var(--lo, 0.25);
+  }
+  68% {
+    transform: scale(1.06);
+    opacity: 0.6;
+  }
+  78% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+}
+@keyframes gr-trace {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+@keyframes gr-ripple {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 0;
+  }
+}
+
+.gr-appear {
+  animation: gr-appear 0.3s ease-out 0.35s both;
+}
+.gr-throw {
+  animation: gr-throw 2.4s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+  transform-origin: 50% 55%;
+}
+.gr-throw-shadow {
+  animation: gr-throw-shadow 2.4s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+}
+.gr-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+}
+.gr-spin-60 {
+  animation: gr-spin 60s linear infinite;
+}
+.gr-spin-28 {
+  animation: gr-spin 28s linear infinite;
+}
+.gr-spin-orbit {
+  animation: gr-spin 4.8s linear infinite;
+}
+.gr-sweep-ring {
+  animation: gr-spin 3.6s linear infinite;
+}
+.gr-spin-rev-16 {
+  animation: gr-spin-rev 16s linear infinite;
+}
+
+.gr-spin-rev-40 {
+  animation: gr-spin-rev 40s linear infinite;
+}
+.gr-trace {
+  animation: gr-trace 4.8s ease-in-out infinite;
+}
+.gr-ripple {
+  animation: gr-ripple 2.4s ease-out 1.63s infinite;
+}
+.gr-flicker {
+  animation: gr-flicker 2.4s ease-in-out infinite;
+}
+.gr-rise {
+  animation: gr-rise 0.5s ease-out both;
+}
+.gr-corridor {
+  animation: gr-corridor 2.4s ease-in-out infinite;
+}
+/* As estrelas cobrem a tela toda: mudam em degraus (quatro por segundo), e o navegador só
+   recompõe a tela nesses degraus, não a cada quadro. No ponto pequeno, o degrau não aparece. */
+.gr-twinkle {
+  --lo: 0.35;
+  --hi: 0.9;
+  animation: gr-flicker 4s steps(8) infinite;
+}
+
+/* ---------- página inicial: círculo lento, d20 flutuando, brilhos ---------- */
+
+@keyframes gr-float-shadow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: var(--hi, 0.16);
+  }
+  50% {
+    transform: scale(0.86);
+    opacity: var(--lo, 0.1);
+  }
+}
+.gr-hero-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 40%;
+}
+.gr-spin-90 {
+  animation: gr-spin 90s linear infinite;
+}
+.gr-spin-rev-60 {
+  animation: gr-spin-rev 60s linear infinite;
+}
+.gr-float {
+  animation: gr-float 4.8s ease-in-out infinite;
+}
+.gr-float-shadow {
+  animation: gr-float-shadow 4.8s ease-in-out infinite;
+}
+.gr-glint {
+  --lo: 0.25;
+  animation: gr-flicker 3.2s ease-in-out infinite;
+}
+
+/* ---------- d20 pequeno que rola (botões e carregamentos dentro da página) ---------- */
+
+@keyframes gr-roll {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  35% {
+    transform: rotate(210deg) scale(0.9);
+  }
+  70% {
+    transform: rotate(345deg) scale(1.05);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+.gr-roll {
+  animation: gr-roll 1.8s cubic-bezier(0.5, 0.1, 0.3, 1) infinite;
+  transform-origin: 50% 50%;
+}
+.gr-spinner {
+  animation: gr-spin 0.9s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* ---------- 404: trilha que anda, pedaço do mapa que flutua, d20 que gira ao rolar ---------- */
+
+@keyframes gr-march {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+@keyframes gr-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(4px, -6px) rotate(4deg);
+  }
+}
+@keyframes gr-tumble {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(0.9);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+.gr-march {
+  animation: gr-march 1.4s linear infinite;
+}
+.gr-bob {
+  animation: gr-float 3s ease-in-out infinite;
+}
+.gr-drift {
+  animation: gr-drift 5s ease-in-out infinite;
+}
+.gr-tumble {
+  animation: gr-tumble 0.3s linear infinite;
+}
+
+/* ---------- 500: círculo partido que treme, runas falhando, fumaça e faíscas ---------- */
+
+@keyframes gr-quake {
+  0%,
+  86%,
+  100% {
+    transform: translate(0, 0);
+  }
+  88% {
+    transform: translate(2px, -1px);
+  }
+  90% {
+    transform: translate(-2px, 1px);
+  }
+  92% {
+    transform: translate(1px, 1px);
+  }
+  94% {
+    transform: translate(-1px, -1px);
+  }
+}
+@keyframes gr-runes {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0.55;
+  }
+  45% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.7;
+  }
+}
+@keyframes gr-smoke {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(-26px);
+    opacity: 0;
+  }
+}
+@keyframes gr-spark {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.gr-quake {
+  animation: gr-quake 4s ease-in-out infinite;
+}
+.gr-runes {
+  animation: gr-runes 3.2s steps(1, end) infinite;
+}
+.gr-crack-glow {
+  --lo: 0.35;
+  animation: gr-flicker 2.2s ease-in-out infinite;
+}
+.gr-smoke {
+  animation: gr-smoke 3.4s ease-out infinite;
+}
+.gr-spark {
+  animation: gr-spark 1.8s ease-in-out infinite;
+}
+
+/* ---------- 403: pergaminho que balança, brilho que passa no selo ---------- */
+
+@keyframes gr-sheen {
+  0%,
+  55% {
+    transform: translateX(-120px);
+  }
+  85%,
+  100% {
+    transform: translateX(120px);
+  }
+}
+@keyframes gr-wink {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.3) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(45deg);
+  }
+}
+@keyframes gr-sway {
+  0%,
+  100% {
+    transform: rotate(-1.2deg);
+  }
+  50% {
+    transform: rotate(1.2deg);
+  }
+}
+.gr-sheen {
+  animation: gr-sheen 4.5s ease-in-out infinite;
+}
+.gr-wink {
+  animation: gr-wink 2.6s ease-in-out infinite;
+}
+/* Balança presa em cima: o eixo é o meio do rolo de cima do pergaminho (y = 58 de 400). */
+.gr-sway {
+  animation: gr-sway 6s ease-in-out infinite;
+  transform-origin: 50% 14.5%;
+}
+
+/* ---------- cores das cenas (carregamento e telas de erro) ---------- */
+
+.gr-scene {
+  --sc-backdrop: none;
+  --sc-rule: var(--ornament);
+  --sc-line: #b8913a;
+  --sc-line-2: #9a7426;
+  --sc-wave: #9a7426;
+  --sc-paper: #e9dcc0;
+  --sc-paper-edge: #c9b48c;
+  --sc-star: #efd48e;
+  --sc-glow: #c39a45;
+  --sc-crack: #7a2e1e;
+  --sc-disc: #fbf8f2;
+  --sc-spark-a: #c39a45;
+  --sc-spark-b: #c39a45;
+  --sc-ground: #4a2818;
+  --sc-ground-op: 0.1;
+  --sc-shadow: #4a2818;
+  --sc-shadow-op: 0.2;
+  --sc-scroll: #eaddc2;
+  --sc-scroll-lines: #c9b48c;
+  --sc-roll-1: #f4ead5;
+  --sc-roll-2: #d9c6a0;
+  --sc-roll-3: #b49a6c;
+  --sc-roll-edge: #b49a6c;
+  --sc-wax: #7a2e1e;
+  --sc-wax-2: #8e3a27;
+  --sc-wax-edge: #5e2216;
+  --sc-lock: #efd48e;
+  --sc-sheen: #fff6dd;
+  --sc-sweep: rgb(184 145 58 / 0.3);
+}
+:root[data-system-dark]:not([data-theme]) .gr-scene,
+[data-theme='dark'] .gr-scene,
+[data-theme='dark'].gr-scene {
+  /* Luz de petróleo vinda de cima. */
+  --sc-backdrop: radial-gradient(ellipse 90% 70% at 50% 0%, #133234 0%, #0c1a1c 45%, #090e10 100%);
+  --sc-rule: var(--border-strong);
+  --sc-line: #8c939c;
+  --sc-line-2: #8c939c;
+  --sc-wave: #5cc2ae;
+  --sc-paper: #15232a;
+  --sc-paper-edge: #3a5256;
+  --sc-star: #3a5256;
+  --sc-glow: #5cc2ae;
+  --sc-crack: #c9f2e8;
+  --sc-disc: #111a1d;
+  --sc-spark-a: #e7ecec;
+  --sc-spark-b: #5cc2ae;
+  --sc-ground: #5cc2ae;
+  --sc-ground-op: 0.08;
+  --sc-shadow: #000000;
+  --sc-shadow-op: 0.55;
+  --sc-scroll: #17252a;
+  --sc-scroll-lines: #2e4448;
+  --sc-roll-1: #3e5559;
+  --sc-roll-2: #26383b;
+  --sc-roll-3: #162225;
+  --sc-roll-edge: #4a6266;
+  --sc-wax: #2f8f80;
+  --sc-wax-2: #277a6e;
+  --sc-wax-edge: #1c5a51;
+  --sc-lock: #e7ecec;
+  --sc-sheen: #e9fffa;
+  --sc-sweep: rgb(92 194 174 / 0.3);
+}
+
+/* Feixe que varre o anel do carregamento. */
+.gr-sweep {
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 285deg,
+    var(--sc-sweep) 352deg,
+    transparent 360deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 32%, #000 33%, #000 66%, transparent 67%);
+  mask: radial-gradient(circle, transparent 32%, #000 33%, #000 66%, transparent 67%);
+}

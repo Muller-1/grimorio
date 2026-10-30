@@ -1,4 +1,4 @@
-import { CONDITION_PREFIX, CONDITIONS, EXHAUSTION_ID } from '@grimorio/rules';
+import { CONDITION_PREFIX, EXHAUSTION_ID } from '@grimorio/rules';
 import type { CharacterSummary } from '@grimorio/shared';
 import type { CampaignDetail, GameAction, PartyMember } from '@grimorio/shared/campaign';
 import {
@@ -21,24 +21,17 @@ import { Popover } from '@/components/ui/popover';
 import { ServerStatus } from '@/features/auth/ServerStatus';
 import { useAuthStore } from '@/features/auth/store';
 import { listCharacters } from '@/features/characters/api';
+import { InlineLoader } from '@/features/screens/LoadingScreen';
 import { useToastStore } from '@/features/toast/store';
 import { formatDateTime } from '@/lib/format';
 import { tcp } from '@/lib/i18n/campaign';
 import { cn } from '@/lib/utils';
 import { campaignApi, inviteLink } from './api';
+import { CONDITION_LIST, conditionName, EXHAUSTION_NAME } from './conditions';
 import { campaignError } from './CampaignsPage';
 
 /** A mesa se atualiza sozinha enquanto a página está aberta. */
 const POLL_MS = 10_000;
-
-const CONDITION_LIST = CONDITIONS.filter((c) => c.id !== EXHAUSTION_ID);
-const EXHAUSTION_NAME = CONDITIONS.find((c) => c.id === EXHAUSTION_ID)?.name ?? EXHAUSTION_ID;
-
-function conditionName(key: string): string {
-  const exhaustion = `${CONDITION_PREFIX}${EXHAUSTION_ID}:`;
-  if (key.startsWith(exhaustion)) return `${EXHAUSTION_NAME} ${key.slice(exhaustion.length)}`;
-  return CONDITIONS.find((c) => `${CONDITION_PREFIX}${c.id}` === key)?.name ?? key;
-}
 
 function exhaustionOf(conditions: string[]): number {
   const prefix = `${CONDITION_PREFIX}${EXHAUSTION_ID}:`;
@@ -489,12 +482,16 @@ export default function CampaignPage() {
   if (status !== 'signed-in') {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
-        <p className="text-muted">{status === 'signed-out' ? tcp.signedOut : tcp.loading}</p>
+        {status === 'signed-out' ? (
+          <p className="text-muted">{tcp.signedOut}</p>
+        ) : (
+          <InlineLoader label={tcp.loading} className="py-0" />
+        )}
         <ServerStatus className="mx-auto mt-4 max-w-md text-left" />
       </div>
     );
   }
-  if (campaign === null) return <p className="p-8 text-center text-muted">{tcp.loading}</p>;
+  if (campaign === null) return <InlineLoader label={tcp.loading} />;
   if (campaign === 'missing') {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">

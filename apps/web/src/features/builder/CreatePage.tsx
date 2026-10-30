@@ -195,7 +195,7 @@ export default function CreatePage() {
       {step === 'details' ? <DetailsStep saveTo={saveTo} /> : null}
 
       {/* Rodapé fixo: voltar, o que falta e avançar */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
           <Button
             variant="ghost"

@@ -1,11 +1,13 @@
 /**
- * Tema visual (pedido dos testadores, 14/10/2026). As cores ficam em styles/index.css; aqui só
- * a escolha: guardada neste navegador e aplicada como `data-theme` no <html>.
+ * Tema visual: Pergaminho (claro) e Obsidiana (escuro), ou "Automático", que segue o aparelho.
+ * As cores ficam em styles/index.css; aqui só a escolha: guardada neste navegador e aplicada
+ * como `data-theme` no <html>. Escolhas antigas (Taverna, Arcano, Floresta, Alto contraste) não
+ * existem mais e viram "Automático".
  *
  * O public/theme.js repete a chave e a lista para aplicar o tema antes de a página aparecer
  * (a CSP não deixa script inline). O teste confere que os dois continuam iguais.
  */
-export const THEMES = ['auto', 'light', 'dark', 'arcane', 'forest', 'contrast'] as const;
+export const THEMES = ['auto', 'light', 'dark'] as const;
 export type ThemeId = (typeof THEMES)[number];
 
 export const THEME_STORAGE_KEY = 'grimorio.tema';

@@ -1,14 +1,11 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
+import { LoadingScreen } from '@/features/screens/LoadingScreen';
+import { NotFoundScreen } from '@/features/screens/NotFoundScreen';
+import { AppErrorBoundary } from '@/features/screens/ServerErrorScreen';
 import HomePage from '@/pages/HomePage';
 import StartPage from '@/pages/StartPage';
-import {
-  CreditsPage,
-  NotFoundPage,
-  PrivacyPage,
-  SupportPage,
-  TermsPage,
-} from '@/pages/SimplePages';
+import { CreditsPage, PrivacyPage, SupportPage, TermsPage } from '@/pages/SimplePages';
 import { t } from '@/lib/i18n';
 import { Layout } from './Layout';
 import { pageMeta } from './meta';
@@ -25,9 +22,16 @@ const CampaignPage = lazy(() => import('@/features/campaigns/CampaignPage'));
 
 function Loading({ children }: { children: ReactNode }) {
   return (
-    // Ocupa a tela toda enquanto carrega: o rodapé fica fora da vista e não "pula" quando a
-    // página chega (Lighthouse, CLS ≤ 0,1).
-    <Suspense fallback={<p className="min-h-dvh p-8 text-center text-muted">{t.common.loading}</p>}>
+    // A tela de carregamento cobre tudo (e só aparece se demorar). O espaço vazio embaixo dela
+    // ocupa a tela toda: o rodapé fica fora da vista e não "pula" quando a página chega
+    // (Lighthouse, CLS ≤ 0,1).
+    <Suspense
+      fallback={
+        <div className="min-h-dvh">
+          <LoadingScreen />
+        </div>
+      }
+    >
       {children}
     </Suspense>
   );
@@ -174,17 +178,20 @@ export const STATIC_PAGES: readonly {
 
 export function AppRoutes() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        {PAGES.map(({ path, element }) =>
-          path === '/' ? (
-            <Route key={path} index element={element} />
-          ) : (
-            <Route key={path} path={path.slice(1)} element={element} />
-          ),
-        )}
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+    <AppErrorBoundary>
+      <Routes>
+        <Route element={<Layout />}>
+          {PAGES.map(({ path, element }) =>
+            path === '/' ? (
+              <Route key={path} index element={element} />
+            ) : (
+              <Route key={path} path={path.slice(1)} element={element} />
+            ),
+          )}
+        </Route>
+        {/* As telas de erro têm cabeçalho próprio, sem a barra do site (docs/design.md). */}
+        <Route path="*" element={<NotFoundScreen />} />
+      </Routes>
+    </AppErrorBoundary>
   );
 }

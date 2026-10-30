@@ -1,4 +1,4 @@
-import { CircleUserRound, CloudOff, LogIn } from 'lucide-react';
+import { CircleUserRound, CloudOff } from 'lucide-react';
 import { lazy, Suspense } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ export function AccountMenu() {
     return (
       <span
         className={cn(
-          'grid size-9 place-items-center rounded-full text-muted',
+          'grid size-11 place-items-center rounded-full text-muted',
           slow && 'animate-pulse',
         )}
         title={label}
@@ -38,7 +38,7 @@ export function AccountMenu() {
   if (status === 'unavailable') {
     return (
       <span
-        className="grid size-9 place-items-center rounded-full text-muted"
+        className="grid size-11 place-items-center rounded-full text-muted"
         title={t.nav.accountsUnavailable}
         aria-label={t.nav.accountsUnavailable}
         role="img"
@@ -52,11 +52,8 @@ export function AccountMenu() {
 
   if (status === 'signed-out' || !user) {
     return (
-      <Button asChild size="sm" variant="outline" data-testid="account.signin">
-        <Link to="/entrar">
-          <LogIn className="size-4" aria-hidden="true" />
-          <span className="max-sm:sr-only">{t.auth.signIn}</span>
-        </Link>
+      <Button asChild variant="outline" className="bg-transparent" data-testid="account.signin">
+        <Link to="/entrar">{t.auth.signIn}</Link>
       </Button>
     );
   }
@@ -64,8 +61,8 @@ export function AccountMenu() {
   return (
     <Suspense
       fallback={
-        <span className="rounded-full p-0.5">
-          <Avatar name={user.displayName} image={user.image} />
+        <span className="grid size-11 place-items-center">
+          <Avatar name={user.displayName} image={user.image} ringed />
         </span>
       }
     >

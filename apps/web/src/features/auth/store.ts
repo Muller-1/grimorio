@@ -9,6 +9,12 @@ import { safeStorage } from '@/ports/storage';
 export const ACCOUNT_STORAGE_PREFIX = 'grimorio.conta.';
 
 /**
+ * "Este aparelho entrou na conta da última vez": a página inicial já abre a tela de quem tem
+ * conta enquanto o servidor responde (no plano grátis ele pode levar até 1 minuto acordando).
+ */
+export const SIGNED_IN_HINT_KEY = `${ACCOUNT_STORAGE_PREFIX}entrou`;
+
+/**
  * Estado do login (ADR-008).
  * - `disabled`: build sem contas (VITE_ACCOUNTS); o site funciona só no navegador, como antes.
  * - `loading`: perguntando à API quem está logado.
@@ -120,6 +126,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
         }
         failures = 0;
         const user = session.data.user;
+        if (user) safeStorage.set(SIGNED_IN_HINT_KEY, '1');
+        else safeStorage.remove(SIGNED_IN_HINT_KEY);
         set({
           status: user ? 'signed-in' : 'signed-out',
           user,

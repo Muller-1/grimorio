@@ -1,7 +1,8 @@
 import { type ActivationView, type ResourceView, type SheetNotice } from '@grimorio/rules';
-import { Minus, Plus, Power, Zap } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel } from '@/components/ui/panel';
+import { SwitchTrack } from '@/components/ui/switch-track';
 import { useDiceStore } from '@/features/dice/store';
 import { useToastStore } from '@/features/toast/store';
 import { t } from '@/lib/i18n';
@@ -23,9 +24,12 @@ function ResourceRow({ r }: { r: ResourceView }) {
   const dispatch = useSheetStore((s) => s.dispatch);
   const notify = useNotify();
   return (
-    <li className="flex items-center gap-2 py-1" data-testid={`resource.${r.id}`}>
+    <li
+      className="flex items-center gap-2 rounded-lg border border-border-soft bg-field py-1.5 pr-1.5 pl-3"
+      data-testid={`resource.${r.id}`}
+    >
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">
+        <p className="truncate font-bold">
           {r.name}
           {r.die ? <span className="ml-1 font-normal text-muted">{p.die(r.die)}</span> : null}
         </p>
@@ -102,33 +106,29 @@ function ActivationRow({ a, names }: { a: ActivationView; names: Map<string, str
   return (
     <li
       className={cn(
-        'flex items-center gap-2 rounded-lg border px-2 py-1.5',
-        a.active ? 'border-accent bg-accent-soft' : 'border-border',
+        'flex items-center gap-2.5 rounded-lg border px-3 py-2',
+        a.active ? 'border-accent bg-accent-soft' : 'border-border-soft bg-field',
       )}
       data-testid={`activation.${a.id}`}
       data-active={a.active}
     >
-      <Zap
-        className={cn('size-4 shrink-0', a.active ? 'text-accent' : 'text-muted')}
-        aria-hidden="true"
-      />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">{a.name}</p>
+        <p className="font-bold">{a.name}</p>
         {details.length ? <p className="text-xs text-muted">{details.join(' · ')}</p> : null}
       </div>
       {a.mode === 'toggle' ? (
-        <Button
-          size="sm"
-          variant={a.active ? 'primary' : 'outline'}
-          aria-pressed={a.active}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={a.active}
           aria-label={p.toggleLabel(a.name, a.active)}
           disabled={!a.available}
           onClick={() => notify(dispatch({ type: 'toggle-activation', id: a.id }))}
           data-testid={`activation.${a.id}.toggle`}
+          className="shrink-0 rounded-full disabled:opacity-50"
         >
-          <Power className="size-3.5" />
-          {a.active ? p.turnOff : p.turnOn}
-        </Button>
+          <SwitchTrack on={a.active} />
+        </button>
       ) : (
         <Button
           size="sm"
@@ -149,7 +149,7 @@ function ActivationRow({ a, names }: { a: ActivationView; names: Map<string, str
  * para ligar (Fúria, Ataque Imprudente) ou usar (Recuperar Fôlego), e as magias que estão
  * valendo no personagem. As contas (dano, CA, vantagens) mudam sozinhas na ficha.
  */
-export function PowersPanel() {
+export function PowersPanel({ className }: { className?: string }) {
   const { derived } = useSheet();
   const { resources, activations } = derived.engine;
   const names = new Map(activations.map((a) => [a.id, a.name]));
@@ -157,12 +157,16 @@ export function PowersPanel() {
   const active = derived.notes.length > 0 || resist.length > 0;
 
   return (
-    <Panel title={p.title} bodyClassName="space-y-3" className="max-md:scroll-mt-28">
+    <Panel
+      title={p.title}
+      bodyClassName="space-y-3"
+      className={cn('max-md:scroll-mt-28', className)}
+    >
       {resources.length === 0 && activations.length === 0 ? (
         <p className="text-sm text-muted">{p.empty}</p>
       ) : null}
       {resources.length ? (
-        <ul className="divide-y divide-border" data-testid="powers.resources">
+        <ul className="space-y-1.5" data-testid="powers.resources">
           {resources.map((r) => (
             <ResourceRow key={r.id} r={r} />
           ))}
@@ -177,7 +181,7 @@ export function PowersPanel() {
       ) : null}
       {active ? (
         <div className="rounded-lg bg-surface-2 px-3 py-2 text-sm" data-testid="powers.active">
-          <p className="font-semibold">{p.activeTitle}</p>
+          <p className="font-bold">{p.activeTitle}</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5">
             {resist.length ? <li>{p.resistances(resist.join(', '))}</li> : null}
             {derived.notes.map((n, i) => (

@@ -81,8 +81,11 @@ export const ptBR = {
 
   nav: {
     home: 'Início',
+    homeLabel: 'Grimório, página inicial',
+    menu: 'Abrir menu',
+    menuClose: 'Fechar menu',
     sheet: 'Fichas',
-    campaign: 'Campanha',
+    campaign: 'Campanhas',
     dice: 'Dados',
     support: 'Apoie',
     profile: 'Perfil',
@@ -104,11 +107,8 @@ export const ptBR = {
     hint: 'Fica salvo neste navegador.',
     options: {
       auto: { name: 'Automático', text: 'Claro ou escuro, igual ao seu aparelho.' },
-      light: { name: 'Pergaminho', text: 'Claro, cor de papel antigo.' },
-      dark: { name: 'Taverna', text: 'Escuro, à luz de vela.' },
-      arcane: { name: 'Arcano', text: 'Escuro, azul-noite e violeta.' },
-      forest: { name: 'Floresta', text: 'Claro, verde-musgo.' },
-      contrast: { name: 'Alto contraste', text: 'Preto no branco, para ler melhor.' },
+      light: { name: 'Pergaminho', text: 'Claro, papel antigo com detalhes em ouro.' },
+      dark: { name: 'Obsidiana', text: 'Escuro, para a mesa à noite, com detalhes em prata.' },
     },
   },
   footer: {
@@ -120,7 +120,8 @@ export const ptBR = {
     privacy: 'Privacidade',
     support: 'Apoie o projeto',
     compat: 'Compatível com a 5ª edição. Projeto independente, sem vínculo com a editora do jogo.',
-    version: (version: string, commit: string) => `v${version} · ${commit}`,
+    version: (version: string) => `v${version}`,
+    build: (commit: string) => `Código ${commit}`,
   },
 
   home: {
@@ -130,7 +131,7 @@ export const ptBR = {
     ctaDice: 'Rolar dados',
     startLink: 'Nunca jogou? Veja os primeiros passos',
     blankLink: 'Já sabe preencher? Abrir uma ficha em branco',
-    freeNote: 'Grátis, sem anúncios e em português.',
+    badges: ['Grátis', 'sem anúncios', 'em português'],
     localNote: 'Nesta versão, a ficha fica salva só neste navegador.',
     accountsNote:
       'Sem conta, tudo fica salvo neste navegador. Entrando com o Google, suas fichas abrem em qualquer aparelho.',
@@ -228,6 +229,61 @@ export const ptBR = {
     supportText:
       'O Grimório é e continuará gratuito. Se ele ajudar a sua mesa, considere apoiar o projeto.',
     supportCta: 'Quero apoiar',
+    /** Cartões ilustrativos ao lado dos textos (só desenho: o leitor de tela pula). */
+    preview: {
+      wizard: {
+        label: 'Criar personagem',
+        step: 'Passo 1 de 4',
+        title: 'Escolha a classe',
+        hint: 'Na dúvida, escolha Guerreiro ou Ladino: são as classes mais simples para começar.',
+        classes: [
+          { name: 'Bárbaro', text: 'Luta na linha de frente com a Fúria', simple: false },
+          { name: 'Guerreiro', text: 'Domina armas, armaduras e estilos de luta', simple: true },
+          { name: 'Ladino', text: 'Furtividade, perícias e Ataque Furtivo', simple: true },
+          { name: 'Mago', text: 'Aprende magias e guarda num grimório', simple: false },
+        ],
+        selected: 'Ladino',
+        simple: 'Simples para começar',
+        simpleShort: 'Simples',
+        back: 'Voltar',
+        next: 'Próximo: Origem',
+      },
+      levelUp: {
+        label: 'Subir de nível',
+        who: 'Kaela · Ladina',
+        level: 'Nível',
+        text: 'O que você ganhou e o que precisa escolher.',
+        hp: 'Pontos de Vida máximos',
+        hpValue: '24 → 31',
+        hitDice: 'Dados de Vida',
+        hitDiceValue: '3d8 → 4d8',
+        feat: 'Talento de Aumento no Valor de Atributo',
+        choose: 'Escolher',
+      },
+      dice: {
+        label: 'Dados',
+        history: 'Histórico da sessão',
+        expression: '2d20kh1+5',
+        roll: 'Rolar',
+        advantage: 'Vantagem: fica o maior',
+        rows: [
+          ['4d6kh3', '14'],
+          ['1d8+3 · Rapieira', '9'],
+          ['100d2', '153'],
+        ],
+      },
+      explain: {
+        label: 'De onde vem este número',
+        skill: 'Furtividade',
+        rows: [
+          ['Modificador de Destreza', '+3'],
+          ['Bônus de Proficiência', '+2'],
+        ],
+        total: 'Total',
+        tipBefore: 'Mudou a Destreza para 18? Vira',
+        tipAfter: 'sozinho.',
+      },
+    },
   },
 
   start: {
@@ -471,12 +527,123 @@ export const ptBR = {
     openedOffline: 'Servidor fora do ar: abrimos a cópia deste aparelho.',
   },
 
-  pages: {
-    notFound: {
-      title: 'Página não encontrada',
-      text: 'Essa página se perdeu na masmorra.',
-      back: 'Voltar ao início',
+  /** Tela inicial de quem entrou na conta (docs/design.md). */
+  dashboard: {
+    greeting: (hour: number, name: string) =>
+      `${hour >= 5 && hour < 12 ? 'Bom dia' : hour >= 12 && hour < 18 ? 'Boa tarde' : 'Boa noite'}, ${name}`,
+    saved: 'Suas fichas e campanhas estão salvas na conta.',
+    create: 'Criar personagem',
+    opening: 'Abrindo a sua mesa…',
+    failed: 'Não foi possível carregar agora.',
+    retry: 'Tentar de novo',
+    continueTitle: 'Continuar de onde parou',
+    editedToday: (time: string) => `Editada hoje, ${time}`,
+    editedOn: (date: string) => `Editada em ${date}`,
+    atTable: (name: string) => `Na mesa: ${name}`,
+    open: 'Abrir ficha',
+    level: (n: number) => `Nível ${n}`,
+    ac: 'Classe de Armadura',
+    hp: 'Pontos de Vida',
+    hpLabel: (current: number, max: number) =>
+      current >= max ? 'Pontos de Vida cheios' : `${current} de ${max} Pontos de Vida`,
+    initiative: 'Iniciativa',
+    rollInitiative: (mod: string) => `Rolar Iniciativa: ${mod}`,
+    initiativeRoll: (name: string) => `Iniciativa · ${name}`,
+    inspiration: 'Inspiração Heroica',
+    inspirationOn: 'Disponível',
+    inspirationOff: 'Sem inspiração agora',
+    noConditions: 'Sem condições',
+    hitDice: (left: number, total: number) => `Dados de Vida ${left} de ${total}`,
+    noCharacter: 'Você ainda não tem personagens na conta.',
+    noCharacterHint: 'O assistente monta a ficha passo a passo, com as regras explicadas.',
+    quickTitle: 'Rolagem rápida',
+    openDice: 'Abrir Dados',
+    advantage: 'Vantagem',
+    rollDie: (name: string) => `Rolar ${name}`,
+    quickEmpty: 'Toque num dado ou escreva uma expressão.',
+    charactersTitle: 'Meus personagens',
+    count: (n: number, max: number) => `${n} de ${max}`,
+    status: (ac: number, hp: number, max: number) => `CA ${ac} · PV ${hp}/${max}`,
+    updatedToday: (time: string) => `Hoje, ${time}`,
+    updatedOn: (date: string) => `Editado em ${date}`,
+    seeAllCharacters: 'Ver todos',
+    campaignsTitle: 'Campanhas',
+    seeAll: 'Ver todas',
+    roleDm: 'Mestre',
+    rolePlayer: 'Jogador',
+    counts: (people: number, sheets: number) =>
+      `${people} ${people === 1 ? 'pessoa' : 'pessoas'} · ${sheets} ${sheets === 1 ? 'ficha' : 'fichas'}`,
+    hereAtTable: (name: string) => `${name} está na mesa`,
+    noCampaigns:
+      'Nenhuma campanha ainda. Crie uma para a sua mesa ou entre com o convite da mestre.',
+    createCampaign: 'Criar campanha',
+    useInvite: 'Usar convite',
+  },
+
+  /** Tela de carregamento e telas de erro (docs/design.md). */
+  screens: {
+    loading: {
+      title: 'Carregando o Grimório',
+      status: 'Carregando…',
+      phrases: [
+        'Consultando o oráculo…',
+        'Desenrolando o pergaminho…',
+        'Afiando as espadas…',
+        'Preparando os espaços de magia…',
+        'Rolando iniciativa…',
+        'Acendendo as tochas…',
+      ],
+      rolling: 'Rolando…',
     },
+    tipLabel: 'Dica',
+    tips: [
+      'Com Inspiração Heroica, você pode rolar de novo qualquer dado logo depois da rolagem — e fica com o novo resultado.',
+      'Toque num número da ficha para ver de onde ele vem: atributo, proficiência e bônus, um por um.',
+      'Vantagem é rolar dois d20 e ficar com o maior; Desvantagem, com o menor. A ficha marca quando cada uma vale.',
+      'Num Descanso Longo você recupera todos os Pontos de Vida e os espaços de magia.',
+    ],
+    nav: { sheets: 'Fichas', campaigns: 'Campanhas', dice: 'Rolador' },
+    home: 'Voltar ao início',
+    notFound: {
+      eyebrow: 'Erro 404 · falha crítica',
+      title: 'Esta página não está no mapa',
+      text: 'Você rolou um 1 natural em Sabedoria (Sobrevivência). O caminho que procurava não existe ou mudou de lugar.',
+      art: 'Mapa rasgado: a trilha pontilhada termina na borda rasgada. Ao lado, um d20 mostra o resultado.',
+      reroll: 'Rolar de novo',
+      rolling: 'Rolando…',
+      mySheets: 'Ver minhas fichas',
+      result: (n: number) => `Resultado: ${n}`,
+      outcome: (n: number) =>
+        n === 20
+          ? 'Acerto crítico! Mas nem um 20 natural faz esta página existir.'
+          : n === 1
+            ? 'Outro 1. A trilha continua perdida.'
+            : n >= 10
+              ? 'Você acha pegadas… e elas levam de volta ao início.'
+              : 'Não foi o bastante para reencontrar a trilha.',
+    },
+    server: {
+      eyebrow: 'Erro 500 · o ritual falhou',
+      title: 'A magia saiu pela culatra',
+      text: 'Algo deu errado e a página não pôde ser montada. Tente de novo em alguns instantes; se o problema continuar, avise a gente.',
+      art: 'Um círculo mágico partido ao meio por uma rachadura, soltando fumaça e faíscas.',
+      retry: 'Tentar de novo',
+      retrying: 'Tentando…',
+      code: 'Código do erro:',
+      report: 'Avisar sobre o problema',
+    },
+    forbidden: {
+      eyebrow: 'Erro 403 · acesso restrito',
+      title: 'Esta parte é só do Mestre',
+      text: 'Nesta campanha, os jogadores veem apenas o resumo das fichas dos outros. A ficha completa fica com quem a criou e com o Mestre.',
+      art: 'Um pergaminho enrolado, amarrado com fita e fechado por um selo de cera com um cadeado.',
+      summary: 'Ver resumo da ficha',
+      back: 'Voltar à campanha',
+      note: 'Precisa de alguma informação da ficha? Peça ao Mestre ou a quem a criou.',
+    },
+  },
+
+  pages: {
     updated: (date: string) => `Atualizado em ${date}`,
     initialVersion: 'Versão inicial, válida enquanto o site não tem contas',
     contactTitle: 'Contato',
@@ -510,6 +677,7 @@ export const ptBR = {
         ['class-variance-authority', 'Apache-2.0'],
         ['Ícones Lucide', 'ISC'],
         ['Fonte Cinzel (via Fontsource)', 'SIL Open Font License 1.1'],
+        ['Fonte Alegreya Sans (via Fontsource)', 'SIL Open Font License 1.1'],
       ] as [string, string][],
       rulesTitle: 'Regras do jogo',
       rules:
@@ -766,6 +934,14 @@ export const ptBR = {
     },
 
     identity: {
+      sectionLabel: 'Identidade',
+      species: 'Espécie',
+      background: 'Antecedente',
+      you: 'Você',
+      menu: 'Mais opções da ficha',
+      edit: 'Editar nome, classe e descrição',
+      editTitle: 'Dados do personagem',
+      done: 'Pronto',
       portrait: 'Retrato',
       portraitUrl: 'Link da imagem do retrato',
       portraitPlaceholder: 'https://…',
@@ -790,21 +966,26 @@ export const ptBR = {
       proficiency: 'Proficiência',
       inspiration: 'Inspiração Heroica',
       inspirationMax: 'Máximo',
+      inspirationOn: 'Inspiração Heroica: você tem (toque para usar)',
+      inspirationOff: 'Inspiração Heroica: você não tem (toque para ganhar)',
       decrease: (what: string) => `Diminuir ${what}`,
       increase: (what: string) => `Aumentar ${what}`,
     },
 
-    abilitiesTitle: 'Atributos',
+    abilitiesTitle: 'Atributos, salvaguardas e perícias',
+    abilitiesHint: 'Toque no nome para rolar · no número para ver de onde vem',
+    abilityValue: 'Valor',
+    saveRow: 'Salvaguarda',
+    noSkills: (name: string) => `Nenhuma perícia usa ${name}.`,
+    legend: { none: 'sem proficiência', prof: 'proficiente', expert: 'especialista' },
     abilityScore: (name: string) => `Valor de ${name}`,
     abilityMod: 'Modificador',
     rollCheck: (name: string) => `Rolar teste de ${name}`,
     checkLabel: (name: string) => `Teste de ${name}`,
 
-    savesTitle: 'Salvaguardas',
     saveLabel: (name: string) => `Salvaguarda de ${name}`,
     rollSave: (name: string) => `Rolar salvaguarda de ${name}`,
 
-    skillsTitle: 'Perícias',
     skillLabel: (name: string) => name,
     rollSkill: (name: string) => `Rolar ${name}`,
     passivePerception: 'Percepção passiva',
@@ -818,6 +999,7 @@ export const ptBR = {
     proficiencyToggle: (name: string, state: string) => `${name}: ${state}. Clique para trocar.`,
 
     combat: {
+      title: 'Combate',
       ac: 'Classe Armd.',
       acLong: 'Classe de Armadura',
       initiative: 'Iniciativa',
@@ -827,7 +1009,6 @@ export const ptBR = {
       acManualHint: 'Use enquanto armaduras não estão no site. Ex.: Cota de Malha + Escudo = 18.',
       acAuto: 'Voltar ao cálculo (10 + Destreza)',
       speedEdit: 'Deslocamento em metros',
-      speedUnit: 'm',
       speedValue: (m: string) => `${m} m`,
       speedNow: (m: string) =>
         `Agora: ${m} m (magias ou condições). O campo acima é o seu deslocamento normal.`,
@@ -844,6 +1025,10 @@ export const ptBR = {
       received: 'Recebidos',
       max: 'Máximos',
       amount: 'Quantidade',
+      amountShort: 'Qtd.',
+      ofMax: (max: number) => `/ ${max}`,
+      totals: (healed: number, received: number) =>
+        `Desde o último descanso longo: ${healed} curados, ${received} recebidos.`,
       damage: 'Dano',
       heal: 'Cura',
       addTemp: 'Temp.',
@@ -873,8 +1058,9 @@ export const ptBR = {
 
     hitDice: {
       title: 'Dados de Vida',
-      remaining: (remaining: number, total: number, die: number) => `${remaining}/${total}d${die}`,
+      remaining: (remaining: number, total: number) => `${remaining} / ${total}`,
       roll: 'Rolar',
+      spend: (die: number) => `Gastar 1d${die}`,
       rollLabel: 'Gastar um dado de vida e recuperar PV',
       die: 'Tipo de dado de vida',
       rollName: 'Dado de vida',
@@ -882,8 +1068,10 @@ export const ptBR = {
 
     deathSaves: {
       title: 'Salvaguardas contra Morte',
-      success: 'Sucesso',
-      failure: 'Fracasso',
+      success: 'Sucessos',
+      failure: 'Fracassos',
+      count: (n: number) => `${n} de 3`,
+      rollShort: 'Rolar',
       roll: 'Rolar salvaguarda contra morte',
       rollName: 'Salvaguarda contra morte',
       pip: (kind: string, n: number) => `${kind} ${n}`,
@@ -908,13 +1096,24 @@ export const ptBR = {
 
     actions: {
       tabs: {
-        weapons: 'Armas/Utilizáveis',
+        weapons: 'Armas',
         spells: 'Magias',
         inventory: 'Inventário',
         features: 'Características',
         add: 'Adicionar',
       },
       search: 'Pesquisar…',
+      searchIn: (tab: string) => `Pesquisar ${tab.toLowerCase()}…`,
+      columns: {
+        weapon: 'Arma',
+        properties: 'Propriedades',
+        crit: 'Crítico',
+        toHit: 'Acerto',
+        damage: 'Dano',
+      },
+      critShort: (n: number) => (n >= 20 ? '20' : `${n}–20`),
+      critLabel: (n: number) => (n >= 20 ? 'Crítico em 20' : `Crítico de ${n} a 20`),
+      rollDamageOf: (name: string, expr: string) => `Rolar dano de ${name}: ${expr}`,
       searchLabel: 'Pesquisar na lista',
       emptyWeapons: 'Nenhuma arma ainda. Use o + para adicionar.',
       emptyFeatures:
@@ -1077,7 +1276,7 @@ export const ptBR = {
     },
 
     powers: {
-      title: 'Habilidades',
+      title: 'Habilidades e efeitos',
       empty:
         'Sem habilidades de classe com usos ou para ligar. Fichas do assistente mostram aqui Fúria, Canalizar Divindade e afins.',
       uses: (remaining: number, max: number) => `${remaining}/${max}`,
@@ -1091,8 +1290,6 @@ export const ptBR = {
         one: '1 volta no descanso curto',
         none: 'volta no descanso longo',
       },
-      turnOn: 'Ligar',
-      turnOff: 'Desligar',
       use: 'Usar',
       on: 'Ligada',
       toggleLabel: (name: string, on: boolean) => `${name}: ${on ? 'ligada' : 'desligada'}`,

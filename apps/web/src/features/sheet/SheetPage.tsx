@@ -1,5 +1,5 @@
 import { createBlankSheet } from '@grimorio/shared';
-import { ArrowLeft, FilePlus2, HardDriveDownload, Sparkles, Wand2 } from 'lucide-react';
+import { ArrowLeft, Wand2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
@@ -8,9 +8,11 @@ import { RollTray } from '@/features/dice/components/RollTray';
 import { useToastStore } from '@/features/toast/store';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { AbilitiesPanel } from './components/AbilitiesPanel';
 import { ActionsColumn } from './components/ActionsColumn';
-import { CharacterColumn } from './components/CharacterColumn';
-import { CombatColumn, SkillsPanel } from './components/CombatColumn';
+import { CombatPanel, DeathSavesPanel } from './components/CombatColumn';
+import { IdentityBar } from './components/Identity';
+import { PowersPanel } from './components/PowersPanel';
 import { safeStorage } from '@/ports/storage';
 import { exampleSheet } from './example';
 import { useSheetStore } from './store';
@@ -35,7 +37,7 @@ function WizardHint() {
   const h = t.sheet.wizardHint;
   return (
     <aside
-      className="mb-3 flex flex-col gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 sm:flex-row sm:items-center"
+      className="flex flex-col gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 sm:flex-row sm:items-center"
       data-testid="sheet.wizard-hint"
     >
       <Wand2 className="size-6 shrink-0 text-accent" aria-hidden="true" />
@@ -44,11 +46,10 @@ function WizardHint() {
         <p className="mt-0.5">{h.text}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="primary">
+        <Button asChild variant="primary">
           <Link to="/criar">{h.cta}</Link>
         </Button>
         <Button
-          size="sm"
           variant="ghost"
           onClick={() => {
             safeStorage.set(WIZARD_HINT_KEY, '1');
@@ -64,8 +65,10 @@ function WizardHint() {
 type Confirm = 'blank' | 'example' | null;
 
 /**
- * A ficha do protótipo: 3 colunas no computador, 2 no tablet e abas no celular
- * (plano v2, seção 2 e RNF-02).
+ * A ficha (docs/design.md): a faixa de identidade em cima; atributos (com salvaguardas e
+ * perícias) ao lado do combate; embaixo, as abas de armas, magias, inventário e
+ * características ao lado das habilidades. No celular, a identidade fica em cima e o resto vira
+ * três abas (Personagem, Combate, Ações), que também trocam deslizando para os lados.
  *
  * `local` = a ficha deste navegador (/ficha). `account` = uma ficha da conta (/personagem),
  * aberta pela AccountSheetPage, com salvamento automático no servidor.
@@ -127,43 +130,27 @@ export default function SheetPage({
     { key: 'combat', label: t.sheet.mobileTabs.combat },
     { key: 'actions', label: t.sheet.mobileTabs.actions },
   ];
+  const hidden = (key: Column) => column !== key && 'max-md:hidden';
+  const wide = 'min-w-0 md:flex-[2_1_760px]';
+  const narrow = 'min-w-0 md:flex-[1_1_360px]';
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-3 pt-3 pb-24 sm:px-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          {mode === 'account' ? (
-            <Button asChild variant="ghost" size="icon-sm" aria-label={t.sync.backToList}>
-              <Link to="/personagens">
-                <ArrowLeft className="size-4" />
-              </Link>
-            </Button>
-          ) : null}
-          <div className="min-w-0">
-            <h1 className="truncate font-display text-xl font-bold">{name || t.sheet.unnamed}</h1>
-            {mode === 'account' ? (
-              status
-            ) : (
-              <p className="flex items-center gap-1 text-xs text-muted">
-                <HardDriveDownload className="size-3.5" aria-hidden="true" />
-                {t.sheet.savedLocally}
-              </p>
-            )}
-          </div>
-        </div>
-        {mode === 'local' ? (
-          <div className="flex gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setConfirm('example')}>
-              <Sparkles className="size-4" />
-              {t.sheet.loadExample}
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setConfirm('blank')}>
-              <FilePlus2 className="size-4" />
-              {t.sheet.newSheet}
-            </Button>
-          </div>
-        ) : null}
-      </div>
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-3 pt-4 pb-24 md:gap-5 md:px-6 md:pt-5">
+      {mode === 'account' ? (
+        <Button asChild variant="ghost" size="sm" className="-mb-2 self-start text-muted">
+          <Link to="/personagens">
+            <ArrowLeft className="size-4" />
+            {t.sync.backToList}
+          </Link>
+        </Button>
+      ) : null}
+
+      <IdentityBar
+        {...(mode === 'account' ? { status } : {})}
+        {...(mode === 'local'
+          ? { onExample: () => setConfirm('example'), onBlank: () => setConfirm('blank') }
+          : {})}
+      />
 
       {mode === 'local' ? <WizardHint /> : banner}
 
@@ -171,7 +158,7 @@ export default function SheetPage({
       <div
         role="tablist"
         aria-label={t.sheet.pageTitle}
-        className="sticky top-14 z-20 mb-3 grid grid-cols-3 gap-1 rounded-lg border border-border bg-surface p-1 md:hidden"
+        className="sticky top-16 z-20 grid grid-cols-3 gap-1 rounded-[10px] border border-border bg-surface p-1 md:hidden"
       >
         {columns.map((c) => (
           <button
@@ -182,8 +169,10 @@ export default function SheetPage({
             aria-controls={`col-${c.key}`}
             onClick={() => setColumn(c.key)}
             className={cn(
-              'h-9 rounded-md text-sm font-semibold transition-colors',
-              column === c.key ? 'bg-accent text-accent-contrast' : 'text-muted hover:bg-surface-2',
+              'h-10 rounded-[7px] text-sm transition-colors',
+              column === c.key
+                ? 'bg-accent font-bold text-accent-contrast'
+                : 'font-medium text-muted hover:bg-surface-2',
             )}
           >
             {c.label}
@@ -193,33 +182,39 @@ export default function SheetPage({
 
       <div
         ref={columnsRef}
-        className="grid grid-cols-1 gap-3 max-md:min-h-[60svh] max-md:touch-pan-y max-md:touch-pinch-zoom md:grid-cols-2 xl:grid-cols-3"
+        data-testid="sheet.columns"
+        className="flex flex-col gap-4 max-md:min-h-[60svh] max-md:touch-pan-y max-md:touch-pinch-zoom md:gap-5"
       >
-        <section
-          id="col-character"
-          aria-label={t.sheet.columns.character}
-          className={cn(column !== 'character' && 'max-md:hidden')}
-        >
-          <CharacterColumn />
-        </section>
-        <section
-          id="col-combat"
-          aria-label={t.sheet.columns.combat}
-          className={cn(column !== 'combat' && 'max-md:hidden')}
-        >
-          <CombatColumn />
-        </section>
-        <section
-          id="col-actions"
-          aria-label={t.sheet.columns.actions}
-          className={cn('md:col-span-2 xl:col-span-1', column !== 'actions' && 'max-md:hidden')}
-        >
-          {/* Perícias em cima das armas, magias, inventário e características. */}
-          <div className="space-y-3">
-            <SkillsPanel />
-            <ActionsColumn />
+        <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-stretch md:gap-5">
+          <section
+            id="col-character"
+            aria-label={t.sheet.columns.character}
+            className={cn(wide, 'flex flex-col', hidden('character'))}
+          >
+            <AbilitiesPanel className="flex-1" />
+          </section>
+          <section
+            id="col-combat"
+            aria-label={t.sheet.columns.combat}
+            className={cn(narrow, 'flex flex-col gap-4 md:gap-5', hidden('combat'))}
+          >
+            <CombatPanel />
+            <DeathSavesPanel className="flex-1" />
+          </section>
+        </div>
+        <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-stretch md:gap-5">
+          <section
+            id="col-actions"
+            aria-label={t.sheet.columns.actions}
+            className={cn(wide, 'flex flex-col', hidden('actions'))}
+          >
+            <ActionsColumn className="flex-1" />
+          </section>
+          {/* No celular, as habilidades aparecem na aba Combate (logo abaixo dele). */}
+          <div className={cn(narrow, 'flex flex-col', hidden('combat'))}>
+            <PowersPanel className="flex-1" />
           </div>
-        </section>
+        </div>
       </div>
 
       <RollTray />

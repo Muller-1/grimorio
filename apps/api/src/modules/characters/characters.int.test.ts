@@ -90,6 +90,10 @@ describe('criar, listar e abrir', () => {
     expect(list.map((c: { name: string }) => c.name)).toEqual(['Segunda', 'Primeira']);
     expect(list[0]).toMatchObject({ level: 3, classSummary: 'Guerreiro', rulesEdition: '2024' });
     expect(list[0]).not.toHaveProperty('sheet');
+    // O cartão da tela inicial: CA e PV calculados no servidor, nada além disso.
+    expect(Object.keys(list[0].card).sort()).toEqual(['ac', 'hp', 'origin']);
+    expect(list[0].card.ac).toBeGreaterThan(0);
+    expect(list[0].card.hp.max).toBeGreaterThan(0);
   });
 
   it('ficha inválida é recusada com VALIDATION_ERROR', async () => {

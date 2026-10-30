@@ -135,7 +135,7 @@ test.describe('B16 — inventário, características e efeitos', { tag: '@B16' }
       'data-carried',
       String(Math.round((expected.carriedKg - machado) * 100) / 100),
     );
-    await page.getByRole('tab', { name: 'Armas/Utilizáveis' }).click();
+    await page.getByRole('tab', { name: 'Armas', exact: true }).click();
     await expect(page.getByTestId('attack.w1')).toHaveCount(0);
     await expect(page.getByTestId('attack.w2')).toBeVisible();
     await expect(page.getByTestId('weapons.stored')).toBeVisible();

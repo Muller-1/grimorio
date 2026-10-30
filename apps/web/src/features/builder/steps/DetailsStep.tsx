@@ -133,7 +133,7 @@ export function DetailsStep({ saveTo }: { saveTo: 'account' | 'local' }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
       <div className="space-y-5">
-        <div className="space-y-3 text-[15px] leading-relaxed">
+        <div className="space-y-3 text-sm leading-relaxed">
           <h1 className="font-display text-2xl font-bold">{dt.title}</h1>
           {dt.intro.map((p) => (
             <p key={p}>{p}</p>

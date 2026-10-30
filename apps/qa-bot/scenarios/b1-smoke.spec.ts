@@ -3,7 +3,15 @@
  * no console; com semente fixa, 1d20 dá um valor exato conhecido.
  */
 import { seededRng } from '@grimorio/rules';
-import { expect, expected404, openPage, PAGES, rollBy, test } from '../support/bot';
+import {
+  expect,
+  expected404,
+  openPage,
+  openThemeOptions,
+  PAGES,
+  rollBy,
+  test,
+} from '../support/bot';
 
 test.describe('B1 — fumaça', { tag: '@B1' }, () => {
   for (const path of PAGES) {
@@ -19,7 +27,7 @@ test.describe('B1 — fumaça', { tag: '@B1' }, () => {
     const response = await page.goto('/nao-existe');
     expect(response?.status()).toBe(404);
     await page.waitForFunction(() => window.__APP_TEST__ !== undefined);
-    await expect(page.locator('h1')).toHaveText('Página não encontrada');
+    await expect(page.locator('h1')).toHaveText('Esta página não está no mapa');
   });
 
   // Feedback dos testadores (14/10): quem chega pela inicial vai direto para o assistente.
@@ -55,27 +63,28 @@ test.describe('B1 — fumaça', { tag: '@B1' }, () => {
     await page.waitForURL(/\/criar$/);
   });
 
-  // Pedido dos testadores (14/10): temas de cor, lembrados neste navegador.
+  // Tema claro ou escuro, lembrado neste navegador.
   test('troca o tema, lembra depois de recarregar e volta ao automático', async ({ page }) => {
     const html = page.locator('html');
     await openPage(page, '/');
     await expect(html).not.toHaveAttribute('data-theme', /./);
-    await page.getByTestId('theme.trigger').click();
-    await page.getByTestId('theme.option.arcane').click();
-    await expect(html).toHaveAttribute('data-theme', 'arcane');
-    await expect(page.getByTestId('theme.option.arcane').getByRole('radio')).toBeChecked();
+    await openThemeOptions(page);
+    await page.getByTestId('theme.option.dark').click();
+    await expect(html).toHaveAttribute('data-theme', 'dark');
+    await expect(page.getByTestId('theme.option.dark').getByRole('radio')).toBeChecked();
     // O public/theme.js aplica o tema antes do app: vale até numa página "shell".
     await openPage(page, '/dados');
-    await expect(html).toHaveAttribute('data-theme', 'arcane');
+    await expect(html).toHaveAttribute('data-theme', 'dark');
     await page.reload();
-    await expect(html).toHaveAttribute('data-theme', 'arcane');
-    await page.getByTestId('theme.trigger').click();
+    await expect(html).toHaveAttribute('data-theme', 'dark');
+    await openThemeOptions(page);
     await page.getByTestId('theme.option.auto').click();
     await expect(html).not.toHaveAttribute('data-theme', /./);
     expect(await page.evaluate(() => localStorage.getItem('grimorio.tema'))).toBeNull();
   });
 
-  test('o seletor de tema funciona pelo teclado', async ({ page }) => {
+  test('o seletor de tema funciona pelo teclado', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'no celular as opções de tema ficam no menu, sem a paleta');
     await openPage(page, '/');
     const trigger = page.getByTestId('theme.trigger');
     await trigger.focus();
