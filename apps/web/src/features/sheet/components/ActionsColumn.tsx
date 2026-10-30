@@ -159,6 +159,8 @@ function WeaponCard({
             </dd>
             <dt className="text-muted">{a.rollDamage}</dt>
             <dd className="font-mono">{dmg ?? a.invalidDamage}</dd>
+            <dt className="text-muted">{a.weaponKind}</dt>
+            <dd data-testid={`attack.${weapon.id}.traits`}>{a.traits(attack.traits)}</dd>
             {weapon.properties ? (
               <>
                 <dt className="text-muted">{ts.weaponEditor.properties}</dt>

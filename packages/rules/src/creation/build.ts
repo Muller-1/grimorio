@@ -95,6 +95,22 @@ function isMonkWeapon(weapon: WeaponDef): boolean {
   return !weapon.ranged && (weapon.category === 'simple' || weapon.light);
 }
 
+/** Propriedades estruturadas a partir do texto do livro ("Arremesso (6/18 m), Leve"). */
+function weaponProperties(weapon: WeaponDef): Partial<Weapon> {
+  const text = weapon.properties;
+  const distance = /\((\d+(?:,\d+)?)\/(\d+(?:,\d+)?) m/.exec(text);
+  const meters = (s: string) => Number(s.replace(',', '.'));
+  return {
+    range: weapon.ranged ? 'ranged' : 'melee',
+    finesse: weapon.finesse,
+    ...(/Arremesso/.test(text) ? { thrown: true } : {}),
+    ...(/Duas Mãos/.test(text) ? { twoHanded: true } : {}),
+    ...(weapon.light ? { light: true } : {}),
+    ...(/Extensão/.test(text) ? { reach: true } : {}),
+    ...(distance ? { rangeM: { normal: meters(distance[1]!), long: meters(distance[2]!) } } : {}),
+  };
+}
+
 function toSheetWeapon(
   cls: ClassDef,
   weapon: WeaponDef,
@@ -118,6 +134,7 @@ function toSheetWeapon(
     magicBonus: 0,
     critRange: 20,
     properties,
+    ...weaponProperties(weapon),
     ...(knownWeightKg(weapon.name) !== undefined
       ? { weightKg: knownWeightKg(weapon.name)! * quantity }
       : {}),
@@ -225,6 +242,8 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
       magicBonus: 0,
       critRange: 20,
       properties: 'Socos, chutes e cotoveladas',
+      range: 'melee',
+      finesse: false,
     });
   }
 

@@ -80,6 +80,24 @@ export const WeaponSchema = z.object({
   equipped: z.boolean().optional(),
   /** Peso em kg. Ausente: o site usa o peso do livro, se conhecer a arma pelo nome. */
   weightKg: z.number().min(0).max(1000).optional(),
+  // Propriedades da arma (cap. 6). Fichas de antes delas não têm os campos: o site deduz
+  // alcance e Acuidade pelo atributo (Destreza fixa = à distância; "Acuidade" = Acuidade).
+  /** Arma corpo a corpo ou à distância (Arquearia, Ataque Furtivo…). */
+  range: z.enum(['melee', 'ranged']).optional(),
+  /** Propriedade Acuidade. Diferente de `ability: 'finesse'`: o Monge usa o maior atributo sem ela. */
+  finesse: z.boolean().optional(),
+  /** Arremesso: também ataca à distância, arremessando. */
+  thrown: z.boolean().optional(),
+  /** Duas Mãos. */
+  twoHanded: z.boolean().optional(),
+  /** Leve. */
+  light: z.boolean().optional(),
+  /** Extensão: alcance corpo a corpo de 3 m. */
+  reach: z.boolean().optional(),
+  /** Distância normal e longa, em metros (Munição ou Arremesso), ex.: 24/96. */
+  rangeM: z
+    .object({ normal: z.number().min(0).max(1000), long: z.number().min(0).max(1000) })
+    .optional(),
 });
 
 /** De onde vem cada característica (a aba Características agrupa por isso). */

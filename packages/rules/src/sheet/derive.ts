@@ -65,9 +65,21 @@ export interface ExtraDamage {
   oncePerTurn: boolean;
 }
 
+/** Propriedades da arma já resolvidas (das fichas antigas, deduzidas pelo atributo). */
+export interface WeaponTraits {
+  range: 'melee' | 'ranged';
+  finesse: boolean;
+  thrown: boolean;
+  twoHanded: boolean;
+  light: boolean;
+  reach: boolean;
+  rangeM?: { normal: number; long: number };
+}
+
 export interface AttackOption {
   weaponId: string;
   ability: AbilityKey;
+  traits: WeaponTraits;
   toHit: Explained;
   /** Jogada de ataque pronta para rolar: "1d20+5", com Bênção "1d20+5+1d4". */
   attackExpression: string;
@@ -217,16 +229,34 @@ function attackAbility(weapon: Weapon, mods: Record<AbilityKey, number>): Abilit
 }
 
 /**
- * O efeito vale para esta arma? A ficha não guarda o alcance da arma: Destreza fixa conta como
- * à distância (é como o assistente monta arcos e bestas); Acuidade e Força, como corpo a corpo.
+ * Propriedades da arma. Fichas de antes dos campos `range`/`finesse` não os têm: Destreza fixa
+ * conta como à distância (é como o assistente montava arcos e bestas) e o atributo "Acuidade"
+ * como a propriedade Acuidade.
  */
-function matchesWeapon(filter: AttackFilter | undefined, weapon: Weapon, ability: AbilityKey) {
+export function weaponTraits(weapon: Weapon): WeaponTraits {
+  return {
+    range: weapon.range ?? (weapon.ability === 'dex' ? 'ranged' : 'melee'),
+    finesse: weapon.finesse ?? weapon.ability === 'finesse',
+    thrown: Boolean(weapon.thrown),
+    twoHanded: Boolean(weapon.twoHanded),
+    light: Boolean(weapon.light),
+    reach: Boolean(weapon.reach),
+    ...(weapon.rangeM ? { rangeM: weapon.rangeM } : {}),
+  };
+}
+
+/** O efeito vale para esta arma? */
+function matchesWeapon(
+  filter: AttackFilter | undefined,
+  traits: WeaponTraits,
+  ability: AbilityKey,
+) {
   if (!filter) return true;
-  const ranged = weapon.ability === 'dex';
+  const ranged = traits.range === 'ranged';
   if (filter.ability && filter.ability !== ability) return false;
   if (filter.range === 'melee' && ranged) return false;
   if (filter.range === 'ranged' && !ranged) return false;
-  if (filter.finesseOrRanged && weapon.ability === 'str') return false;
+  if (filter.finesseOrRanged && !traits.finesse && !ranged) return false;
   return true;
 }
 
@@ -409,7 +439,8 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
     .filter((w) => w.equipped !== false)
     .map((weapon): AttackOption => {
       const ability = attackAbility(weapon, mods);
-      const applies = (filter: AttackFilter | undefined) => matchesWeapon(filter, weapon, ability);
+      const traits = weaponTraits(weapon);
+      const applies = (filter: AttackFilter | undefined) => matchesWeapon(filter, traits, ability);
       const magic: ExplainedPart[] =
         weapon.magicBonus !== 0 ? [{ source: { kind: 'magic' }, value: weapon.magicBonus }] : [];
       const toHitParts: ExplainedPart[] = [
@@ -461,6 +492,7 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
       return {
         weaponId: weapon.id,
         ability,
+        traits,
         toHit,
         attackExpression: `${withModifier('1d20', toHit.value)}${attackDice}`,
         advantage: attackAdvantage || hasAdvantage(effects, `attack:${ability}`),

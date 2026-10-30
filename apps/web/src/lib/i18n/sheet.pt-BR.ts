@@ -1,4 +1,4 @@
-import type { SheetNotice } from '@grimorio/rules';
+import type { SheetNotice, WeaponTraits } from '@grimorio/rules';
 
 /**
  * Textos da ficha (`ts.identity`, `ts.actions`...): a ficha deste navegador, a da conta, as
@@ -240,6 +240,20 @@ export const sheetPtBR = {
     advantage: 'Vantagem',
     disadvantage: 'Desvantagem',
     rollDamage: 'Dano',
+    weaponKind: 'Tipo',
+    traits: (t: WeaponTraits) => {
+      const m = (n: number) => String(n).replace('.', ',');
+      const distance = t.rangeM ? ` (${m(t.rangeM.normal)}/${m(t.rangeM.long)} m)` : '';
+      const list = [
+        t.finesse && 'Acuidade',
+        t.thrown && `Arremesso${t.range === 'melee' ? distance : ''}`,
+        t.twoHanded && 'Duas Mãos',
+        t.light && 'Leve',
+        t.reach && 'Extensão (3 m)',
+      ].filter(Boolean);
+      const kind = t.range === 'ranged' ? `À distância${distance}` : 'Corpo a corpo';
+      return [kind, ...list].join(' · ');
+    },
     rollCritDamage: 'Dano crítico',
     firstHit: 'Dano + 1º acerto',
     firstHitLabel: (name: string, extras: string) =>
@@ -268,6 +282,19 @@ export const sheetPtBR = {
     abilityStr: 'Força',
     abilityDex: 'Destreza',
     abilityFinesse: 'Acuidade (o maior entre Força e Destreza)',
+    range: 'Tipo de arma',
+    melee: 'Corpo a corpo',
+    ranged: 'À distância',
+    flags: 'Propriedades da arma',
+    flag: {
+      finesse: 'Acuidade',
+      thrown: 'Arremesso',
+      twoHanded: 'Duas Mãos',
+      light: 'Leve',
+      reach: 'Extensão',
+    },
+    normalRange: 'Distância normal (m)',
+    longRange: 'Distância longa (m)',
     proficient: 'Tenho proficiência com esta arma',
     damageDice: 'Dados de dano',
     damageDicePlaceholder: 'Ex.: 1d8',
@@ -276,8 +303,8 @@ export const sheetPtBR = {
     noDamageType: '—',
     magicBonus: 'Bônus mágico',
     critRange: 'Crítico a partir de',
-    properties: 'Propriedades',
-    propertiesPlaceholder: 'Ex.: Acuidade, Leve, Arremesso',
+    properties: 'Outras propriedades e maestria',
+    propertiesPlaceholder: 'Ex.: Maestria: Ágil, Versátil (1d10)',
     notes: 'Anotações',
     equipped: 'Equipada (o personagem está carregando)',
     equippedHint: 'Arma guardada não aparece nos ataques e não conta no peso.',

@@ -162,6 +162,38 @@ describe('motor de habilidades: outras classes', () => {
     expect(d.attacks.find((a) => a.weaponId === 'w2')!.firstHitExpression).toBe('1d8+3+3d6');
   });
 
+  it('arma com alcance e Acuidade guardados: Ataque Furtivo segue a propriedade', () => {
+    const s = sheetOf('rogue', 5, { abilities: { dex: 16 } });
+    s.weapons = [
+      // Cajado de Monge: usa o maior atributo, mas não tem Acuidade.
+      {
+        ...axe,
+        id: 'staff',
+        name: 'Cajado',
+        damageDice: '1d6',
+        ability: 'finesse',
+        finesse: false,
+      },
+      // Rapieira usando Força: continua sendo arma com Acuidade.
+      { ...rapier, id: 'rap', ability: 'str', range: 'melee', finesse: true },
+    ];
+    const on = act(s, { type: 'toggle-activation', id: 'sneak-attack' }).sheet;
+    const d = deriveSheet(on);
+    expect(d.attacks.find((a) => a.weaponId === 'staff')!.firstHitExpression).toBeNull();
+    expect(d.attacks.find((a) => a.weaponId === 'rap')!.firstHitExpression).toBe('1d8+3d6');
+  });
+
+  it('arma sem os campos novos (ficha antiga): alcance e Acuidade vêm do atributo', () => {
+    const s = sheetOf('rogue', 1);
+    s.weapons = [axe, bow, rapier];
+    const traits = deriveSheet(s).attacks.map((a) => a.traits);
+    expect(traits.map((t) => [t.range, t.finesse])).toEqual([
+      ['melee', false],
+      ['ranged', false],
+      ['melee', true],
+    ]);
+  });
+
   it('crítico no 1º acerto dobra também os dados de uma vez por turno, não o modificador', () => {
     const s = sheetOf('rogue', 5, { abilities: { dex: 16 } });
     s.weapons = [axe, rapier];
@@ -174,6 +206,16 @@ describe('motor de habilidades: outras classes', () => {
     const axeAtk = d.attacks.find((a) => a.weaponId === 'w1')!;
     expect(axeAtk.criticalExpression).toBe('2d12');
     expect(axeAtk.firstHitCriticalExpression).toBeNull();
+  });
+
+  it('Arquearia vale para arma à distância, não para quem usa Destreza', () => {
+    const s = sheetOf('ranger', 2, { abilities: { dex: 16 } });
+    s.progression!.levels = [{ level: 2, choices: [{ kind: 'fighting-style', id: 'archery' }] }];
+    // Rapieira em que o jogador fixou Destreza: continua corpo a corpo.
+    s.weapons = [{ ...rapier, ability: 'dex', range: 'melee', finesse: true }, bow];
+    const d = deriveSheet(s);
+    expect(d.attacks.find((a) => a.weaponId === 'w3')!.toHit.value).toBe(5);
+    expect(d.attacks.find((a) => a.weaponId === 'w2')!.toHit.value).toBe(7);
   });
 
   it('Crítico Aprimorado do Campeão: 19–20', () => {

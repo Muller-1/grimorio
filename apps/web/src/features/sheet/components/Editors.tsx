@@ -1,4 +1,4 @@
-import { knownWeightKg, parse, splitQuantity, withModifier } from '@grimorio/rules';
+import { knownWeightKg, parse, splitQuantity, weaponTraits, withModifier } from '@grimorio/rules';
 import {
   DAMAGE_TYPES,
   FEATURE_SOURCES,
@@ -33,7 +33,18 @@ const blankWeapon = (): Weapon => ({
   damageDice: '',
   magicBonus: 0,
   critRange: 20,
+  range: 'melee',
+  finesse: false,
 });
+
+/** Arma de ficha antiga (sem alcance e Acuidade guardados): o editor mostra o que a ficha deduz. */
+function withTraits(weapon: Weapon): Weapon {
+  const t = weaponTraits(weapon);
+  return { ...weapon, range: t.range, finesse: t.finesse };
+}
+
+/** Propriedades de marcar (a lista do livro, cap. 6). */
+const FLAGS = ['finesse', 'thrown', 'twoHanded', 'light', 'reach'] as const;
 
 export function WeaponEditor({
   initial,
@@ -44,7 +55,7 @@ export function WeaponEditor({
 }) {
   const edit = useSheetStore((s) => s.edit);
   const { derived } = useSheet();
-  const [w, setW] = useState<Weapon>(() => initial ?? blankWeapon());
+  const [w, setW] = useState<Weapon>(() => (initial ? withTraits(initial) : blankWeapon()));
   const [error, setError] = useState<string | null>(null);
   const ids = {
     name: useId(),
@@ -58,6 +69,9 @@ export function WeaponEditor({
     prof: useId(),
     equipped: useId(),
     weight: useId(),
+    range: useId(),
+    normal: useId(),
+    long: useId(),
   };
   const e = ts.weaponEditor;
   const [weight, setWeight] = useState(() =>
@@ -69,6 +83,27 @@ export function WeaponEditor({
 
   const set = <K extends keyof Weapon>(key: K, value: Weapon[K]) =>
     setW((prev) => ({ ...prev, [key]: value }));
+  /** Marca/desmarca uma propriedade; Acuidade e "à distância" sugerem o atributo certo. */
+  const setFlag = (key: (typeof FLAGS)[number], on: boolean) =>
+    setW((prev) => {
+      const next = { ...prev };
+      if (key === 'finesse') next.finesse = on;
+      else if (on) next[key] = true;
+      else delete next[key];
+      if (key === 'finesse' && on && prev.ability === 'str') next.ability = 'finesse';
+      return next;
+    });
+  const setRange = (range: 'melee' | 'ranged') =>
+    setW((prev) => ({
+      ...prev,
+      range,
+      ...(range === 'ranged' && prev.ability === 'str' ? { ability: 'dex' as const } : {}),
+    }));
+  const [distance, setDistance] = useState(() => ({
+    normal: initial?.rangeM ? String(initial.rangeM.normal).replace('.', ',') : '',
+    long: initial?.rangeM ? String(initial.rangeM.long).replace('.', ',') : '',
+  }));
+  const meters = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')));
 
   // Prévia com as mesmas regras da ficha
   const mods = { str: derived.abilities.str.mod, dex: derived.abilities.dex.mod };
@@ -85,6 +120,12 @@ export function WeaponEditor({
     const kg = weight.trim() === '' ? undefined : Number(weight.replace(',', '.'));
     if (kg !== undefined && Number.isFinite(kg) && kg >= 0 && kg <= 1000) clean.weightKg = kg;
     else delete clean.weightKg;
+    const normal = meters(distance.normal);
+    const long = meters(distance.long);
+    const okM = (n: number) => Number.isFinite(n) && n > 0 && n <= 1000;
+    if ((clean.range === 'ranged' || clean.thrown) && okM(normal)) {
+      clean.rangeM = { normal, long: okM(long) ? Math.max(long, normal) : normal };
+    } else delete clean.rangeM;
     edit((d) => {
       const i = d.weapons.findIndex((x) => x.id === clean.id);
       if (i >= 0) d.weapons[i] = clean;
@@ -133,6 +174,65 @@ export function WeaponEditor({
             <option value="finesse">{e.abilityFinesse}</option>
           </Select>
         </div>
+        <div className="col-span-2">
+          <Label htmlFor={ids.range}>{e.range}</Label>
+          <Select
+            id={ids.range}
+            value={w.range ?? 'melee'}
+            onChange={(ev) => setRange(ev.target.value as 'melee' | 'ranged')}
+            data-testid="weapon.range"
+          >
+            <option value="melee">{e.melee}</option>
+            <option value="ranged">{e.ranged}</option>
+          </Select>
+        </div>
+        <fieldset className="col-span-2">
+          <legend className="mb-1 text-sm font-medium">{e.flags}</legend>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {FLAGS.map((key) => (
+              <label key={key} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={Boolean(w[key])}
+                  onChange={(ev) => setFlag(key, ev.target.checked)}
+                  className="size-4 accent-[var(--accent)]"
+                  data-testid={`weapon.flag.${key}`}
+                />
+                {e.flag[key]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        {w.range === 'ranged' || w.thrown ? (
+          <>
+            <div>
+              <Label htmlFor={ids.normal}>{e.normalRange}</Label>
+              <Input
+                id={ids.normal}
+                inputMode="decimal"
+                value={distance.normal}
+                maxLength={6}
+                placeholder="24"
+                onChange={(ev) =>
+                  setDistance((d) => ({ ...d, normal: ev.target.value.replace(/[^\d.,]/g, '') }))
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor={ids.long}>{e.longRange}</Label>
+              <Input
+                id={ids.long}
+                inputMode="decimal"
+                value={distance.long}
+                maxLength={6}
+                placeholder="96"
+                onChange={(ev) =>
+                  setDistance((d) => ({ ...d, long: ev.target.value.replace(/[^\d.,]/g, '') }))
+                }
+              />
+            </div>
+          </>
+        ) : null}
         <label htmlFor={ids.prof} className="col-span-2 flex items-center gap-2 text-sm">
           <input
             id={ids.prof}

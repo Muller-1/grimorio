@@ -263,6 +263,39 @@ describe('ficha montada', () => {
     );
   });
 
+  it('armas do assistente guardam alcance, Acuidade e as outras propriedades', () => {
+    const sheet = buildCharacterSheet(completeDraft('fighter'), ctx)!;
+    const byName = (name: string) => sheet.weapons.find((w) => w.name.startsWith(name));
+    expect(byName('Lança')).toMatchObject({
+      range: 'melee',
+      finesse: false,
+      thrown: true,
+      rangeM: { normal: 6, long: 18 },
+    });
+    expect(byName('Lança')).not.toHaveProperty('twoHanded');
+    expect(byName('Arco Curto')).toMatchObject({
+      range: 'ranged',
+      finesse: false,
+      twoHanded: true,
+      rangeM: { normal: 24, long: 96 },
+    });
+    expect(byName('Espada Grande')).toMatchObject({ range: 'melee', twoHanded: true });
+    expect(byName('Espada Grande')).not.toHaveProperty('rangeM');
+
+    const rogue = buildCharacterSheet(completeDraft('rogue'), ctx)!;
+    expect(rogue.weapons.find((w) => w.name.startsWith('Adaga'))).toMatchObject({
+      range: 'melee',
+      finesse: true,
+      thrown: true,
+      light: true,
+    });
+  });
+
+  it('Monge: Artes Marciais usa o maior atributo, mas o ataque desarmado não tem Acuidade', () => {
+    const sheet = buildCharacterSheet(completeDraft('monk'), ctx)!;
+    expect(sheet.weapons[0]).toMatchObject({ ability: 'finesse', finesse: false, range: 'melee' });
+  });
+
   it('Força abaixo de 13 com Cota de Malha: −3 m de deslocamento', () => {
     const d = completeDraft('fighter', (x) => {
       x.baseScores = { str: 8, dex: 15, con: 14, int: 12, wis: 13, cha: 10 };
