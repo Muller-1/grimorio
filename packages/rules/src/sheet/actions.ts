@@ -71,6 +71,9 @@ export interface ActionOutcome {
 }
 
 const HP_LOG_LIMIT = 50;
+
+type DeathSaves = LocalSheet['state']['deathSaves'];
+const noSaves = (): DeathSaves => ({ successes: 0, failures: 0 });
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const nonNegativeInt = (v: number) => Math.max(0, Math.floor(v));
 
@@ -88,6 +91,13 @@ export function applySheetAction(
     ...sheet,
     state: { ...sheet.state, ...state },
   });
+
+  /** Quanto os testes contra a morte mudaram (só entra no histórico quando mudou). */
+  const savesDelta = (after: DeathSaves): Pick<HpEvent['effect'], 'deathSaves'> => {
+    const successes = after.successes - deathSaves.successes;
+    const failures = after.failures - deathSaves.failures;
+    return successes || failures ? { deathSaves: { successes, failures } } : {};
+  };
 
   const logEvent = (
     kind: HpEvent['kind'],
@@ -131,7 +141,11 @@ export function applySheetAction(
         sheet: withState({
           hp: { current, temp: hp.temp - tempUsed },
           deathSaves: { ...deathSaves, failures },
-          hpLog: logEvent('damage', amount, { current: current - hp.current, temp: -tempUsed }),
+          hpLog: logEvent('damage', amount, {
+            current: current - hp.current,
+            temp: -tempUsed,
+            ...savesDelta({ ...deathSaves, failures }),
+          }),
         }),
         notices,
       };
@@ -140,12 +154,16 @@ export function applySheetAction(
     case 'heal': {
       const amount = nonNegativeInt(action.amount);
       const current = Math.min(hpMax, hp.current + amount);
-      const revived = hp.current === 0 && current > 0;
+      const saves = hp.current === 0 && current > 0 ? noSaves() : deathSaves;
       return {
         sheet: withState({
           hp: { ...hp, current },
-          deathSaves: revived ? { successes: 0, failures: 0 } : deathSaves,
-          hpLog: logEvent('heal', amount, { current: current - hp.current, temp: 0 }),
+          deathSaves: saves,
+          hpLog: logEvent('heal', amount, {
+            current: current - hp.current,
+            temp: 0,
+            ...savesDelta(saves),
+          }),
         }),
         notices,
       };
@@ -170,6 +188,7 @@ export function applySheetAction(
 
       const current = clamp(hp.current - target.effect.current, 0, hpMax);
       const temp = Math.max(0, hp.temp - target.effect.temp);
+      const undoSaves = target.effect.deathSaves ?? noSaves();
       const hitDiceSpent =
         target.source === 'hit-die'
           ? Math.max(0, sheet.state.hitDiceSpent - 1)
@@ -178,7 +197,14 @@ export function applySheetAction(
       return {
         sheet: withState({
           hp: { current, temp },
-          deathSaves: current > 0 ? { successes: 0, failures: 0 } : deathSaves,
+          // De pé não há testes; caído, tira só o que este evento tinha mudado.
+          deathSaves:
+            current > 0
+              ? noSaves()
+              : {
+                  successes: clamp(deathSaves.successes - undoSaves.successes, 0, 3),
+                  failures: clamp(deathSaves.failures - undoSaves.failures, 0, 3),
+                },
           hitDiceSpent,
           hpLog: sheet.state.hpLog.map((e) => (e === target ? { ...e, undone: true } : e)),
         }),
@@ -195,8 +221,8 @@ export function applySheetAction(
         return {
           sheet: withState({
             hp: { ...hp, current: Math.min(1, hpMax) },
-            deathSaves: { successes: 0, failures: 0 },
-            hpLog: logEvent('heal', 1, { current: 1, temp: 0 }),
+            deathSaves: noSaves(),
+            hpLog: logEvent('heal', 1, { current: 1, temp: 0, ...savesDelta(noSaves()) }),
           }),
           notices,
         };
@@ -314,13 +340,13 @@ export function applySheetAction(
       if (action.healRolled !== undefined) {
         const amount = nonNegativeInt(action.healRolled);
         const current = Math.min(hpMax, next.state.hp.current + amount);
-        const revived = next.state.hp.current === 0 && current > 0;
+        const saves = next.state.hp.current === 0 && current > 0 ? noSaves() : deathSaves;
         next = {
           ...next,
           state: {
             ...next.state,
             hp: { ...next.state.hp, current },
-            deathSaves: revived ? { successes: 0, failures: 0 } : next.state.deathSaves,
+            deathSaves: saves,
             hpLog: [
               ...next.state.hpLog,
               {
@@ -328,7 +354,11 @@ export function applySheetAction(
                 at: ctx.now,
                 kind: 'heal' as const,
                 amount,
-                effect: { current: current - next.state.hp.current, temp: 0 },
+                effect: {
+                  current: current - next.state.hp.current,
+                  temp: 0,
+                  ...savesDelta(saves),
+                },
               },
             ].slice(-HP_LOG_LIMIT),
           },
@@ -424,7 +454,7 @@ export function applySheetAction(
               ...freshAbilityState(),
               active,
               hp: { current: hpMax, temp: 0 },
-              deathSaves: { successes: 0, failures: 0 },
+              deathSaves: noSaves(),
               hitDiceSpent: 0,
               hpLog: [],
             },

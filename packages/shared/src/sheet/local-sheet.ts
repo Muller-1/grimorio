@@ -46,8 +46,15 @@ export const HpEventSchema = z.object({
   kind: z.enum(['damage', 'heal', 'temp']),
   /** Valor pedido pelo jogador (ex.: "5 de dano"). */
   amount: int().min(0),
-  /** O que realmente mudou (PV atual e temporário). É o que o "desfazer" inverte. */
-  effect: z.object({ current: int(), temp: int() }),
+  /**
+   * O que realmente mudou: PV atual, temporário e, quando mexeu, os testes contra a morte
+   * (dano caído soma falhas; cura que levanta zera os testes). É o que o "desfazer" inverte.
+   */
+  effect: z.object({
+    current: int(),
+    temp: int(),
+    deathSaves: z.object({ successes: int(), failures: int() }).optional(),
+  }),
   /** Marcado quando o evento foi desfeito; deixa de contar em Curados/Recebidos. */
   undone: z.boolean().optional(),
   /** Origem especial: cura de Dado de Vida (desfazer devolve o dado). */

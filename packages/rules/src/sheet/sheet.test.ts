@@ -26,6 +26,11 @@ function act(sheet: LocalSheet, action: SheetAction) {
   return applySheetAction(sheet, action, ctx());
 }
 
+/** Desfaz o último evento do histórico de PV. */
+function undoLast(sheet: LocalSheet) {
+  return act(sheet, { type: 'undo-hp', targetActionId: sheet.state.hpLog.at(-1)!.actionId }).sheet;
+}
+
 describe('modificador e proficiência', () => {
   it.each([
     [1, -5],
@@ -333,6 +338,65 @@ describe('testes contra a morte (RF-37)', () => {
       failures: 0,
     });
   });
+
+  it('desfazer dano com 0 PV tira a falha que ele deu', () => {
+    const s = dying();
+    s.state.deathSaves = { successes: 1, failures: 1 };
+    const hit = act(s, { type: 'damage', amount: 3 }).sheet;
+    expect(hit.state.deathSaves.failures).toBe(2);
+    const undone = undoLast(hit);
+    expect(undone.state.hp.current).toBe(0);
+    expect(undone.state.deathSaves).toEqual({ successes: 1, failures: 1 });
+  });
+
+  it('desfazer dano crítico com 0 PV tira as duas falhas', () => {
+    const hit = act(dying(), { type: 'damage', amount: 3, critical: true }).sheet;
+    expect(hit.state.deathSaves.failures).toBe(2);
+    expect(undoLast(hit).state.deathSaves).toEqual({ successes: 0, failures: 0 });
+  });
+
+  it('desfazer a morte instantânea volta às falhas de antes', () => {
+    const s = dying();
+    s.state.deathSaves = { successes: 0, failures: 1 };
+    const r = act(s, { type: 'damage', amount: 30 });
+    expect(r.notices).toContain('instant-death');
+    expect(undoLast(r.sheet).state.deathSaves).toEqual({ successes: 0, failures: 1 });
+  });
+
+  it('desfazer dano não mexe nas falhas que vieram de outros testes', () => {
+    let s = act(dying(), { type: 'damage', amount: 3 }).sheet; // 1 falha
+    const hitId = s.state.hpLog.at(-1)!.actionId;
+    s = act(s, { type: 'death-save', d20: 5 }).sheet; // 2 falhas
+    s = act(s, { type: 'undo-hp', targetActionId: hitId }).sheet;
+    expect(s.state.deathSaves).toEqual({ successes: 0, failures: 1 });
+  });
+
+  it('desfazer a cura que levantou o personagem volta aos testes de antes', () => {
+    const s = dying();
+    s.state.deathSaves = { successes: 2, failures: 1 };
+    const healed = act(s, { type: 'heal', amount: 3 }).sheet;
+    const undone = undoLast(healed);
+    expect(undone.state.hp.current).toBe(0);
+    expect(undone.state.deathSaves).toEqual({ successes: 2, failures: 1 });
+  });
+
+  it('desfazer o 20 natural volta a 0 PV com os testes de antes', () => {
+    const s = dying();
+    s.state.deathSaves = { successes: 1, failures: 2 };
+    const revived = act(s, { type: 'death-save', d20: 20 }).sheet;
+    const undone = undoLast(revived);
+    expect(undone.state.hp.current).toBe(0);
+    expect(undone.state.deathSaves).toEqual({ successes: 1, failures: 2 });
+  });
+
+  it('desfazer a cura de uma habilidade que levantou o personagem volta aos testes de antes', () => {
+    const s = dying();
+    s.progression = { classId: 'fighter', levels: [] };
+    s.state.deathSaves = { successes: 1, failures: 1 };
+    const healed = act(s, { type: 'use-activation', id: 'second-wind', healRolled: 6 }).sheet;
+    expect(healed.state.hp.current).toBe(6);
+    expect(undoLast(healed).state.deathSaves).toEqual({ successes: 1, failures: 1 });
+  });
 });
 
 describe('dados de vida e descanso longo', () => {
@@ -445,6 +509,48 @@ describe('invariantes', () => {
           if (violations.length > 0) return false;
         }
         return true;
+      }),
+    );
+  });
+
+  it('desfazer logo em seguida devolve PV, temporários e testes contra a morte de antes', () => {
+    const arbSetup: fc.Arbitrary<SheetAction> = fc.oneof(
+      fc.record({
+        type: fc.constant('damage'),
+        amount: fc.integer({ min: 0, max: 40 }),
+        critical: fc.boolean(),
+      }),
+      fc.record({ type: fc.constant('heal'), amount: fc.integer({ min: 0, max: 20 }) }),
+      fc.record({ type: fc.constant('set-temp-hp'), amount: fc.integer({ min: 0, max: 10 }) }),
+      fc.record({ type: fc.constant('death-save'), d20: fc.integer({ min: 1, max: 20 }) }),
+    );
+    const arbLogged: fc.Arbitrary<SheetAction> = fc.oneof(
+      fc.record({
+        type: fc.constant('damage'),
+        amount: fc.integer({ min: 0, max: 60 }),
+        critical: fc.boolean(),
+      }),
+      fc.record({ type: fc.constant('heal'), amount: fc.integer({ min: 0, max: 30 }) }),
+      fc.record({ type: fc.constant('set-temp-hp'), amount: fc.integer({ min: 0, max: 30 }) }),
+      fc.constant<SheetAction>({ type: 'death-save', d20: 20 }),
+      fc.record({ type: fc.constant('spend-hit-die'), rolled: fc.integer({ min: 1, max: 10 }) }),
+    );
+    fc.assert(
+      fc.property(fc.array(arbSetup, { maxLength: 20 }), arbLogged, (setup, last) => {
+        let s = thalia();
+        for (const a of setup) s = act(s, a).sheet;
+        const before = s.state;
+        const after = act(s, last).sheet;
+        const event = after.state.hpLog.at(-1);
+        if (!event || event.actionId === before.hpLog.at(-1)?.actionId) return true;
+        const undone = undoLast(after).state;
+        return (
+          undone.hp.current === before.hp.current &&
+          undone.hp.temp === before.hp.temp &&
+          undone.hitDiceSpent === before.hitDiceSpent &&
+          undone.deathSaves.successes === before.deathSaves.successes &&
+          undone.deathSaves.failures === before.deathSaves.failures
+        );
       }),
     );
   });
