@@ -244,6 +244,9 @@ export const sheetPtBR = {
     firstHit: 'Dano + 1º acerto',
     firstHitLabel: (name: string, extras: string) =>
       `Dano no 1º acerto do turno (${extras}): ${name}`,
+    firstHitCrit: 'Crítico + 1º acerto',
+    firstHitCritLabel: (name: string, extras: string) =>
+      `Dano crítico no 1º acerto do turno (${extras}): ${name}`,
     extraDamage: (list: string) => `Extras: ${list}`,
     oncePerTurn: '1×/turno',
     edit: 'Editar',

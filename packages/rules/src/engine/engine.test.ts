@@ -93,6 +93,8 @@ describe('motor de habilidades: Bárbaro', () => {
     expect(atk.extraDamage).toEqual([{ name: 'Frenesi', dice: '2d6', oncePerTurn: true }]);
     expect(atk.damageExpression).toBe('1d12+5');
     expect(atk.firstHitExpression).toBe('1d12+5+2d6');
+    expect(atk.criticalExpression).toBe('2d12+5');
+    expect(atk.firstHitCriticalExpression).toBe('2d12+5+4d6');
 
     // Nível 9: Dano de Fúria +3 → 3d6.
     const high = { ...both, build: { ...both.build, level: 9 } };
@@ -158,6 +160,20 @@ describe('motor de habilidades: outras classes', () => {
     expect(d.attacks.find((a) => a.weaponId === 'w1')!.firstHitExpression).toBeNull();
     expect(d.attacks.find((a) => a.weaponId === 'w3')!.firstHitExpression).toBe('1d8+3+3d6');
     expect(d.attacks.find((a) => a.weaponId === 'w2')!.firstHitExpression).toBe('1d8+3+3d6');
+  });
+
+  it('crítico no 1º acerto dobra também os dados de uma vez por turno, não o modificador', () => {
+    const s = sheetOf('rogue', 5, { abilities: { dex: 16 } });
+    s.weapons = [axe, rapier];
+    const on = act(s, { type: 'toggle-activation', id: 'sneak-attack' }).sheet;
+    const d = deriveSheet(on);
+    const rapierAtk = d.attacks.find((a) => a.weaponId === 'w3')!;
+    expect(rapierAtk.criticalExpression).toBe('2d8+3');
+    expect(rapierAtk.firstHitCriticalExpression).toBe('2d8+3+6d6');
+    // Sem extra de uma vez por turno, não há crítico de 1º acerto separado.
+    const axeAtk = d.attacks.find((a) => a.weaponId === 'w1')!;
+    expect(axeAtk.criticalExpression).toBe('2d12');
+    expect(axeAtk.firstHitCriticalExpression).toBeNull();
   });
 
   it('Crítico Aprimorado do Campeão: 19–20', () => {

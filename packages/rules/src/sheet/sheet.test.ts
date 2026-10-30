@@ -189,6 +189,7 @@ describe('ataques', () => {
     s.weapons = [{ ...dagger, damageDice: '1d' }];
     const d = deriveSheet(s);
     expect(d.attacks[0]!.damageExpression).toBeNull();
+    expect(d.attacks[0]!.criticalExpression).toBeNull();
     expect(d.warnings).toContainEqual({ code: 'invalid-damage-dice', weaponId: 'w1' });
   });
 

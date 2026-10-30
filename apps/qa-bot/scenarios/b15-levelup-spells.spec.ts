@@ -144,6 +144,14 @@ test.describe('B15 — subida de nível, magias e habilidades', { tag: '@B15' },
     await page.getByRole('button', { name: 'Detalhes de Machado Grande' }).click();
     await expect(page.getByTestId('attack.w1.extras')).toContainText('Frenesi 2d6');
     await expect(page.getByTestId('attack.w1.first-hit')).toBeVisible();
+
+    // Crítico no 1º acerto: dobra os dados da arma e os do Frenesi; o +5 entra uma vez.
+    await page.getByTestId('attack.w1.crit').click();
+    let last = await page.evaluate(() => window.__APP_TEST__!.getLastRoll());
+    expect(last?.expression).toBe('2d12+5');
+    await page.getByTestId('attack.w1.first-hit-crit').click();
+    last = await page.evaluate(() => window.__APP_TEST__!.getLastRoll());
+    expect(last?.expression).toBe('2d12+5+4d6');
   });
 
   test('Mago: adiciona magia, conjura gastando espaço e mantém Concentração', async ({ page }) => {

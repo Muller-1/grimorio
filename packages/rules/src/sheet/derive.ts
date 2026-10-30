@@ -11,7 +11,7 @@ import {
   type Weapon,
 } from '@grimorio/shared';
 import type { AdvantageTarget, AttackFilter } from '../classes/types';
-import { parse } from '../dice';
+import { critical, parse, stringify } from '../dice';
 import { withModifier } from '../dice/modifier';
 
 export { withModifier };
@@ -80,6 +80,10 @@ export interface AttackOption {
   damageExpression: string | null;
   /** Dano do primeiro acerto do turno, com os extras "uma vez por turno" (ou `null`). */
   firstHitExpression: string | null;
+  /** Dano crítico: todos os dados dobrados, modificadores uma vez só ("1d8+3" → "2d8+3"). */
+  criticalExpression: string | null;
+  /** Crítico no primeiro acerto do turno: dobra também os dados "uma vez por turno". */
+  firstHitCriticalExpression: string | null;
   extraDamage: ExtraDamage[];
   critRange: number;
 }
@@ -198,6 +202,13 @@ function hpMaxFromLevels(
       { source: { kind: 'trait' }, value: bonusPerLevel * level },
     ]),
   );
+}
+
+/** Versão crítica de uma expressão de dano: dobra os dados e mantém os números fixos. */
+function criticalOf(expression: string | null): string | null {
+  if (!expression) return null;
+  const parsed = parse(expression);
+  return parsed.ok ? stringify(critical(parsed.ast)) : null;
 }
 
 function attackAbility(weapon: Weapon, mods: Record<AbilityKey, number>): AbilityKey {
@@ -445,6 +456,7 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
         .map((x) => `+${x.dice}`)
         .join('');
       const damageExpression = valid ? `${expression}${always}${damagePenalty}` : null;
+      const firstHitExpression = damageExpression && once ? `${damageExpression}${once}` : null;
 
       return {
         weaponId: weapon.id,
@@ -455,7 +467,9 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
         disadvantage: attackDisadvantage || hasDisadvantage(effects, `attack:${ability}`),
         damageBonus,
         damageExpression,
-        firstHitExpression: damageExpression && once ? `${damageExpression}${once}` : null,
+        firstHitExpression,
+        criticalExpression: criticalOf(damageExpression),
+        firstHitCriticalExpression: criticalOf(firstHitExpression),
         extraDamage,
         critRange: Math.min(weapon.critRange, critMin),
       };

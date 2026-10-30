@@ -1,4 +1,4 @@
-import { critical, parse, stringify, type AttackOption } from '@grimorio/rules';
+import type { AttackOption } from '@grimorio/rules';
 import { FEATURE_SOURCES, type Feature, type Weapon } from '@grimorio/shared';
 import { ChevronDown, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { Tabs } from 'radix-ui';
@@ -47,11 +47,6 @@ const a = ts.actions;
 /** Normaliza para busca: sem acentos e sem maiúsculas ("Rapiéira" acha "rapieira"). */
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-function critExpression(expression: string): string | null {
-  const parsed = parse(expression);
-  return parsed.ok ? stringify(critical(parsed.ast)) : null;
-}
-
 // ---------------------------------------------------------------------------
 // Armas
 // ---------------------------------------------------------------------------
@@ -70,8 +65,9 @@ function WeaponCard({
   const detailsId = useId();
   const toHit = attack.toHit.value;
   const dmg = attack.damageExpression;
-  const critDmg = dmg ? critExpression(dmg) : null;
+  const critDmg = attack.criticalExpression;
   const first = attack.firstHitExpression;
+  const firstCrit = attack.firstHitCriticalExpression;
   const typeLabel = weapon.damageType ? t.damageTypes[weapon.damageType] : null;
   // A jogada já vem com os dados extras (Bênção: +1d4); Vantagem troca o d20 por 2d20.
   const withD20 = (d20: string) => attack.attackExpression.replace(/^1d20/, d20);
@@ -212,9 +208,21 @@ function WeaponCard({
                 rollLabel={a.critDamageLabel(weapon.name)}
                 expression={critDmg}
                 ariaLabel={a.critDamageLabel(weapon.name)}
+                testId={`attack.${weapon.id}.crit`}
                 className="h-8 w-auto gap-1 border border-gold/60 px-2 text-xs text-gold"
               >
                 {a.rollCritDamage}
+              </RollButton>
+            ) : null}
+            {firstCrit ? (
+              <RollButton
+                rollLabel={a.firstHitCritLabel(weapon.name, extras)}
+                expression={firstCrit}
+                ariaLabel={a.firstHitCritLabel(weapon.name, extras)}
+                testId={`attack.${weapon.id}.first-hit-crit`}
+                className="h-8 w-auto gap-1 border border-gold/60 px-2 text-xs text-gold"
+              >
+                {a.firstHitCrit}
               </RollButton>
             ) : null}
           </div>
