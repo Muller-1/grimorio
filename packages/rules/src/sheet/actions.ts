@@ -2,7 +2,7 @@ import { freshAbilityState, type HpEvent, type LocalSheet } from '@grimorio/shar
 import { SPELL_ACTIVE_PREFIX } from '../engine/character';
 import { CONDITION_PREFIX, EXHAUSTION_ID, exhaustionLevel, isOnYouKey } from '../engine/on-you';
 import { SPELL_EFFECTS } from '../spells/effects';
-import { deriveSheet } from './derive';
+import { deriveSheet, type SheetDerived } from './derive';
 
 /**
  * Ações de jogo da ficha local (subconjunto da `GameAction` do plano v2, 9.6).
@@ -77,12 +77,16 @@ const noSaves = (): DeathSaves => ({ successes: 0, failures: 0 });
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const nonNegativeInt = (v: number) => Math.max(0, Math.floor(v));
 
+/**
+ * Aplica uma ação de jogo. `derived` é o `deriveSheet(sheet)` que a tela já calculou; sem ele, a
+ * função calcula de novo (o resultado é o mesmo, só custa mais).
+ */
 export function applySheetAction(
   sheet: LocalSheet,
   action: SheetAction,
   ctx: ActionContext,
+  derived: SheetDerived = deriveSheet(sheet),
 ): ActionOutcome {
-  const derived = deriveSheet(sheet);
   const hpMax = derived.hpMax.value;
   const notices: SheetNotice[] = [];
   const { hp, deathSaves } = sheet.state;

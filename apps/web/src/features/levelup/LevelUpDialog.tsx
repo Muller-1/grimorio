@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Label, Select } from '@/components/ui/input';
 import { useDiceStore } from '@/features/dice/store';
+import { derivedOf } from '@/features/sheet/derived';
 import { useSheetStore } from '@/features/sheet/store';
 import { useToastStore } from '@/features/toast/store';
 import { formatModifier } from '@/lib/format';
@@ -385,7 +386,7 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
 
   // ---------- 3) resumo ----------
   if (phase.kind === 'summary') {
-    const before = deriveSheet(sheet);
+    const before = derivedOf(sheet);
     const after = preview ? deriveSheet(preview) : null;
     const rows: [string, string, string][] = after
       ? [

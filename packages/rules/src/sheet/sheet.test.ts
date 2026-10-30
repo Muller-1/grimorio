@@ -500,6 +500,20 @@ describe('invariantes', () => {
     expect(checkSheetInvariants(sheet)).toEqual([]);
   });
 
+  it('ação e normalização usam a ficha derivada já calculada, quando vem junto', () => {
+    const s = thalia();
+    s.state.hp.current = 5;
+    const derived = deriveSheet(s);
+    // Ficha derivada de outra situação (PV máximo 10): prova que não foi recalculada.
+    const fake = { ...derived, hpMax: { value: 10, parts: [] } };
+    expect(applySheetAction(s, { type: 'heal', amount: 500 }, ctx(), fake).sheet.state.hp).toEqual({
+      current: 10,
+      temp: 0,
+    });
+    const high = { ...s, state: { ...s.state, hp: { current: 20, temp: 0 } } };
+    expect(normalizeSheet(high, fake).sheet.state.hp.current).toBe(10);
+  });
+
   it('qualquer sequência de ações mantém as invariantes', () => {
     const arbAction: fc.Arbitrary<SheetAction> = fc.oneof(
       fc.record({

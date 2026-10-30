@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import { nowIso } from '@/ports/clock';
 import { newId } from '@/ports/ids';
 import { safeStorage } from '@/ports/storage';
+import { derivedOf } from './derived';
 
 /** Chave com versão: se o formato mudar, a versão nova migra a antiga (plano v2, 9.7). */
 export const SHEET_STORAGE_KEY = 'grimorio.ficha.v1';
@@ -88,17 +89,19 @@ export const useSheetStore = create<SheetState>((set, get) => ({
     // Não deixa um valor inválido entrar (ex.: campo numérico apagado).
     const valid = parseLocalSheet(draft);
     if (!valid) return;
-    set({ sheet: normalizeSheet(valid).sheet });
+    set({ sheet: normalizeSheet(valid, derivedOf(valid)).sheet });
   },
 
   dispatch(action) {
-    const outcome = applySheetAction(get().sheet, action, { now: nowIso(), actionId: newId() });
+    const { sheet } = get();
+    const ctx = { now: nowIso(), actionId: newId() };
+    const outcome = applySheetAction(sheet, action, ctx, derivedOf(sheet));
     set({ sheet: outcome.sheet });
     return outcome.notices;
   },
 
   replace(sheet) {
-    set({ sheet: normalizeSheet(sheet).sheet });
+    set({ sheet: normalizeSheet(sheet, derivedOf(sheet)).sheet });
   },
 
   openLocal() {
@@ -112,7 +115,7 @@ export const useSheetStore = create<SheetState>((set, get) => ({
   },
 
   loadLocal(sheet) {
-    const normalized = normalizeSheet(sheet).sheet;
+    const normalized = normalizeSheet(sheet, derivedOf(sheet)).sheet;
     saveLocalSheet(normalized);
     set({ sheet: normalized, source: { kind: 'local' }, recoveredFromBadData: false });
   },

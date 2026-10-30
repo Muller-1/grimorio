@@ -1,10 +1,8 @@
-import { deriveSheet } from '@grimorio/rules';
-import { useMemo } from 'react';
+import { derivedOf } from './derived';
 import { useSheetStore } from './store';
 
-/** Ficha salva + valores derivados (recalculados só quando a ficha muda). */
+/** Ficha salva + valores derivados (calculados uma vez por versão da ficha, ver `derivedOf`). */
 export function useSheet() {
   const sheet = useSheetStore((s) => s.sheet);
-  const derived = useMemo(() => deriveSheet(sheet), [sheet]);
-  return { sheet, derived };
+  return { sheet, derived: derivedOf(sheet) };
 }

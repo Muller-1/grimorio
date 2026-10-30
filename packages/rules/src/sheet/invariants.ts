@@ -1,5 +1,5 @@
 import type { LocalSheet } from '@grimorio/shared';
-import { deriveSheet, type SheetWarning } from './derive';
+import { deriveSheet, type SheetDerived, type SheetWarning } from './derive';
 
 /**
  * Invariantes da ficha local (plano v2, 9.5): verdades que valem para qualquer ficha.
@@ -38,8 +38,11 @@ export function checkSheetInvariants(sheet: LocalSheet): Violation[] {
  * Quando um máximo diminui (ex.: desceu de nível), ajusta o valor gasto E avisa.
  * Nada é ajustado em silêncio.
  */
-export function normalizeSheet(sheet: LocalSheet): { sheet: LocalSheet; warnings: SheetWarning[] } {
-  const d = deriveSheet(sheet);
+export function normalizeSheet(
+  sheet: LocalSheet,
+  /** O `deriveSheet(sheet)` já calculado, se houver. */
+  d: SheetDerived = deriveSheet(sheet),
+): { sheet: LocalSheet; warnings: SheetWarning[] } {
   const warnings: SheetWarning[] = [];
   const state = { ...sheet.state, hp: { ...sheet.state.hp } };
 
