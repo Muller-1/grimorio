@@ -3,7 +3,9 @@ import {
   SKILL_ABILITY,
   SKILL_KEYS,
   type AbilityKey,
+  type ActiveInfo,
   type DamageType,
+  type EffectDuration,
   type HitDieSides,
   type LocalSheet,
   type ProficiencyLevel,
@@ -15,7 +17,15 @@ import { critical, parse, stringify } from '../dice';
 import { withModifier } from '../dice/modifier';
 
 export { withModifier };
-import { characterEngine, type CharacterEngine, type SourcedEffect } from '../engine/character';
+import {
+  characterEngine,
+  SPELL_ACTIVE_PREFIX,
+  type CharacterEngine,
+  type SourcedEffect,
+} from '../engine/character';
+import { CONDITION_PREFIX, DEBUFF_PREFIX, onYouEntry } from '../engine/on-you';
+import { durationInRounds } from '../spells/duration';
+import { SPELL_EFFECTS } from '../spells/effects';
 import { evalDice, evalScaling } from '../engine/scaling';
 import { carryingLoad, type CarryLoad } from '../inventory/load';
 import { spellcastingView, type SpellcastingView } from '../spells/casting';
@@ -107,6 +117,25 @@ export interface SourcedNote {
   source: string;
 }
 
+/** Quanto falta para um efeito acabar (para a tela dizer "termina na rodada 12"). */
+export interface EffectTiming {
+  duration?: EffectDuration;
+  startedRound?: number;
+  /** Rodada em cujo início o efeito acaba (só em combate, com duração contada). */
+  endsAtRound?: number;
+  roundsLeft?: number;
+}
+
+/** Um efeito ligado em você, com nome e tempo. */
+export interface ActiveEffectView extends EffectTiming {
+  /** Id em `state.active` ("spell:bless", "cond:stunned", "rage"). */
+  key: string;
+  name: string;
+  kind: 'spell' | 'condition' | 'ability';
+  by?: 'self' | 'other';
+  concentration: boolean;
+}
+
 export interface SheetDerived {
   level: number;
   proficiencyBonus: Explained;
@@ -149,6 +178,12 @@ export interface SheetDerived {
    * não decide: avisa que é com o jogador e o Mestre.
    */
   decisions: SourcedNote[];
+  /** Efeitos ligados em você, com quanto falta para acabar. */
+  activeEffects: ActiveEffectView[];
+  /** Concentração atual (a magia pode estar em outra criatura) e quanto falta. */
+  concentration: ({ spellId: string } & EffectTiming) | null;
+  /** Rodada do combate; `null` fora de combate. */
+  round: number | null;
   /** Ações que o personagem não pode usar agora e de onde vem (Incapacitado, Lentidão…). */
   restrictions: { actions: boolean; bonusActions: boolean; reactions: boolean; sources: string[] };
   /** Classe, características, recursos e o que dá para ligar (ADR-010). */
@@ -603,6 +638,44 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
     disadvantage: attackDisadvantage,
   };
 
+  // Efeitos ligados e o tempo de cada um (ADR-015).
+  const round = sheet.state.round ?? null;
+  const timing = (info: ActiveInfo | undefined): EffectTiming => {
+    if (!info) return {};
+    const t: EffectTiming = {
+      ...(info.duration ? { duration: info.duration } : {}),
+      ...(info.startedRound !== undefined ? { startedRound: info.startedRound } : {}),
+    };
+    if (info.duration && info.startedRound !== undefined) {
+      t.endsAtRound = info.startedRound + durationInRounds(info.duration);
+      if (round !== null) t.roundsLeft = Math.max(0, t.endsAtRound - round);
+    }
+    return t;
+  };
+  const activationNames = new Map(engine.activations.map((a) => [a.id, a.name]));
+  const activeEffects = sheet.state.active.flatMap((key): ActiveEffectView[] => {
+    const info = sheet.state.activeInfo?.[key];
+    const base = {
+      key,
+      ...timing(info),
+      ...(info?.by ? { by: info.by } : {}),
+      concentration: Boolean(info?.concentration),
+    };
+    if (key.startsWith(SPELL_ACTIVE_PREFIX)) {
+      const spell = SPELL_EFFECTS[key.slice(SPELL_ACTIVE_PREFIX.length)];
+      return spell ? [{ ...base, name: spell.name, kind: 'spell' }] : [];
+    }
+    if (key.startsWith(CONDITION_PREFIX) || key.startsWith(DEBUFF_PREFIX)) {
+      const entry = onYouEntry(key);
+      return entry ? [{ ...base, name: entry.name, kind: 'condition' }] : [];
+    }
+    const name = activationNames.get(key);
+    return name ? [{ ...base, name, kind: 'ability' }] : [];
+  });
+  const concentration = sheet.state.concentration
+    ? { spellId: sheet.state.concentration, ...timing(sheet.state.concentrationInfo) }
+    : null;
+
   return {
     level,
     proficiencyBonus,
@@ -624,6 +697,9 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
     notes,
     decisions,
     restrictions,
+    activeEffects,
+    concentration,
+    round,
     engine,
     spellcasting,
     spellAttack,

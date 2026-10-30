@@ -1,4 +1,11 @@
-import type { SheetNotice, WeaponTraits } from '@grimorio/rules';
+import type { EffectTiming, SheetNotice, WeaponTraits } from '@grimorio/rules';
+
+const DURATION_UNITS = {
+  round: ['rodada', 'rodadas'],
+  minute: ['minuto', 'minutos'],
+  hour: ['hora', 'horas'],
+  day: ['dia', 'dias'],
+} as const;
 
 /**
  * Textos da ficha (`ts.identity`, `ts.actions`...): a ficha deste navegador, a da conta, as
@@ -193,6 +200,7 @@ export const sheetPtBR = {
     'no-slot': 'Sem espaço de magia desse círculo.',
     'unknown-ability': 'Essa habilidade não está disponível nesta ficha.',
     'concentration-ended': 'A Fúria encerrou a Concentração.',
+    'effects-ended': 'Acabou o tempo de um efeito: ele saiu da ficha.',
   } satisfies Record<SheetNotice, string>,
 
   actions: {
@@ -355,6 +363,26 @@ export const sheetPtBR = {
       resistance: 'Resistência a dano',
       hpMax: (v: string) => `${v} PV máximo`,
       saveBonus: (v: string) => `${v} nas salvaguardas`,
+      rounds: 'Condição nova dura',
+      roundsOption: (n: number) =>
+        n === 0 ? 'até tirar' : n === 1 ? '1 rodada (até o próximo turno)' : `${n} rodadas`,
+      chip: (name: string, timing: string) => (timing ? `${name} · ${timing}` : name),
+    },
+    combat: {
+      start: 'Começar combate',
+      hint: 'A ficha conta as rodadas e tira o que acabou.',
+      round: (n: number) => `Rodada ${n}`,
+      next: 'Próxima rodada',
+      end: 'Encerrar combate',
+    },
+    /** "mais 8 rodadas", "acaba na próxima rodada", "1 minuto", "8 horas". */
+    timing: (t: EffectTiming) => {
+      if (t.roundsLeft !== undefined) {
+        return t.roundsLeft <= 1 ? 'acaba na próxima rodada' : `mais ${t.roundsLeft} rodadas`;
+      }
+      if (!t.duration) return '';
+      const [one, many] = DURATION_UNITS[t.duration.unit];
+      return `${t.duration.amount} ${t.duration.amount === 1 ? one : many}`;
     },
     concentration: (name: string) => `Concentrado em: ${name}`,
     endConcentration: 'Encerrar',

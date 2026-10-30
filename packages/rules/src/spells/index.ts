@@ -3,3 +3,4 @@
 export * from './casting';
 export * from './effects';
 export * from './types';
+export * from './duration';

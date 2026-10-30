@@ -337,7 +337,12 @@ export default function SpellsTab({ query }: { query: string }) {
         )}
         {concentrationName ? (
           <div className="flex items-center justify-between gap-2 rounded-md border border-accent bg-accent-soft px-2 py-1.5 text-sm">
-            <span data-testid="spells.concentration">{tsp.concentration(concentrationName)}</span>
+            <span data-testid="spells.concentration">
+              {tsp.concentration(concentrationName)}
+              {derived.concentration && ts.powers.timing(derived.concentration)
+                ? ` · ${ts.powers.timing(derived.concentration)}`
+                : ''}
+            </span>
             <Button
               size="sm"
               variant="ghost"

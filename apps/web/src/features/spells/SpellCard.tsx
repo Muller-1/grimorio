@@ -1,4 +1,5 @@
 import {
+  parseSpellDuration,
   SPELL_ACTIVE_PREFIX,
   SPELL_EFFECTS,
   spellRoll,
@@ -103,7 +104,10 @@ export function SpellCard({
         if (notices.length) return toast(tsp.castNoSlot, 'danger');
       }
     }
-    if (spell.concentration) dispatch({ type: 'set-concentration', spellId: spell.id });
+    if (spell.concentration) {
+      const duration = parseSpellDuration(spell.duration);
+      dispatch({ type: 'set-concentration', spellId: spell.id, ...(duration ? { duration } : {}) });
+    }
     // Só vai para "Magias em você" quando a magia é sua ou foi conjurada em você mesmo.
     if (hasEffect && onCaster && !useSheetStore.getState().sheet.state.active.includes(effectKey)) {
       dispatch({ type: 'toggle-spell-effect', spellId: spell.id });

@@ -526,7 +526,24 @@ describe('invariantes', () => {
       fc.record({ type: fc.constant('death-save'), d20: fc.integer({ min: 1, max: 20 }) }),
       fc.record({ type: fc.constant('spend-hit-die'), rolled: fc.integer({ min: 1, max: 10 }) }),
       fc.constant<SheetAction>({ type: 'long-rest' }),
+      fc.constant<SheetAction>({ type: 'short-rest' }),
       fc.constant<SheetAction>({ type: 'undo-hp', targetActionId: 'último' }),
+      fc.constant<SheetAction>({ type: 'start-combat' }),
+      fc.constant<SheetAction>({ type: 'next-round' }),
+      fc.constant<SheetAction>({ type: 'end-combat' }),
+      fc.record({
+        type: fc.constant('toggle-spell-effect'),
+        spellId: fc.constantFrom('bless', 'shield', 'mage-armor', 'shield-of-faith'),
+      }),
+      fc.record({
+        type: fc.constant('set-concentration'),
+        spellId: fc.constantFrom('bless', 'hold-person', null),
+      }),
+      fc.record({
+        type: fc.constant('toggle-on-you'),
+        key: fc.constantFrom('cond:stunned', 'cond:poisoned', 'debuff:slow'),
+        rounds: fc.integer({ min: 0, max: 3 }),
+      }),
     );
     fc.assert(
       fc.property(fc.array(arbAction, { maxLength: 40 }), (actions) => {

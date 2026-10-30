@@ -2,8 +2,8 @@
  * B18 — Regras que a ficha passou a saber (revisão do motor): tipo e propriedades da arma
  * (Arquearia e Ataque Furtivo seguem a arma, não o atributo); armadura e Escudo vestidos no
  * Inventário calculam a CA (Estilo Defesa só com armadura); Atordoado falha sozinho nas
- * salvaguardas de Força e Destreza, tira as ações e encerra a Concentração. O oráculo é o motor
- * de regras.
+ * salvaguardas de Força e Destreza, tira as ações e encerra a Concentração; o combate conta as
+ * rodadas e tira da ficha o efeito que acabou. O oráculo é o motor de regras.
  */
 import { deriveSheet } from '@grimorio/rules';
 import { createBlankSheet, type LocalSheet } from '@grimorio/shared';
@@ -143,5 +143,34 @@ test.describe('B18 — regras da revisão do motor', { tag: '@B18' }, () => {
     await expect(page.getByTestId('save.con.roll')).toBeVisible();
     await openColumn(page, 'Ações');
     await expect(page.getByTestId('actions.restricted')).toContainText('Atordoado');
+  });
+
+  test('rodadas: efeito com duração mostra quanto falta e sai sozinho', async ({ page }) => {
+    await withSheet(page, sheetOf('cleric', 3, { wis: 16 }));
+    await openColumn(page, 'Combate');
+    await page.getByTestId('combat.start').click();
+    await expect(page.getByTestId('combat.round')).toHaveAttribute('data-value', '1');
+
+    await page.getByTestId('on-you.open').click();
+    await page.getByTestId('on-you.rounds').selectOption('1');
+    await page.getByTestId('on-you.cond:poisoned').click();
+    await page.getByTestId('on-you.done').click();
+    const chip = page.getByTestId('on-you.chip.cond:poisoned');
+    await expect(chip).toContainText('acaba na próxima rodada');
+    let sheet = await sheetNow(page);
+    expect(sheet.state.activeInfo?.['cond:poisoned']).toMatchObject({
+      startedRound: 1,
+      duration: { amount: 1, unit: 'round' },
+    });
+
+    await page.getByTestId('combat.next').click();
+    await expect(page.getByTestId('combat.round')).toHaveAttribute('data-value', '2');
+    await expect(chip).toHaveCount(0);
+    sheet = await sheetNow(page);
+    expect(sheet.state.active).toEqual([]);
+
+    await page.getByTestId('combat.end').click();
+    await expect(page.getByTestId('combat.start')).toBeVisible();
+    expect((await sheetNow(page)).state.round).toBeUndefined();
   });
 });

@@ -1,4 +1,10 @@
-import { freshAbilityState, type HpEvent, type LocalSheet } from '@grimorio/shared';
+import {
+  freshAbilityState,
+  type ActiveInfo,
+  type EffectDuration,
+  type HpEvent,
+  type LocalSheet,
+} from '@grimorio/shared';
 import { SPELL_ACTIVE_PREFIX } from '../engine/character';
 import {
   CONDITION_PREFIX,
@@ -7,6 +13,7 @@ import {
   isOnYouKey,
   onYouEntry,
 } from '../engine/on-you';
+import { durationInRounds } from '../spells/duration';
 import { SPELL_EFFECTS } from '../spells/effects';
 import { deriveSheet, type SheetDerived } from './derive';
 
@@ -38,12 +45,25 @@ export type SheetAction =
   /** Espaço de magia (círculo 1–9) ou de Magia de Pacto (`pact`). */
   | { type: 'spend-slot'; circle: number; pact?: boolean }
   | { type: 'restore-slot'; circle: number; pact?: boolean }
-  /** Começa (ou troca) a Concentração; `null` encerra. */
-  | { type: 'set-concentration'; spellId: string | null }
-  /** Marca que o efeito de uma magia está valendo em você (Bênção, Escudo da Fé…). */
-  | { type: 'toggle-spell-effect'; spellId: string }
-  /** Liga/desliga uma condição ("cond:poisoned") ou magia que atrapalha ("debuff:bane"). */
-  | { type: 'toggle-on-you'; key: string }
+  /**
+   * Começa (ou troca) a Concentração; `null` encerra. `duration`: a da magia (sem ela, a das
+   * magias que a ficha conhece).
+   */
+  | { type: 'set-concentration'; spellId: string | null; duration?: EffectDuration }
+  /**
+   * Marca que o efeito de uma magia está valendo em você (Bênção, Escudo da Fé…). `by`: quem
+   * conjurou (padrão: você).
+   */
+  | { type: 'toggle-spell-effect'; spellId: string; by?: 'self' | 'other' }
+  /**
+   * Liga/desliga uma condição ("cond:poisoned") ou magia que atrapalha ("debuff:bane").
+   * `rounds`: quantas rodadas dura (ex.: Atordoado até o fim do próximo turno = 1).
+   */
+  | { type: 'toggle-on-you'; key: string; rounds?: number }
+  /** Combate: começa na rodada 1, passa para a próxima (o que acabou sai) ou termina. */
+  | { type: 'start-combat' }
+  | { type: 'next-round' }
+  | { type: 'end-combat' }
   /** Nível de Exaustão (0 a 6). */
   | { type: 'set-exhaustion'; level: number };
 
@@ -62,7 +82,9 @@ export type SheetNotice =
   | 'no-slot'
   | 'unknown-ability'
   /** Ligar a Fúria encerrou a Concentração. */
-  | 'concentration-ended';
+  | 'concentration-ended'
+  /** Passou o tempo de algum efeito (ou da Concentração): ele saiu da ficha. */
+  | 'effects-ended';
 
 export interface ActionContext {
   /** Momento da ação (ISO). Vem da porta Clock: a função continua pura. */
@@ -92,6 +114,20 @@ export function applySheetAction(
   action: SheetAction,
   ctx: ActionContext,
   derived: SheetDerived = deriveSheet(sheet),
+): ActionOutcome {
+  const outcome = applyAction(sheet, action, ctx, derived);
+  if (outcome.sheet === sheet) return outcome;
+  return {
+    ...outcome,
+    sheet: { ...outcome.sheet, state: tidyInfo(sheet.state, outcome.sheet.state, ctx) },
+  };
+}
+
+function applyAction(
+  sheet: LocalSheet,
+  action: SheetAction,
+  ctx: ActionContext,
+  derived: SheetDerived,
 ): ActionOutcome {
   const hpMax = derived.hpMax.value;
   const notices: SheetNotice[] = [];
@@ -293,7 +329,13 @@ export function applySheetAction(
         if (r.shortRest === 'all') delete resources[r.id];
         else if (r.shortRest === 'one' && r.spent > 0) resources[r.id] = r.spent - 1;
       }
-      return { sheet: withState({ resources, pactSlotsSpent: 0 }), notices };
+      // Passa 1 hora: acaba o que dura até 1 hora (Bênção, Escudo da Fé…).
+      const passed = expire(sheet.state, (info) => fitsIn(info, 600));
+      if (passed.ended) notices.push('effects-ended');
+      return {
+        sheet: { ...sheet, state: { ...passed.state, resources, pactSlotsSpent: 0 } },
+        notices,
+      };
     }
 
     case 'spend-resource':
@@ -403,19 +445,43 @@ export function applySheetAction(
     case 'set-concentration': {
       const ended = withoutConcentration(sheet.state);
       if (action.spellId === null) return { sheet: { ...sheet, state: ended }, notices };
+      const duration = action.duration ?? SPELL_EFFECTS[action.spellId]?.duration;
+      const concentrationInfo: ActiveInfo = {
+        ...startInfo(sheet.state, ctx),
+        ...(duration ? { duration } : {}),
+        by: 'self',
+        concentration: true,
+      };
       return {
-        sheet: { ...sheet, state: { ...ended, concentration: action.spellId.slice(0, 60) } },
+        sheet: {
+          ...sheet,
+          state: { ...ended, concentration: action.spellId.slice(0, 60), concentrationInfo },
+        },
         notices,
       };
     }
 
     case 'toggle-spell-effect': {
       const key = `${SPELL_ACTIVE_PREFIX}${action.spellId}`;
-      if (!SPELL_EFFECTS[action.spellId]) return { sheet, notices: ['unknown-ability'] };
+      const spell = SPELL_EFFECTS[action.spellId];
+      if (!spell) return { sheet, notices: ['unknown-ability'] };
       const on = sheet.state.active.includes(key);
+      if (on) {
+        return {
+          sheet: withState({ active: sheet.state.active.filter((id) => id !== key) }),
+          notices,
+        };
+      }
+      const info: ActiveInfo = {
+        ...startInfo(sheet.state, ctx),
+        ...(spell.duration ? { duration: spell.duration } : {}),
+        by: action.by ?? 'self',
+        ...(spell.concentration ? { concentration: true } : {}),
+      };
       return {
         sheet: withState({
-          active: on ? sheet.state.active.filter((id) => id !== key) : [...sheet.state.active, key],
+          active: [...sheet.state.active, key],
+          activeInfo: { ...sheet.state.activeInfo, [key]: info },
         }),
         notices,
       };
@@ -426,11 +492,20 @@ export function applySheetAction(
         return { sheet, notices: ['unknown-ability'] };
       }
       const on = sheet.state.active.includes(action.key);
+      const rounds = action.rounds === undefined ? 0 : clamp(Math.floor(action.rounds), 0, 9999);
+      const info: ActiveInfo = {
+        ...startInfo(sheet.state, ctx),
+        ...(rounds > 0 ? { duration: { amount: rounds, unit: 'round' as const } } : {}),
+        by: 'other',
+      };
       const state = {
         ...sheet.state,
-        active: on
-          ? sheet.state.active.filter((id) => id !== action.key)
-          : [...sheet.state.active, action.key],
+        ...(on
+          ? { active: sheet.state.active.filter((id) => id !== action.key) }
+          : {
+              active: [...sheet.state.active, action.key],
+              activeInfo: { ...sheet.state.activeInfo, [action.key]: info },
+            }),
       };
       // Incapacitado (e o que inclui) encerra a Concentração.
       const breaks = onYouEntry(action.key)?.effects.some(
@@ -440,6 +515,42 @@ export function applySheetAction(
         notices.push('concentration-ended');
         return { sheet: { ...sheet, state: withoutConcentration(state) }, notices };
       }
+      return { sheet: { ...sheet, state }, notices };
+    }
+
+    case 'start-combat': {
+      // O que já estava ligado conta a partir da rodada 1.
+      const from1 = (info: ActiveInfo): ActiveInfo =>
+        info.startedRound === undefined ? { ...info, startedRound: 1 } : info;
+      const { concentrationInfo, activeInfo } = sheet.state;
+      return {
+        sheet: withState({
+          round: 1,
+          ...(activeInfo ? { activeInfo: mapInfo(activeInfo, from1) } : {}),
+          ...(concentrationInfo ? { concentrationInfo: from1(concentrationInfo) } : {}),
+        }),
+        notices,
+      };
+    }
+
+    case 'next-round': {
+      const round = (sheet.state.round ?? 0) + 1;
+      const passed = expire({ ...sheet.state, round }, (info) => {
+        if (!info.duration || info.startedRound === undefined) return false;
+        return round >= info.startedRound + durationInRounds(info.duration);
+      });
+      if (passed.ended) notices.push('effects-ended');
+      return { sheet: { ...sheet, state: passed.state }, notices };
+    }
+
+    case 'end-combat': {
+      // Acaba o que dura rodadas; o resto continua, mas sem rodada para contar.
+      const passed = expire(sheet.state, (info) => info.duration?.unit === 'round');
+      if (passed.ended) notices.push('effects-ended');
+      const { round: _round, ...state } = passed.state;
+      const outOfCombat = ({ startedRound: _r, ...info }: ActiveInfo): ActiveInfo => info;
+      if (state.activeInfo) state.activeInfo = mapInfo(state.activeInfo, outOfCombat);
+      if (state.concentrationInfo) state.concentrationInfo = outOfCombat(state.concentrationInfo);
       return { sheet: { ...sheet, state }, notices };
     }
 
@@ -503,7 +614,7 @@ function spendCost(
  * Encerra a Concentração: tira `concentration` e o efeito ligado dessa magia em você.
  */
 function withoutConcentration(state: LocalSheet['state']): LocalSheet['state'] {
-  const { concentration, ...rest } = state;
+  const { concentration, concentrationInfo: _info, ...rest } = state;
   if (!concentration) return state;
   const key = `${SPELL_ACTIVE_PREFIX}${concentration}`;
   return { ...rest, active: rest.active.filter((id) => id !== key) };
@@ -514,4 +625,65 @@ function withExhaustion(active: string[], level: number): string[] {
   const rest = active.filter((id) => !id.startsWith(`${CONDITION_PREFIX}${EXHAUSTION_ID}`));
   const l = Math.min(6, Math.max(0, Math.floor(level)));
   return l > 0 ? [...rest, `${CONDITION_PREFIX}${EXHAUSTION_ID}:${l}`] : rest;
+}
+
+/** Início de um efeito: agora e, em combate, a rodada. */
+function startInfo(state: LocalSheet['state'], ctx: ActionContext): ActiveInfo {
+  return { startedAt: ctx.now, ...(state.round ? { startedRound: state.round } : {}) };
+}
+
+function mapInfo(
+  info: Record<string, ActiveInfo>,
+  fn: (i: ActiveInfo) => ActiveInfo,
+): Record<string, ActiveInfo> {
+  return Object.fromEntries(Object.entries(info).map(([k, v]) => [k, fn(v)]));
+}
+
+/** Dura no máximo `rounds` rodadas (efeito sem duração contada não acaba sozinho). */
+function fitsIn(info: ActiveInfo, rounds: number): boolean {
+  return info.duration !== undefined && durationInRounds(info.duration) <= rounds;
+}
+
+/** Tira o que acabou (pelo critério dado), inclusive a Concentração e o efeito dela. */
+function expire(
+  state: LocalSheet['state'],
+  isOver: (info: ActiveInfo) => boolean,
+): { state: LocalSheet['state']; ended: boolean } {
+  const info = state.activeInfo ?? {};
+  const gone = state.active.filter((id) => info[id] && isOver(info[id]));
+  let next: LocalSheet['state'] = gone.length
+    ? { ...state, active: state.active.filter((id) => !gone.includes(id)) }
+    : state;
+  const concentrationOver = Boolean(
+    next.concentration && next.concentrationInfo && isOver(next.concentrationInfo),
+  );
+  if (concentrationOver) next = withoutConcentration(next);
+  return { state: next, ended: gone.length > 0 || concentrationOver };
+}
+
+/**
+ * Depois de cada ação: o que acabou de ser ligado ganha início (se a ação não deu detalhes), o
+ * que saiu de `active` perde os detalhes, e a Concentração encerrada leva os dela junto.
+ */
+function tidyInfo(
+  before: LocalSheet['state'],
+  after: LocalSheet['state'],
+  ctx: ActionContext,
+): LocalSheet['state'] {
+  const info: Record<string, ActiveInfo> = {};
+  for (const id of after.active) {
+    const known = after.activeInfo?.[id];
+    if (known) info[id] = known;
+    else if (!before.active.includes(id)) info[id] = startInfo(after, ctx);
+  }
+  const { activeInfo: _old, concentrationInfo, ...rest } = after;
+  let concentration = after.concentration ? concentrationInfo : undefined;
+  if (after.concentration && after.concentration !== before.concentration && !concentration) {
+    concentration = { ...startInfo(after, ctx), by: 'self', concentration: true };
+  }
+  return {
+    ...rest,
+    ...(Object.keys(info).length ? { activeInfo: info } : {}),
+    ...(concentration ? { concentrationInfo: concentration } : {}),
+  };
 }

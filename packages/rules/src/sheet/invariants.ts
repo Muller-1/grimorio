@@ -13,7 +13,8 @@ export type Violation =
   | 'death-saves-while-conscious'
   | 'hit-dice-out-of-range'
   | 'hp-log-too-long'
-  | 'duplicate-active';
+  | 'duplicate-active'
+  | 'active-info-orphan';
 
 export function checkSheetInvariants(sheet: LocalSheet): Violation[] {
   const d = deriveSheet(sheet);
@@ -31,6 +32,10 @@ export function checkSheetInvariants(sheet: LocalSheet): Violation[] {
   if (hitDiceSpent < 0 || hitDiceSpent > d.level) v.push('hit-dice-out-of-range');
   if (hpLog.length > 50) v.push('hp-log-too-long');
   if (new Set(sheet.state.active).size !== sheet.state.active.length) v.push('duplicate-active');
+  const active = new Set(sheet.state.active);
+  if (Object.keys(sheet.state.activeInfo ?? {}).some((id) => !active.has(id))) {
+    v.push('active-info-orphan');
+  }
   return v;
 }
 
@@ -66,12 +71,20 @@ export function normalizeSheet(
   }
   // O mesmo efeito ligado duas vezes contaria dobrado em quem percorre a lista.
   if (new Set(state.active).size !== state.active.length) state.active = [...new Set(state.active)];
+  // Detalhes de efeito que não está mais ligado (ficha editada à mão) saem.
+  const info = state.activeInfo;
+  if (info && Object.keys(info).some((id) => !state.active.includes(id))) {
+    const kept = Object.entries(info).filter(([id]) => state.active.includes(id));
+    if (kept.length) state.activeInfo = Object.fromEntries(kept);
+    else delete state.activeInfo;
+  }
 
   return {
     sheet:
       warnings.length > 0 ||
       state.deathSaves !== sheet.state.deathSaves ||
-      state.active !== sheet.state.active
+      state.active !== sheet.state.active ||
+      state.activeInfo !== sheet.state.activeInfo
         ? { ...sheet, state }
         : sheet,
     warnings,

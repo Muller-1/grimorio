@@ -120,10 +120,23 @@ function Row({
   );
 }
 
-export default function EffectsDialog({ onClose }: { onClose: () => void }) {
+export default function EffectsDialog({
+  onClose,
+  rounds,
+  onRounds,
+}: {
+  onClose: () => void;
+  /** Quantas rodadas dura a condição que for ligada agora (0 = até tirar). */
+  rounds: number;
+  onRounds: (n: number) => void;
+}) {
   const { sheet } = useSheet();
   const dispatch = useSheetStore((s) => s.dispatch);
   const exhaustionId = useId();
+  const roundsId = useId();
+  /** Liga (com a duração escolhida) ou desliga uma condição ou magia que atrapalha. */
+  const toggleOnYou = (key: string) =>
+    dispatch({ type: 'toggle-on-you', key, ...(rounds > 0 ? { rounds } : {}) });
   const active = new Set(sheet.state.active);
   const buffs = Object.entries(SPELL_EFFECTS).sort(([, a], [, b]) =>
     a.name.localeCompare(b.name, 'pt-BR'),
@@ -151,6 +164,24 @@ export default function EffectsDialog({ onClose }: { onClose: () => void }) {
       }
     >
       <div className="space-y-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Label htmlFor={roundsId} className="mb-0">
+            {o.rounds}
+          </Label>
+          <Select
+            id={roundsId}
+            value={rounds}
+            onChange={(e) => onRounds(Number(e.target.value))}
+            className="w-auto"
+            data-testid="on-you.rounds"
+          >
+            {[0, 1, 2, 3, 10].map((n) => (
+              <option key={n} value={n}>
+                {o.roundsOption(n)}
+              </option>
+            ))}
+          </Select>
+        </div>
         {section(
           o.conditions,
           <>
@@ -164,7 +195,7 @@ export default function EffectsDialog({ onClose }: { onClose: () => void }) {
                     text={c.text}
                     on={active.has(key)}
                     tone="bad"
-                    onToggle={() => dispatch({ type: 'toggle-on-you', key })}
+                    onToggle={() => toggleOnYou(key)}
                     testId={`on-you.${key}`}
                   />
                 );
@@ -203,7 +234,7 @@ export default function EffectsDialog({ onClose }: { onClose: () => void }) {
                   text={d.text}
                   on={active.has(key)}
                   tone="bad"
-                  onToggle={() => dispatch({ type: 'toggle-on-you', key })}
+                  onToggle={() => toggleOnYou(key)}
                   testId={`on-you.${key}`}
                 />
               );
@@ -220,7 +251,7 @@ export default function EffectsDialog({ onClose }: { onClose: () => void }) {
                 text={describe(s.effects)}
                 on={active.has(`${SPELL_ACTIVE_PREFIX}${id}`)}
                 tone="good"
-                onToggle={() => dispatch({ type: 'toggle-spell-effect', spellId: id })}
+                onToggle={() => dispatch({ type: 'toggle-spell-effect', spellId: id, by: 'other' })}
                 testId={`on-you.spell.${id}`}
               />
             ))}

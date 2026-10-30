@@ -1,11 +1,14 @@
 // Gerado por packages/rules/scripts/spells/gen.py — SRD 5.2 (CC BY 4.0).
 // Não edite aqui: mude tr/*.json e rode o gerador de novo (ADR-010).
+import type { EffectDuration } from '@grimorio/shared';
 import type { Effect } from '../classes/types';
 
 export interface SpellEffectsDef {
   name: string;
   level: number;
   concentration: boolean;
+  /** Ausente: Instantânea ou até ser dissipada. */
+  duration?: EffectDuration;
   effects: Effect[];
 }
 
@@ -15,6 +18,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Auxílio',
     level: 2,
     concentration: false,
+    duration: {
+      amount: 8,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'hp-max-bonus',
@@ -30,6 +37,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Pele-Casca',
     level: 2,
     concentration: false,
+    duration: {
+      amount: 1,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'ac-minimum',
@@ -41,6 +52,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Sinal de Esperança',
     level: 3,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'advantage',
@@ -56,6 +71,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Bênção',
     level: 1,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'roll-bonus-dice',
@@ -68,6 +87,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Turvar',
     level: 2,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'note',
@@ -79,6 +102,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Proteção Contra a Morte',
     level: 4,
     concentration: false,
+    duration: {
+      amount: 8,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'note',
@@ -90,6 +117,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Favor Divino',
     level: 1,
     concentration: false,
+    duration: {
+      amount: 1,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'extra-damage',
@@ -105,6 +136,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Aumentar/Reduzir',
     level: 2,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'extra-damage',
@@ -127,6 +162,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Voo',
     level: 3,
     concentration: true,
+    duration: {
+      amount: 10,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'note',
@@ -138,6 +177,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Sexto Sentido',
     level: 9,
     concentration: false,
+    duration: {
+      amount: 8,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'advantage',
@@ -168,6 +211,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Movimentação Livre',
     level: 4,
     concentration: false,
+    duration: {
+      amount: 1,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'note',
@@ -179,6 +226,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Invisibilidade Maior',
     level: 4,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'advantage',
@@ -194,6 +245,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Celeridade',
     level: 3,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'ac-bonus',
@@ -213,6 +268,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Heroísmo',
     level: 1,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'note',
@@ -224,6 +283,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Danação',
     level: 1,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'extra-damage',
@@ -236,6 +299,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Aura Sagrada',
     level: 8,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'advantage',
@@ -251,6 +318,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Marca do Predador',
     level: 1,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'extra-damage',
@@ -263,6 +334,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Passos Largos',
     level: 1,
     concentration: false,
+    duration: {
+      amount: 1,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'speed-bonus',
@@ -274,6 +349,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Armadura Arcana',
     level: 1,
     concentration: false,
+    duration: {
+      amount: 8,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'ac-formula',
@@ -287,6 +366,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Arma Mágica',
     level: 2,
     concentration: false,
+    duration: {
+      amount: 1,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'attack-bonus',
@@ -312,6 +395,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Proteção Contra o Bem e o Mal',
     level: 1,
     concentration: true,
+    duration: {
+      amount: 10,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'note',
@@ -323,6 +410,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Escudo Arcano',
     level: 1,
     concentration: false,
+    duration: {
+      amount: 1,
+      unit: 'round',
+    },
     effects: [
       {
         type: 'ac-bonus',
@@ -334,6 +425,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Escudo da Fé',
     level: 1,
     concentration: true,
+    duration: {
+      amount: 10,
+      unit: 'minute',
+    },
     effects: [
       {
         type: 'ac-bonus',
@@ -345,6 +440,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Pele-Rocha',
     level: 4,
     concentration: true,
+    duration: {
+      amount: 1,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'resistance',
@@ -356,6 +455,10 @@ export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = {
     name: 'Vínculo de Proteção',
     level: 2,
     concentration: false,
+    duration: {
+      amount: 1,
+      unit: 'hour',
+    },
     effects: [
       {
         type: 'ac-bonus',

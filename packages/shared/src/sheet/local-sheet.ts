@@ -61,6 +61,29 @@ export const HpEventSchema = z.object({
   source: z.enum(['hit-die']).optional(),
 });
 
+/** Duração de um efeito (1 minuto = 10 rodadas; 1 hora = 600). */
+export const EffectDurationSchema = z.object({
+  amount: int().min(1).max(9999),
+  unit: z.enum(['round', 'minute', 'hour', 'day']),
+});
+
+/**
+ * Detalhes de um efeito ligado em `state.active` (ou da Concentração): quando começou, quanto
+ * dura e de quem é. É o que deixa a ficha dizer "termina na rodada 12" e tirar o efeito sozinha.
+ */
+export const ActiveInfoSchema = z.object({
+  /** Data e hora em que foi ligado. */
+  startedAt: z.iso.datetime(),
+  /** Rodada do combate em que começou (só em combate). */
+  startedRound: int().min(1).max(9999).optional(),
+  /** Ausente: até alguém desligar (ou até ser dissipada). */
+  duration: EffectDurationSchema.optional(),
+  /** Quem causou: o próprio personagem ou outra criatura (aliado, inimigo). */
+  by: z.enum(['self', 'other']).optional(),
+  /** Depende da Concentração de quem conjurou. */
+  concentration: z.boolean().optional(),
+});
+
 export const WeaponSchema = z.object({
   id: z.string().min(1),
   name: z.string().max(60),
@@ -300,6 +323,12 @@ export const LocalSheetSchema = z.object({
       .transform((ids) => [...new Set(ids)]),
     /** Magia em que o personagem está concentrado. */
     concentration: z.string().max(60).optional(),
+    /** Quando a Concentração começou e quanto dura (a magia pode estar em outra criatura). */
+    concentrationInfo: ActiveInfoSchema.optional(),
+    /** Detalhes de cada efeito de `active` (por id). Fichas antigas não têm. */
+    activeInfo: z.record(z.string().min(1).max(60), ActiveInfoSchema).optional(),
+    /** Rodada do combate (1, 2, 3…). Ausente: fora de combate. */
+    round: int().min(1).max(9999).optional(),
   }),
   weapons: z.array(WeaponSchema).max(50),
   features: z.array(FeatureSchema).max(100),
@@ -323,6 +352,8 @@ export type Weapon = z.infer<typeof WeaponSchema>;
 export type Feature = z.infer<typeof FeatureSchema>;
 export type Item = z.infer<typeof ItemSchema>;
 export type ItemArmor = z.infer<typeof ArmorSchema>;
+export type EffectDuration = z.infer<typeof EffectDurationSchema>;
+export type ActiveInfo = z.infer<typeof ActiveInfoSchema>;
 export type Inventory = z.infer<typeof InventorySchema>;
 export type AbilityScores = Record<AbilityKey, number>;
 

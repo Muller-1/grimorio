@@ -138,14 +138,24 @@ for lvl,recs in out.items():
         f.write(f'export const LEVEL_{lvl}: SpellDef[] = {body};\n')
 # Efeitos numéricos das magias (Bênção, Escudo da Fé…): arquivo pequeno, que vai junto com o
 # motor da ficha (o resto das magias só carrega ao abrir a parte de magias).
-eff={r['id']:{'name':r['name'],'level':r['level'],'concentration':r['concentration'],'effects':r['effects']}
-     for recs in out.values() for r in recs if r.get('effects')}
+UNITS={'rodada':'round','minuto':'minute','hora':'hour','dia':'day'}
+def dur_struct(d):
+    # Mesma leitura de parseSpellDuration (src/spells/duration.ts): "Concentração, até 1 minuto".
+    m=re.search(r'(\d+)\s*(rodada|minuto|hora|dia)s?\b', d, re.I)
+    return {'amount':int(m.group(1)),'unit':UNITS[m.group(2).lower()]} if m else None
+def eff_entry(r):
+    e={'name':r['name'],'level':r['level'],'concentration':r['concentration']}
+    if dur_struct(r['duration']): e['duration']=dur_struct(r['duration'])
+    e['effects']=r['effects']
+    return e
+eff={r['id']:eff_entry(r) for recs in out.values() for r in recs if r.get('effects')}
 effpath=os.path.normpath(os.path.join(outdir,'..','effects.ts'))
 with open(effpath,'w') as f:
     f.write('// Gerado por packages/rules/scripts/spells/gen.py — SRD 5.2 (CC BY 4.0).\n')
     f.write('// Não edite aqui: mude tr/*.json e rode o gerador de novo (ADR-010).\n')
+    f.write("import type { EffectDuration } from '@grimorio/shared';\n")
     f.write("import type { Effect } from '../classes/types';\n\n")
-    f.write('export interface SpellEffectsDef {\n  name: string;\n  level: number;\n  concentration: boolean;\n  effects: Effect[];\n}\n\n')
+    f.write('export interface SpellEffectsDef {\n  name: string;\n  level: number;\n  concentration: boolean;\n  /** Ausente: Instantânea ou até ser dissipada. */\n  duration?: EffectDuration;\n  effects: Effect[];\n}\n\n')
     f.write('/** Magias com efeito que a ficha calcula quando estão ativas em você. */\n')
     f.write('export const SPELL_EFFECTS: Record<string, SpellEffectsDef> = ')
     f.write(json.dumps(dict(sorted(eff.items())),ensure_ascii=False,indent=2)+';\n')
