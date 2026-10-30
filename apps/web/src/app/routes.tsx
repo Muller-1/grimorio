@@ -1,8 +1,8 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
-import { LoadingScreen } from '@/features/screens/LoadingScreen';
-import { NotFoundScreen } from '@/features/screens/NotFoundScreen';
+import { InlineLoader, LoadingScreen } from '@/features/screens/LoadingScreen';
 import { AppErrorBoundary } from '@/features/screens/ServerErrorScreen';
+import { DiceIntro } from '@/pages/DiceIntro';
 import HomePage from '@/pages/HomePage';
 import StartPage from '@/pages/StartPage';
 import { CreditsPage, PrivacyPage, SupportPage, TermsPage } from '@/pages/SimplePages';
@@ -12,6 +12,10 @@ import { pageMeta } from './meta';
 
 // Ficha e rolador são carregados sob demanda: a página inicial fica leve.
 const SheetPage = lazy(() => import('@/features/sheet/SheetPage'));
+// A 404 só baixa quando alguém cai numa página que não existe.
+const NotFoundScreen = lazy(() =>
+  import('@/features/screens/NotFoundScreen').then((m) => ({ default: m.NotFoundScreen })),
+);
 const DicePage = lazy(() => import('@/pages/DicePage'));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const CharactersPage = lazy(() => import('@/features/characters/CharactersPage'));
@@ -71,9 +75,13 @@ const PAGES: readonly PageRoute[] = [
   {
     path: '/dados',
     element: (
-      <Loading>
-        <DicePage />
-      </Loading>
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        <DiceIntro />
+        {/* O título já está na tela: enquanto o rolador chega, só o d20 rolando embaixo dele. */}
+        <Suspense fallback={<InlineLoader label={t.common.loading} />}>
+          <DicePage />
+        </Suspense>
+      </div>
     ),
     prerender: 'shell',
     lazyModule: 'src/pages/DicePage.tsx',
@@ -173,7 +181,14 @@ export const STATIC_PAGES: readonly {
     meta: pageMeta(path),
     index: index !== false,
   })),
-  { path: '/404', file: '404.html', prerender: 'shell', meta: t.meta.default, index: false },
+  {
+    path: '/404',
+    file: '404.html',
+    prerender: 'shell',
+    lazyModule: 'src/features/screens/NotFoundScreen.tsx',
+    meta: t.meta.default,
+    index: false,
+  },
 ];
 
 export function AppRoutes() {
@@ -190,7 +205,14 @@ export function AppRoutes() {
           )}
         </Route>
         {/* As telas de erro têm cabeçalho próprio, sem a barra do site (docs/design.md). */}
-        <Route path="*" element={<NotFoundScreen />} />
+        <Route
+          path="*"
+          element={
+            <Suspense fallback={<LoadingScreen />}>
+              <NotFoundScreen />
+            </Suspense>
+          }
+        />
       </Routes>
     </AppErrorBoundary>
   );

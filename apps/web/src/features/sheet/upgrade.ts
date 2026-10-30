@@ -1,6 +1,6 @@
 import { upgradeSheetContent } from '@grimorio/rules';
 import { useToastStore } from '@/features/toast/store';
-import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { newId } from '@/ports/ids';
 import { useSheetStore } from './store';
 
@@ -18,5 +18,5 @@ export function upgradeOpenSheet(): void {
     d.features = out.sheet.features;
     d.inventory = out.sheet.inventory;
   });
-  if (out.movedEquipment) useToastStore.getState().push(t.sheet.inventory.moved, 'info');
+  if (out.movedEquipment) useToastStore.getState().push(ts.inventory.moved, 'info');
 }

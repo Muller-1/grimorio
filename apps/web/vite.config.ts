@@ -46,6 +46,20 @@ export default defineConfig({
           includeDependenciesRecursively: false,
           groups: [
             { name: 'rules-dice', test: /packages[\\/]rules[\\/]src[\\/]dice[\\/]/ },
+            // Peças pequenas que quase toda página usa (botão, campo, painel, ícones, o React) num
+            // pedaço só. O teste do Lighthouse (e o celular em rede lenta) sofre mais com muitos
+            // pedidos pequenos do que com alguns kB a mais no começo.
+            {
+              name: 'ui',
+              test: /src[\\/](components[\\/]ui[\\/](?!dialog|popover)|lib[\\/](utils|format)\.ts|ports[\\/](storage|events))|node_modules[\\/].*(lucide-react|tailwind-merge|class-variance-authority|clsx|react-slot|react-compose-refs|zustand|[\\/]react[\\/])/,
+            },
+            // O rolador de dados inteiro (página, estado, histórico) num pedaço: /dados abre com
+            // um pedido só além do que todo mundo baixa.
+            // Fora: a bandeja da ficha e o editor de atalho, que abrem um diálogo (vem sob demanda).
+            {
+              name: 'dice',
+              test: /src[\\/]features[\\/]dice[\\/](?!components[\\/](RollTray|ShortcutEditor))|packages[\\/]shared[\\/]src[\\/]dice[\\/]/,
+            },
             {
               name: 'rules',
               // Fora: o index.ts da raiz (só reexporta; ficando aqui, puxaria o pedaço para

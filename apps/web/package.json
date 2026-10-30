@@ -13,8 +13,6 @@
     "size": "size-limit"
   },
   "dependencies": {
-    "@fontsource/alegreya-sans": "^5.3.0",
-    "@fontsource/cinzel": "^5.3.0",
     "@grimorio/rules": "workspace:*",
     "@grimorio/shared": "workspace:*",
     "class-variance-authority": "^0.7.1",

@@ -7,6 +7,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { RollTray } from '@/features/dice/components/RollTray';
 import { useToastStore } from '@/features/toast/store';
 import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { AbilitiesPanel } from './components/AbilitiesPanel';
 import { ActionsColumn } from './components/ActionsColumn';
@@ -34,7 +35,7 @@ function WizardHint() {
   const blank = useSheetStore((s) => !s.sheet.identity.name && !s.sheet.identity.className);
   const [dismissed, setDismissed] = useState(() => safeStorage.get(WIZARD_HINT_KEY) === '1');
   if (!blank || dismissed) return null;
-  const h = t.sheet.wizardHint;
+  const h = ts.wizardHint;
   return (
     <aside
       className="flex flex-col gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 sm:flex-row sm:items-center"
@@ -100,11 +101,11 @@ export default function SheetPage({
   useSwipeTabs(columnsRef, swipe);
 
   useEffect(() => {
-    document.title = `${name || t.sheet.unnamed} · ${t.brand.name}`;
+    document.title = `${name || ts.unnamed} · ${t.brand.name}`;
   }, [name]);
 
   useEffect(() => {
-    if (recovered) toast(t.sheet.restoredBackup, 'danger');
+    if (recovered) toast(ts.restoredBackup, 'danger');
   }, [recovered, toast]);
 
   // Vindo de uma ficha da conta, /ficha volta a mostrar a ficha deste navegador.
@@ -126,9 +127,9 @@ export default function SheetPage({
   }, [needsUpgrade]);
 
   const columns: { key: Column; label: string }[] = [
-    { key: 'character', label: t.sheet.mobileTabs.character },
-    { key: 'combat', label: t.sheet.mobileTabs.combat },
-    { key: 'actions', label: t.sheet.mobileTabs.actions },
+    { key: 'character', label: ts.mobileTabs.character },
+    { key: 'combat', label: ts.mobileTabs.combat },
+    { key: 'actions', label: ts.mobileTabs.actions },
   ];
   const hidden = (key: Column) => column !== key && 'max-md:hidden';
   const wide = 'min-w-0 md:flex-[2_1_760px]';
@@ -157,7 +158,7 @@ export default function SheetPage({
       {/* Abas só no celular */}
       <div
         role="tablist"
-        aria-label={t.sheet.pageTitle}
+        aria-label={ts.pageTitle}
         className="sticky top-16 z-20 grid grid-cols-3 gap-1 rounded-[10px] border border-border bg-surface p-1 md:hidden"
       >
         {columns.map((c) => (
@@ -188,14 +189,14 @@ export default function SheetPage({
         <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-stretch md:gap-5">
           <section
             id="col-character"
-            aria-label={t.sheet.columns.character}
+            aria-label={ts.columns.character}
             className={cn(wide, 'flex flex-col', hidden('character'))}
           >
             <AbilitiesPanel className="flex-1" />
           </section>
           <section
             id="col-combat"
-            aria-label={t.sheet.columns.combat}
+            aria-label={ts.columns.combat}
             className={cn(narrow, 'flex flex-col gap-4 md:gap-5', hidden('combat'))}
           >
             <CombatPanel />
@@ -205,7 +206,7 @@ export default function SheetPage({
         <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-stretch md:gap-5">
           <section
             id="col-actions"
-            aria-label={t.sheet.columns.actions}
+            aria-label={ts.columns.actions}
             className={cn(wide, 'flex flex-col', hidden('actions'))}
           >
             <ActionsColumn className="flex-1" />
@@ -222,14 +223,12 @@ export default function SheetPage({
       <Dialog
         open={confirm !== null}
         onOpenChange={(o) => !o && setConfirm(null)}
-        title={confirm === 'example' ? t.sheet.exampleConfirmTitle : t.sheet.newSheetConfirmTitle}
-        description={
-          confirm === 'example' ? t.sheet.exampleConfirmText : t.sheet.newSheetConfirmText
-        }
+        title={confirm === 'example' ? ts.exampleConfirmTitle : ts.newSheetConfirmTitle}
+        description={confirm === 'example' ? ts.exampleConfirmText : ts.newSheetConfirmText}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirm(null)}>
-              {t.sheet.cancel}
+              {ts.cancel}
             </Button>
             <Button
               variant="primary"
@@ -239,7 +238,7 @@ export default function SheetPage({
                 setColumn('character');
               }}
             >
-              {t.sheet.confirm}
+              {ts.confirm}
             </Button>
           </>
         }

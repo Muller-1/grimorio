@@ -6,7 +6,7 @@ import { Input, Label, Textarea } from '@/components/ui/input';
 import { Popover } from '@/components/ui/popover';
 import { useToastStore } from '@/features/toast/store';
 import type { ImageError } from '@/lib/image';
-import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
@@ -14,7 +14,7 @@ import { ExplainButton } from './Explain';
 
 type TextField = 'name' | 'className' | 'playerName' | 'origin';
 
-const i = t.sheet.identity;
+const i = ts.identity;
 
 // O diálogo de subir de nível (com a lista de magias) só carrega quando o jogador abre.
 const LevelUpDialog = lazy(() => import('@/features/levelup/LevelUpDialog'));
@@ -22,7 +22,7 @@ const LevelUpDialog = lazy(() => import('@/features/levelup/LevelUpDialog'));
 function LevelUpButton() {
   const level = useSheetStore((s) => s.sheet.build.level);
   const [open, setOpen] = useState(false);
-  const l = t.sheet.levelUp;
+  const l = ts.levelUp;
   return (
     <>
       <Button
@@ -275,13 +275,13 @@ function SheetMenu({
         {onExample ? (
           <Button variant="ghost" size="sm" className={item} onClick={onExample}>
             <Sparkles className="size-4" />
-            {t.sheet.loadExample}
+            {ts.loadExample}
           </Button>
         ) : null}
         {onBlank ? (
           <Button variant="ghost" size="sm" className={item} onClick={onBlank}>
             <FilePlus2 className="size-4" />
-            {t.sheet.newSheet}
+            {ts.newSheet}
           </Button>
         ) : null}
       </div>
@@ -306,7 +306,7 @@ export function IdentityBar({
   const { sheet, derived } = useSheet();
   const [editing, setEditing] = useState(false);
   const { identity } = sheet;
-  const name = identity.name || t.sheet.unnamed;
+  const name = identity.name || ts.unnamed;
   const facts = [
     { label: i.className, value: identity.className },
     ...originParts(identity.origin),
@@ -345,7 +345,7 @@ export function IdentityBar({
               >
                 <path d="M4 14v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5M12 4v11M8 11l4 4 4-4" />
               </svg>
-              {t.sheet.savedLocally}
+              {ts.savedLocally}
             </p>
           )}
         </div>

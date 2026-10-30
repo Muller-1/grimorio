@@ -1,4 +1,4 @@
-import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 
 /**
  * "V" (Vantagem) ou "D" (Desvantagem) por habilidade, magia ou condição. Com as duas, elas se
@@ -12,7 +12,7 @@ export function AdvantageBadge({
   disadvantage?: boolean;
 }) {
   if (advantage === disadvantage) return null;
-  const p = t.sheet.powers;
+  const p = ts.powers;
   const label = advantage ? p.advantage : p.disadvantage;
   return (
     <abbr

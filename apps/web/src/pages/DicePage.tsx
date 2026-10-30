@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { Suspense, useEffect, useId, useState } from 'react';
 import { Panel } from '@/components/ui/panel';
 import { DiceExpressionInput } from '@/features/dice/components/DiceExpressionInput';
 import { QuickRollFields } from '@/features/dice/components/QuickRollFields';
@@ -30,13 +30,9 @@ export default function DicePage() {
     if (recovered) toast(t.dice.shortcuts.recovered, 'danger');
   }, [recovered, toast]);
 
+  // O título e a frase ficam em DiceIntro, fora deste pedaço (app/routes.tsx).
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-5">
-        <h1 className="font-display text-3xl font-bold">{t.dice.pageTitle}</h1>
-        <p className="mt-2 max-w-2xl text-muted">{t.dice.pageLead}</p>
-      </div>
-
+    <>
       {/* A 2ª linha (histórico) leva a sobra de altura da coluna dos atalhos: sem buraco no meio. */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[auto_1fr] lg:items-start">
         <div className="space-y-4">
@@ -108,7 +104,11 @@ export default function DicePage() {
         </Panel>
       </div>
 
-      {draft ? <ShortcutEditor initial={draft} onClose={() => setDraft(null)} /> : null}
-    </div>
+      {draft ? (
+        <Suspense fallback={null}>
+          <ShortcutEditor initial={draft} onClose={() => setDraft(null)} />
+        </Suspense>
+      ) : null}
+    </>
   );
 }

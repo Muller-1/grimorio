@@ -6,17 +6,18 @@ import { SwitchTrack } from '@/components/ui/switch-track';
 import { useDiceStore } from '@/features/dice/store';
 import { useToastStore } from '@/features/toast/store';
 import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
 import { EffectsOnYou } from './EffectsOnYou';
 
-const p = t.sheet.powers;
+const p = ts.powers;
 
 function useNotify() {
   const push = useToastStore((s) => s.push);
   return (notices: SheetNotice[]) => {
-    for (const n of notices) push(t.sheet.notices[n], 'info');
+    for (const n of notices) push(ts.notices[n], 'info');
   };
 }
 

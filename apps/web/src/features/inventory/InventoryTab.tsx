@@ -9,11 +9,11 @@ import { NumberField } from '@/components/ui/number-field';
 import { useSheet } from '@/features/sheet/hooks';
 import { useSheetStore } from '@/features/sheet/store';
 import { formatKg } from '@/lib/format';
-import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { newId } from '@/ports/ids';
 
-const inv = t.sheet.inventory;
+const inv = ts.inventory;
 
 /** Normaliza para busca (sem acentos e sem maiúsculas). */
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -380,7 +380,7 @@ export default function InventoryTab({
         {sheet.inventory.items.length === 0 ? (
           <p className="py-2 text-sm text-muted">{inv.empty}</p>
         ) : items.length === 0 ? (
-          <p className="py-2 text-sm text-muted">{t.sheet.actions.noResults}</p>
+          <p className="py-2 text-sm text-muted">{ts.actions.noResults}</p>
         ) : (
           <ul className="space-y-1.5">
             {items.map((item) => {

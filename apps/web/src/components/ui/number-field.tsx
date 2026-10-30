@@ -92,7 +92,7 @@ export function Stepper({
         className="grid size-7 shrink-0 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 disabled:opacity-40"
         onClick={() => onChange(Math.max(min, value - 1))}
         disabled={value <= min}
-        aria-label={t.sheet.identity.decrease(label)}
+        aria-label={t.common.decrease(label)}
       >
         <Minus className="size-3.5" />
       </button>
@@ -110,7 +110,7 @@ export function Stepper({
         className="grid size-7 shrink-0 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 disabled:opacity-40"
         onClick={() => onChange(Math.min(max, value + 1))}
         disabled={value >= max}
-        aria-label={t.sheet.identity.increase(label)}
+        aria-label={t.common.increase(label)}
       >
         <Plus className="size-3.5" />
       </button>

@@ -13,6 +13,7 @@ import { NumberField } from '@/components/ui/number-field';
 import { Panel } from '@/components/ui/panel';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
@@ -124,9 +125,9 @@ function AbilityCard({ ability }: { ability: AbilityKey }) {
     >
       <div className="flex items-center gap-3 border-b border-border-soft px-3 py-2.5">
         <RollButton
-          rollLabel={t.sheet.checkLabel(name)}
+          rollLabel={ts.checkLabel(name)}
           expression={withModifier('1d20', mod)}
-          ariaLabel={t.sheet.rollCheck(name)}
+          ariaLabel={ts.rollCheck(name)}
           testId={`ability.${ability}.roll`}
           className="group relative h-[50px] w-14 rounded-[10px] border-[1.5px] border-ornament bg-bg font-display text-2xl font-bold text-text hover:border-border-strong hover:bg-surface-2 hover:text-text"
         >
@@ -134,7 +135,7 @@ function AbilityCard({ ability }: { ability: AbilityKey }) {
             className="tabular"
             data-testid={`ability.${ability}.mod`}
             data-value={mod}
-            title={t.sheet.abilityMod}
+            title={ts.abilityMod}
           >
             {formatModifier(mod)}
           </span>
@@ -153,14 +154,14 @@ function AbilityCard({ ability }: { ability: AbilityKey }) {
         </h3>
         <div className="flex min-w-[52px] flex-col items-center rounded-lg border border-border bg-bg px-1.5 pt-0.5 pb-1">
           <span className="label-caps text-xs tracking-[0.1em]" aria-hidden="true">
-            {t.sheet.abilityValue}
+            {ts.abilityValue}
           </span>
           <NumberField
             value={score}
             min={1}
             max={30}
             onCommit={(v) => edit((d) => void (d.build.abilities[ability] = v))}
-            label={t.sheet.abilityScore(name)}
+            label={ts.abilityScore(name)}
             className="h-7 w-11 px-0 font-display text-xl leading-none font-bold"
             data-testid={`ability.${ability}.score`}
             data-value={score}
@@ -170,10 +171,10 @@ function AbilityCard({ ability }: { ability: AbilityKey }) {
       <ul className="flex flex-col px-1.5 pt-1.5 pb-2">
         <CheckRow
           save
-          label={t.sheet.saveRow}
-          explainTitle={t.sheet.saveLabel(name)}
-          rollLabel={t.sheet.saveLabel(name)}
-          rollAria={t.sheet.rollSave(name)}
+          label={ts.saveRow}
+          explainTitle={ts.saveLabel(name)}
+          rollLabel={ts.saveLabel(name)}
+          rollAria={ts.rollSave(name)}
           expression={`${withModifier(d20(save.advantage, save.disadvantage), save.bonus.value)}${save.bonusDice.join('')}`}
           bonus={save.bonus}
           proficiency={sheet.build.saveProficiencies.includes(ability) ? 1 : 0}
@@ -198,7 +199,7 @@ function AbilityCard({ ability }: { ability: AbilityKey }) {
               label={skillName}
               explainTitle={skillName}
               rollLabel={skillName}
-              rollAria={t.sheet.rollSkill(skillName)}
+              rollAria={ts.rollSkill(skillName)}
               expression={withModifier(d20(s.advantage, s.disadvantage), s.bonus.value)}
               bonus={s.bonus}
               proficiency={s.proficiency}
@@ -215,7 +216,7 @@ function AbilityCard({ ability }: { ability: AbilityKey }) {
           );
         })}
         {skills.length === 0 ? (
-          <li className="px-2.5 py-2 text-sm text-muted italic">{t.sheet.noSkills(name)}</li>
+          <li className="px-2.5 py-2 text-sm text-muted italic">{ts.noSkills(name)}</li>
         ) : null}
       </ul>
     </section>
@@ -228,11 +229,11 @@ function AbilityCard({ ability }: { ability: AbilityKey }) {
  */
 export function AbilitiesPanel({ className }: { className?: string }) {
   const { derived } = useSheet();
-  const legend = t.sheet.legend;
+  const legend = ts.legend;
   return (
     <Panel
-      title={t.sheet.abilitiesTitle}
-      actions={<p className="pr-1.5 text-sm text-muted">{t.sheet.abilitiesHint}</p>}
+      title={ts.abilitiesTitle}
+      actions={<p className="pr-1.5 text-sm text-muted">{ts.abilitiesHint}</p>}
       className={cn('flex flex-col', className)}
       bodyClassName="flex flex-1 flex-col gap-3.5"
     >
@@ -251,10 +252,10 @@ export function AbilitiesPanel({ className }: { className?: string }) {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <span className="font-bold">{t.sheet.passivePerception}</span>
+          <span className="font-bold">{ts.passivePerception}</span>
           <ExplainButton
             explained={derived.passivePerception}
-            title={t.sheet.passivePerception}
+            title={ts.passivePerception}
             signed={false}
             testId="stat.passive-perception"
             className="inline-flex h-9 min-w-11 items-center justify-center rounded-lg border-[1.5px] border-ornament bg-bg font-display text-xl font-bold hover:bg-surface-2 hover:no-underline"

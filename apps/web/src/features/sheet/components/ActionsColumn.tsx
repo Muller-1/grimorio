@@ -10,6 +10,7 @@ import { Panel } from '@/components/ui/panel';
 import { StrokeIcon, type IconName } from '@/components/ui/stroke-icon';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
@@ -41,7 +42,7 @@ const SpellsTab = lazy(() => import('@/features/spells/SpellsTab'));
 const InventoryTab = lazy(() => import('@/features/inventory/InventoryTab'));
 const WeaponEditor = lazy(() => import('./Editors').then((m) => ({ default: m.WeaponEditor })));
 const FeatureEditor = lazy(() => import('./Editors').then((m) => ({ default: m.FeatureEditor })));
-const a = t.sheet.actions;
+const a = ts.actions;
 
 /** Normaliza para busca: sem acentos e sem maiúsculas ("Rapiéira" acha "rapieira"). */
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -164,7 +165,7 @@ function WeaponCard({
             <dd className="font-mono">{dmg ?? a.invalidDamage}</dd>
             {weapon.properties ? (
               <>
-                <dt className="text-muted">{t.sheet.weaponEditor.properties}</dt>
+                <dt className="text-muted">{ts.weaponEditor.properties}</dt>
                 <dd>{weapon.properties}</dd>
               </>
             ) : null}
@@ -343,7 +344,7 @@ export function ActionsColumn({ className }: { className?: string }) {
         <div className="flex items-end gap-1 rounded-t-[11px] border-b border-border bg-surface-2 px-2.5 pt-2">
           <Tabs.List
             className="flex min-w-0 flex-1 flex-wrap items-end gap-1"
-            aria-label={t.sheet.columns.actions}
+            aria-label={ts.columns.actions}
           >
             {TABS.map((x) => (
               <Tabs.Trigger

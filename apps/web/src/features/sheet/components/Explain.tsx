@@ -3,27 +3,28 @@ import type { ReactNode } from 'react';
 import { Popover } from '@/components/ui/popover';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 
 /** Traduz a origem de cada parte de um número (o motor só devolve códigos). */
 export function partLabel(source: PartSource): string {
   switch (source.kind) {
     case 'base':
-      return t.sheet.explain.base;
+      return ts.explain.base;
     case 'ability':
       return t.abilities[source.ability];
     case 'proficiency':
-      return t.sheet.explain.proficiency(source.level);
+      return ts.explain.proficiency(source.level);
     case 'level':
-      return t.sheet.explain.level;
+      return ts.explain.level;
     case 'hit-die':
-      return t.sheet.explain.hitDie(source.die, source.levels, source.rolled);
+      return ts.explain.hitDie(source.die, source.levels, source.rolled);
     case 'magic':
-      return t.sheet.explain.magic;
+      return ts.explain.magic;
     case 'trait':
-      return t.sheet.explain.trait;
+      return ts.explain.trait;
     case 'override':
-      return t.sheet.explain.override;
+      return ts.explain.override;
     case 'effect':
       // Nome da característica ou magia (vem do conteúdo das regras, já em português).
       return source.name;
@@ -48,7 +49,7 @@ export function ExplainList({
         </div>
       ))}
       <div className="flex justify-between gap-4 border-t border-border pt-1 font-bold">
-        <dt>{t.sheet.explain.total}</dt>
+        <dt>{ts.explain.total}</dt>
         <dd className="tabular">{signed ? formatModifier(explained.value) : explained.value}</dd>
       </div>
     </dl>
@@ -92,7 +93,7 @@ export function ExplainButton({
             'tabular rounded-md px-1 font-semibold decoration-dotted underline-offset-4 hover:bg-surface-2 hover:underline',
             className,
           )}
-          aria-label={`${title}: ${signed ? formatModifier(explained.value) : explained.value}. ${t.sheet.explain.title}`}
+          aria-label={`${title}: ${signed ? formatModifier(explained.value) : explained.value}. ${ts.explain.title}`}
         >
           {children ?? (signed ? formatModifier(explained.value) : explained.value)}
         </button>

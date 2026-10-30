@@ -13,13 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Label, Select } from '@/components/ui/input';
 import { feetToMeters, formatModifier } from '@/lib/format';
-import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
 
 /** Popup de "Efeitos em você": carregado só quando o jogador abre. */
-const o = t.sheet.powers.onYou;
+const o = ts.powers.onYou;
 
 /** Resumo do que uma magia que ajuda muda na ficha ("+1d4 em ataques e salvaguardas"). */
 function describe(effects: Effect[]): string {

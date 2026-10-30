@@ -1,5 +1,5 @@
 import type { ProficiencyLevel } from '@grimorio/shared';
-import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 
 /**
@@ -46,13 +46,13 @@ export function ProficiencyToggle({
   binary = false,
   testId,
 }: ProficiencyToggleProps) {
-  const state = t.sheet.proficiency[value] ?? '';
+  const state = ts.proficiency[value] ?? '';
   return (
     <button
       type="button"
       role={binary ? 'checkbox' : undefined}
       aria-checked={binary ? value > 0 : undefined}
-      aria-label={t.sheet.proficiencyToggle(name, state)}
+      aria-label={ts.proficiencyToggle(name, state)}
       title={state}
       data-testid={testId}
       data-value={value}

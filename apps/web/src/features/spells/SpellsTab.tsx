@@ -10,6 +10,7 @@ import { useSheet } from '@/features/sheet/hooks';
 import { useSheetStore } from '@/features/sheet/store';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { tsp } from '@/lib/i18n/spells';
 import { cn } from '@/lib/utils';
 import { CustomSpellEditor } from './CustomSpellEditor';
@@ -126,7 +127,7 @@ function CustomCard({ spell, onEdit }: { spell: CustomSpell; onEdit: () => void 
             ) : null}
             <Button size="sm" variant="ghost" onClick={onEdit}>
               <Pencil className="size-3.5" />
-              {t.sheet.actions.edit}
+              {ts.actions.edit}
             </Button>
             <Button
               size="sm"

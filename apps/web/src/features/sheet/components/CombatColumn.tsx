@@ -14,7 +14,7 @@ import { SwitchTrack } from '@/components/ui/switch-track';
 import { useDiceStore } from '@/features/dice/store';
 import { useToastStore } from '@/features/toast/store';
 import { feetToMeters, metersToFeet } from '@/lib/format';
-import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
@@ -32,7 +32,7 @@ function useNotify() {
           : n === 'revived' || n === 'stable'
             ? 'success'
             : 'info';
-      push(t.sheet.notices[n], tone);
+      push(ts.notices[n], tone);
     }
   };
 }
@@ -69,7 +69,7 @@ function CombatStats() {
   const acId = useId();
   const speedId = useId();
   const override = sheet.combat.armorClassOverride;
-  const c = t.sheet.combat;
+  const c = ts.combat;
   const inspired = sheet.state.inspiration > 0;
 
   return (
@@ -177,7 +177,7 @@ function CombatStats() {
         type="button"
         role="switch"
         aria-checked={inspired}
-        aria-label={inspired ? t.sheet.identity.inspirationOn : t.sheet.identity.inspirationOff}
+        aria-label={inspired ? ts.identity.inspirationOn : ts.identity.inspirationOff}
         onClick={() => edit((d) => void (d.state.inspiration = inspired ? 0 : 1))}
         className={cn(
           'flex min-h-[60px] items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left',
@@ -197,7 +197,7 @@ function CombatStats() {
           />
         </svg>
         <span className="min-w-0 flex-1 text-sm leading-tight font-bold">
-          {t.sheet.identity.inspiration}
+          {ts.identity.inspiration}
         </span>
         <SwitchTrack on={inspired} check />
       </button>
@@ -218,11 +218,11 @@ function RollInitiative({
   return (
     <button
       type="button"
-      aria-label={t.sheet.combat.rollInitiative}
-      title={t.sheet.combat.rollInitiative}
+      aria-label={ts.combat.rollInitiative}
+      title={ts.combat.rollInitiative}
       onClick={() =>
         roll({
-          label: t.sheet.combat.initiative,
+          label: ts.combat.initiative,
           expression: withModifier(d20(advantage, disadvantage), bonus),
         })
       }
@@ -242,16 +242,16 @@ function HpHistoryDialog({
 }) {
   const { sheet, derived } = useSheet();
   const log = sheet.state.hpLog;
-  const h = t.sheet.hp.historyItem;
+  const h = ts.hp.historyItem;
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={t.sheet.hp.history}
-      description={t.sheet.hp.totals(derived.hpTotals.healed, derived.hpTotals.received)}
+      title={ts.hp.history}
+      description={ts.hp.totals(derived.hpTotals.healed, derived.hpTotals.received)}
     >
       {log.length === 0 ? (
-        <p className="text-sm text-muted">{t.sheet.hp.historyEmpty}</p>
+        <p className="text-sm text-muted">{ts.hp.historyEmpty}</p>
       ) : (
         <ol className="divide-y divide-border text-sm">
           {[...log].reverse().map((e) => (
@@ -300,8 +300,8 @@ function HitPoints() {
   const amountId = useId();
   const maxId = useId();
   const dieId = useId();
-  const hp = t.sheet.hp;
-  const hd = t.sheet.hitDice;
+  const hp = ts.hp;
+  const hd = ts.hitDice;
 
   const { current, temp } = sheet.state.hp;
   const max = derived.hpMax.value;
@@ -569,7 +569,7 @@ function HitPoints() {
 /** Combate: CA, iniciativa, deslocamento, Inspiração Heroica e os Pontos de Vida. */
 export function CombatPanel() {
   return (
-    <Panel title={t.sheet.combat.title} bodyClassName="flex flex-col gap-3.5">
+    <Panel title={ts.combat.title} bodyClassName="flex flex-col gap-3.5">
       <CombatStats />
       <HitPoints />
     </Panel>
@@ -583,7 +583,7 @@ export function DeathSavesPanel({ className }: { className?: string }) {
   const notify = useNotify();
   const dying = sheet.state.hp.current === 0;
   const { successes, failures } = sheet.state.deathSaves;
-  const ds = t.sheet.deathSaves;
+  const ds = ts.deathSaves;
 
   const setCount = (kind: 'successes' | 'failures', n: number) => {
     const currentCount = sheet.state.deathSaves[kind];

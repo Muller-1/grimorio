@@ -88,11 +88,15 @@ como `dark:fill-[#…]` no componente.
 
 | Família          | Pesos         | Onde                                                                       |
 | ---------------- | ------------- | -------------------------------------------------------------------------- |
-| **Cinzel**       | 600, 700      | títulos, nome do personagem, números grandes (CA, PV, modificadores), nomes de armas |
-| **Alegreya Sans**| 400, 500, 700 | todo o resto                                                               |
+| **Cinzel**       | 700           | títulos, nome do personagem, números grandes (CA, PV, modificadores), nomes de armas |
+| **Alegreya Sans**| 400, 700      | todo o resto                                                               |
 
-As duas vêm do próprio site (`@fontsource`, só o subconjunto latino), porque a CSP não deixa
-buscar fontes de fora. Números usam algarismos alinhados (`lining-nums`) e, em colunas, `tabular`.
+As duas vêm do próprio site, porque a CSP não deixa buscar fontes de fora: são recortes com o
+alfabeto latino e a pontuação que usamos, sem "hinting", ~14 kB cada (`src/assets/fonts`, com o
+LEIA-ME de como foram feitos). Só três arquivos, e o HTML já pede os três logo no começo
+(`preload`): o texto não espera o CSS para começar a baixar a fonte. Pesos intermediários
+(`font-medium`, `font-semibold`) caem no peso carregado mais próximo. Números usam algarismos
+alinhados (`lining-nums`) e, em colunas, `tabular`.
 
 Escala (só o que mudou em relação ao Tailwind):
 
@@ -332,3 +336,19 @@ ficha até 120 kB. Para manter o CSS no limite:
   liso (`bg-surface`) resolve.
 - Palavras do código que o Tailwind confundia com classes estão listadas no `@source not inline`
   do `index.css`. Se o build passar a gerar uma classe que ninguém usa, entra ali.
+
+O Lighthouse do CI (celular em 4G lenta, simulado) cobra LCP de até 2,5 s em `/` e `/dados`. O
+que pesou com o visual novo, e o que resolveu:
+
+- **Fontes:** só três arquivos recortados (~14 kB cada) e pedidos já no HTML (`preload`).
+- **Número de pedidos:** o teste simula HTTP/1.1, com seis conexões; vinte arquivos pequenos
+  custam mais do que um maior. Os grupos de `vite.config.ts` juntam as peças de interface usadas
+  em quase toda página (`ui`) e o rolador de dados (`dice`).
+- **Só o que a página usa:** os textos da ficha ficam em `lib/i18n/sheet.pt-BR.ts` (como os do
+  assistente), o editor de atalho e a 404 baixam sob demanda, e o rolador confere os atalhos
+  salvos sem o Zod.
+- **O maior texto já no HTML:** o título e a frase do rolador (`DiceIntro`) ficam fora da parte
+  carregada sob demanda; enquanto o resto chega, só o d20 rolando embaixo deles.
+
+Resultado no teste local: LCP de `/dados` ~2,3 s (era 2,4 s antes do visual novo) e de `/`
+~2,2 s.

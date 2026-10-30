@@ -34,6 +34,13 @@ function preloadsFor(lazyModule) {
   visit(lazyModule);
   return files;
 }
+// As fontes (três arquivos pequenos, usados em toda página): o HTML já pede todas logo no começo,
+// sem esperar o CSS chegar para descobrir que precisa delas.
+const fontPreloads = (manifest['index.html']?.assets ?? [])
+  .filter((file) => file.endsWith('.woff2'))
+  .map((file) => `<link rel="preload" href="/${file}" as="font" type="font/woff2" crossorigin>`);
+if (fontPreloads.length === 0) throw new Error('Nenhuma fonte .woff2 no manifesto do Vite.');
+
 const template = await readFile(new URL('index.html', dist), 'utf8');
 const MARKER = '<div id="root"><!--app-html--></div>';
 if (!template.includes(MARKER))
@@ -49,6 +56,8 @@ for (const pageInfo of STATIC_PAGES) {
   // `data-prerendered` diz ao main.tsx que pode hidratar; `data-shell`, que deve desenhar do zero.
   const mark = prerender === 'full' ? 'data-prerendered' : 'data-shell';
   const preloads = (lazyModule ? preloadsFor(lazyModule) : [])
+    // O que o index.html já pede não precisa de outro aviso.
+    .filter((js) => !template.includes(`/${js}"`))
     .map((js) => `<link rel="modulepreload" crossorigin href="/${js}">`)
     .join('\n    ');
   // Cada página com o seu título e a sua descrição, a prévia de link (WhatsApp, redes sociais),
@@ -61,7 +70,10 @@ for (const pageInfo of STATIC_PAGES) {
       /<meta\s+name="description"\s+content="[^"]*"\s*\/>/,
       () => `<meta name="description" content="${attr(meta.description)}" />`,
     )
-    .replace('</head>', () => (preloads ? `  ${preloads}\n  </head>` : '</head>'))
+    .replace(
+      '</head>',
+      () => `  ${[...fontPreloads, preloads].filter(Boolean).join('\n    ')}\n  </head>`,
+    )
     .replace(MARKER, () => `<div id="root" ${mark}="${path}">${html}</div>`);
   await writeFile(new URL(file, dist), page);
   console.log(`${prerender.padEnd(5)} ${path} → ${distDir}/${file} (${html.length} caracteres)`);

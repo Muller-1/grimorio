@@ -2,13 +2,45 @@
 /* Palavras do código (`lista.filter`, `const table`, `variant: 'outline'`…) que o Tailwind lia
    como classes: nenhuma é usada como classe, e cortá-las tira CSS que ninguém usa. */
 @source not inline('container filter inline outline ring sepia static table transform visible');
-/* Só o alfabeto latino (português cabe nele): menos @font-face e nada de baixar o que não usamos. */
-@import '@fontsource/alegreya-sans/latin-400.css';
-@import '@fontsource/alegreya-sans/latin-500.css';
-@import '@fontsource/alegreya-sans/latin-700.css';
-@import '@fontsource/cinzel/latin-600.css';
-@import '@fontsource/cinzel/latin-700.css';
 @import './motion.css';
+
+/*
+ * Fontes servidas pelo próprio site (a CSP não deixa buscar de fora): Alegreya Sans 400 e 700 no
+ * texto, Cinzel 700 nos títulos e números. São recortes só com o alfabeto latino e a pontuação
+ * que o site usa, sem as instruções de "hinting": cada arquivo tem ~14 kB em vez de ~24 kB, e a
+ * página abre mais rápido no celular. Como foram feitos e a licença (SIL OFL 1.1) estão em
+ * src/assets/fonts/LEIA-ME.md. O que estiver fora do recorte cai na fonte do sistema.
+ */
+@font-face {
+  font-family: 'Alegreya Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/alegreya-sans-400.woff2') format('woff2');
+  unicode-range:
+    U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201E,
+    U+2022, U+2026, U+2039-203A, U+20AC, U+2122, U+2192, U+2212;
+}
+@font-face {
+  font-family: 'Alegreya Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/alegreya-sans-700.woff2') format('woff2');
+  unicode-range:
+    U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201E,
+    U+2022, U+2026, U+2039-203A, U+20AC, U+2122, U+2192, U+2212;
+}
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/cinzel-700.woff2') format('woff2');
+  unicode-range:
+    U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201E,
+    U+2022, U+2026, U+2039-203A, U+20AC, U+2122, U+2192, U+2212;
+}
 
 /*
  * Dois temas (docs/design.md): Pergaminho (claro, ouro nos detalhes) e Obsidiana (escuro,

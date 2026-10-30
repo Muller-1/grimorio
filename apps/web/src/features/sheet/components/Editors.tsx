@@ -13,6 +13,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Input, Label, Select, Textarea } from '@/components/ui/input';
 import { formatKg, formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { newId } from '@/ports/ids';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
@@ -22,7 +23,7 @@ import { useSheetStore } from '../store';
  * (a página da ficha fica mais leve).
  */
 
-const a = t.sheet.actions;
+const a = ts.actions;
 
 const blankWeapon = (): Weapon => ({
   id: newId(),
@@ -58,7 +59,7 @@ export function WeaponEditor({
     equipped: useId(),
     weight: useId(),
   };
-  const e = t.sheet.weaponEditor;
+  const e = ts.weaponEditor;
   const [weight, setWeight] = useState(() =>
     initial?.weightKg !== undefined ? String(initial.weightKg).replace('.', ',') : '',
   );
@@ -292,7 +293,7 @@ export function FeatureEditor({
   const nameId = useId();
   const textId = useId();
   const sourceId = useId();
-  const e = t.sheet.featureEditor;
+  const e = ts.featureEditor;
 
   const save = () => {
     if (f.name.trim() === '') return setError(e.nameRequired);

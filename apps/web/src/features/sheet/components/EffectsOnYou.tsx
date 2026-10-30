@@ -8,13 +8,13 @@ import {
 import { Plus, X } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
 
 const EffectsDialog = lazy(() => import('./EffectsDialog'));
-const o = t.sheet.powers.onYou;
+const o = ts.powers.onYou;
 
 /**
  * "Efeitos em você" (ADR-011): magias de aliados e de inimigos e condições, escolhidas

@@ -12,6 +12,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Input, Label, Select, Textarea } from '@/components/ui/input';
 import { useSheetStore } from '@/features/sheet/store';
 import { t } from '@/lib/i18n';
+import { ts } from '@/lib/i18n/sheet';
 import { tsp } from '@/lib/i18n/spells';
 import { newId } from '@/ports/ids';
 
@@ -141,7 +142,7 @@ export function CustomSpellEditor({
           />
         </div>
         <div>
-          <Label htmlFor={ids.type}>{t.sheet.weaponEditor.damageType}</Label>
+          <Label htmlFor={ids.type}>{ts.weaponEditor.damageType}</Label>
           <Select
             id={ids.type}
             value={s.damageType ?? ''}
@@ -149,7 +150,7 @@ export function CustomSpellEditor({
               set('damageType', (e.target.value || undefined) as DamageType | undefined)
             }
           >
-            <option value="">{t.sheet.weaponEditor.noDamageType}</option>
+            <option value="">{ts.weaponEditor.noDamageType}</option>
             {DAMAGE_TYPES.map((d) => (
               <option key={d} value={d}>
                 {t.damageTypes[d]}
