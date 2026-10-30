@@ -32,6 +32,17 @@ const allChecks: AdvantageTarget[] = [
   'check:cha',
 ];
 const note = (text: string): Effect => ({ type: 'note', text });
+/** Depende de posição, visão ou alvo: a ficha avisa, a mesa decide. */
+const situational = (text: string): Effect => ({ type: 'note', text, situational: true });
+/** Incapacitado (e quem inclui: Atordoado, Paralisado, Petrificado, Inconsciente). */
+const INCAPACITATED: Effect = {
+  type: 'cannot-act',
+  what: ['actions', 'bonus-actions', 'reactions'],
+  breaksConcentration: true,
+};
+const FAIL_STR_DEX: Effect = { type: 'auto-fail-save', on: ['str', 'dex'] };
+const ADVANTAGE_AGAINST = note('Ataques contra você têm Vantagem.');
+const MELEE_CRITS = note('Ataques contra você têm Vantagem; acertos a até 1,5 m são Críticos.');
 
 /** Condições (Livro do Jogador 2024, Apêndice C). Exaustão tem níveis: ver `exhaustionEffects`. */
 export const CONDITIONS: OnYouDef[] = [
@@ -41,19 +52,16 @@ export const CONDITIONS: OnYouDef[] = [
     text: 'Desvantagem em testes de atributo e ataques enquanto vê a fonte do medo; não pode se aproximar dela.',
     effects: [
       { type: 'disadvantage', on: ['attack', ...allChecks] },
-      note('Amedrontado: não pode se aproximar da fonte do medo por vontade própria.'),
+      situational(
+        'Amedrontado: a Desvantagem só vale enquanto você vê a fonte do medo; não pode se aproximar dela por vontade própria.',
+      ),
     ],
   },
   {
     id: 'stunned',
     name: 'Atordoado',
     text: 'Incapacitado; falha nas salvaguardas de Força e Destreza; ataques contra você têm Vantagem.',
-    effects: [
-      note(
-        'Atordoado: sem ações, Ações Bônus nem Reações; falha automaticamente nas salvaguardas de Força e Destreza.',
-      ),
-      note('Ataques contra você têm Vantagem.'),
-    ],
+    effects: [INCAPACITATED, FAIL_STR_DEX, ADVANTAGE_AGAINST],
   },
   {
     id: 'prone',
@@ -61,9 +69,8 @@ export const CONDITIONS: OnYouDef[] = [
     text: 'Desvantagem nos ataques; ataques a até 1,5 m têm Vantagem contra você (de longe, Desvantagem).',
     effects: [
       { type: 'disadvantage', on: ['attack'] },
-      note(
-        'Caído: só rasteja; levantar gasta metade do Deslocamento. Ataques a até 1,5 m têm Vantagem contra você; de mais longe, Desvantagem.',
-      ),
+      note('Caído: só rasteja; levantar gasta metade do Deslocamento.'),
+      note('Ataques a até 1,5 m têm Vantagem contra você; de mais longe, Desvantagem.'),
     ],
   },
   {
@@ -72,9 +79,8 @@ export const CONDITIONS: OnYouDef[] = [
     text: 'Desvantagem nos ataques; ataques contra você têm Vantagem; falha em testes que dependem da visão.',
     effects: [
       { type: 'disadvantage', on: ['attack'] },
-      note(
-        'Cego: falha automaticamente em testes que dependem da visão; ataques contra você têm Vantagem.',
-      ),
+      situational('Cego: falha automaticamente nos testes que dependem da visão.'),
+      ADVANTAGE_AGAINST,
     ],
   },
   {
@@ -84,7 +90,7 @@ export const CONDITIONS: OnYouDef[] = [
     effects: [
       { type: 'speed-multiplier', factor: 0 },
       { type: 'disadvantage', on: ['attack', 'save:dex'] },
-      note('Contido: ataques contra você têm Vantagem.'),
+      ADVANTAGE_AGAINST,
     ],
   },
   {
@@ -92,9 +98,11 @@ export const CONDITIONS: OnYouDef[] = [
     name: 'Enfeitiçado',
     text: 'Não pode atacar quem o enfeitiçou; essa criatura tem Vantagem nos testes para interagir com você.',
     effects: [
-      note(
-        'Enfeitiçado: não pode atacar nem prejudicar quem o enfeitiçou; ele tem Vantagem nos testes de interação social com você.',
-      ),
+      {
+        type: 'cannot-attack-target',
+        text: 'Enfeitiçado: não pode atacar nem prejudicar quem o enfeitiçou.',
+      },
+      note('Quem o enfeitiçou tem Vantagem nos testes de interação social com você.'),
     ],
   },
   {
@@ -109,7 +117,7 @@ export const CONDITIONS: OnYouDef[] = [
     text: 'Deslocamento 0; Desvantagem nos ataques contra quem não for o imobilizador.',
     effects: [
       { type: 'speed-multiplier', factor: 0 },
-      note(
+      situational(
         'Imobilizado: Desvantagem nos ataques contra qualquer alvo que não seja quem o imobiliza; ele pode arrastar você.',
       ),
     ],
@@ -119,10 +127,9 @@ export const CONDITIONS: OnYouDef[] = [
     name: 'Incapacitado',
     text: 'Sem ações, Ações Bônus nem Reações; perde a Concentração e não pode falar.',
     effects: [
+      INCAPACITATED,
       { type: 'disadvantage', on: ['initiative'] },
-      note(
-        'Incapacitado: sem ações, Ações Bônus nem Reações; a Concentração termina e você não pode falar.',
-      ),
+      note('Incapacitado: não pode falar.'),
     ],
   },
   {
@@ -130,11 +137,11 @@ export const CONDITIONS: OnYouDef[] = [
     name: 'Inconsciente',
     text: 'Incapacitado e Caído, larga o que segura; falha nas salvaguardas de Força e Destreza.',
     effects: [
+      INCAPACITATED,
       { type: 'speed-multiplier', factor: 0 },
-      note(
-        'Inconsciente: Incapacitado e Caído, larga o que segura e não percebe o que acontece; falha automaticamente nas salvaguardas de Força e Destreza.',
-      ),
-      note('Ataques contra você têm Vantagem; acertos a até 1,5 m são Críticos.'),
+      FAIL_STR_DEX,
+      note('Inconsciente: Caído, larga o que segura e não percebe o que acontece.'),
+      MELEE_CRITS,
     ],
   },
   {
@@ -150,17 +157,14 @@ export const CONDITIONS: OnYouDef[] = [
     id: 'paralyzed',
     name: 'Paralisado',
     text: 'Incapacitado, Deslocamento 0; falha nas salvaguardas de Força e Destreza; acertos a até 1,5 m são Críticos.',
-    effects: [
-      { type: 'speed-multiplier', factor: 0 },
-      note('Paralisado: Incapacitado; falha automaticamente nas salvaguardas de Força e Destreza.'),
-      note('Ataques contra você têm Vantagem; acertos a até 1,5 m são Críticos.'),
-    ],
+    effects: [INCAPACITATED, { type: 'speed-multiplier', factor: 0 }, FAIL_STR_DEX, MELEE_CRITS],
   },
   {
     id: 'petrified',
     name: 'Petrificado',
     text: 'Vira pedra: Incapacitado, Deslocamento 0, Resistência a todo dano; falha nas salvaguardas de Força e Destreza.',
     effects: [
+      INCAPACITATED,
       { type: 'speed-multiplier', factor: 0 },
       {
         type: 'resistance',
@@ -180,16 +184,15 @@ export const CONDITIONS: OnYouDef[] = [
           'thunder',
         ],
       },
-      note(
-        'Petrificado: Incapacitado; falha automaticamente nas salvaguardas de Força e Destreza; ataques contra você têm Vantagem.',
-      ),
+      FAIL_STR_DEX,
+      ADVANTAGE_AGAINST,
     ],
   },
   {
     id: 'deafened',
     name: 'Surdo',
     text: 'Não ouve; falha em testes que dependem da audição.',
-    effects: [note('Surdo: falha automaticamente em testes que dependem da audição.')],
+    effects: [situational('Surdo: falha automaticamente nos testes que dependem da audição.')],
   },
 ];
 
@@ -222,7 +225,9 @@ export const DEBUFF_SPELLS: OnYouDef[] = [
     id: 'hex',
     name: 'Danação',
     text: 'Desvantagem nos testes de um atributo escolhido por quem conjurou; sofre dano Necrótico extra.',
-    effects: [note('Danação: Desvantagem nos testes do atributo escolhido por quem conjurou.')],
+    effects: [
+      situational('Danação: Desvantagem nos testes do atributo escolhido por quem conjurou.'),
+    ],
   },
   {
     id: 'faerie-fire',
@@ -242,9 +247,8 @@ export const DEBUFF_SPELLS: OnYouDef[] = [
       { type: 'speed-multiplier', factor: 0.5 },
       { type: 'ac-bonus', value: -2 },
       { type: 'save-bonus', value: -2, on: ['dex'] },
-      note(
-        'Lentidão: sem Reações; no turno, uma ação ou uma Ação Bônus (não as duas) e só um ataque.',
-      ),
+      { type: 'cannot-act', what: ['reactions'] },
+      note('Lentidão: no turno, uma ação ou uma Ação Bônus (não as duas) e só um ataque.'),
     ],
   },
   {
@@ -266,7 +270,7 @@ export const DEBUFF_SPELLS: OnYouDef[] = [
     id: 'bestow-curse',
     name: 'Rogar Maldição',
     text: 'A maldição escolhida por quem conjurou (Desvantagem num atributo, nos ataques contra ele…).',
-    effects: [note('Rogar Maldição: veja com o Mestre qual efeito foi escolhido.')],
+    effects: [situational('Rogar Maldição: veja com o Mestre qual efeito foi escolhido.')],
   },
 ];
 

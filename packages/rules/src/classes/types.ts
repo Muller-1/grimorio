@@ -99,8 +99,24 @@ export type Effect =
   | { type: 'save-proficiency'; on: AbilityKey[] }
   /** Pau pra Toda Obra: metade da proficiência em testes de perícia sem proficiência. */
   | { type: 'half-proficiency-checks' }
-  /** Lembrete sem conta (ex.: "Ataques contra você têm Vantagem"). */
-  | { type: 'note'; text: string };
+  /** Falha automática nas salvaguardas destes atributos (Atordoado: Força e Destreza). */
+  | { type: 'auto-fail-save'; on: AbilityKey[] }
+  /**
+   * O que o personagem não pode fazer (Incapacitado: ações, Ações Bônus e Reações). Com
+   * `breaksConcentration`, ficar assim encerra a Concentração.
+   */
+  | {
+      type: 'cannot-act';
+      what: ('actions' | 'bonus-actions' | 'reactions')[];
+      breaksConcentration?: boolean;
+    }
+  /** Não pode atacar um alvo que só a mesa sabe qual é (Enfeitiçado: quem o enfeitiçou). */
+  | { type: 'cannot-attack-target'; text: string }
+  /**
+   * Lembrete sem conta (ex.: "Ataques contra você têm Vantagem"). `situational`: depende de
+   * posição, visão ou alvo; a ficha não decide, o jogador e o Mestre decidem.
+   */
+  | { type: 'note'; text: string; situational?: boolean };
 
 /** Usos de uma característica: máximo e recarga. */
 export interface ResourceDef {

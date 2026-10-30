@@ -74,6 +74,8 @@ export const sheetPtBR = {
   abilitiesHint: 'Toque no nome para rolar · no número para ver de onde vem',
   abilityValue: 'Valor',
   saveRow: 'Salvaguarda',
+  autoFail: 'Falha',
+  autoFailToast: (ability: string) => `Falha automática na salvaguarda de ${ability}.`,
   noSkills: (name: string) => `Nenhuma perícia usa ${name}.`,
   legend: { none: 'sem proficiência', prof: 'proficiente', expert: 'especialista' },
   abilityScore: (name: string) => `Valor de ${name}`,
@@ -243,6 +245,7 @@ export const sheetPtBR = {
     disadvantage: 'Desvantagem',
     rollDamage: 'Dano',
     weaponKind: 'Tipo',
+    cannotAct: (sources: string) => `Sem ações agora (${sources}): ataques e magias esperam.`,
     properties: 'Propriedades',
     traits: (t: WeaponTraits) => {
       const m = (n: number) => String(n).replace('.', ',');
@@ -309,6 +312,18 @@ export const sheetPtBR = {
     tempRoll: (name: string) => `PV temporários: ${name}`,
     activeTitle: 'Valendo agora',
     resistances: (types: string) => `Resistência: ${types}`,
+    autoFail: (abilities: string) => `Falha automática nas salvaguardas de ${abilities}`,
+    restrictions: (r: { actions: boolean; bonusActions: boolean; reactions: boolean }) =>
+      r.actions && r.bonusActions && r.reactions
+        ? 'Sem ações, Ações Bônus nem Reações'
+        : [
+            r.actions && 'Sem ações',
+            r.bonusActions && 'Sem Ações Bônus',
+            r.reactions && 'Sem Reações',
+          ]
+            .filter(Boolean)
+            .join(', '),
+    decisionsTitle: 'Depende da situação (você e o Mestre decidem)',
     onYou: {
       title: 'Efeitos em você',
       hint: 'Magias de aliados ou de inimigos e condições (Envenenado, Caído…). A ficha soma sozinha.',

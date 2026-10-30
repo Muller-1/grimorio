@@ -120,6 +120,8 @@ export interface SheetDerived {
       disadvantage: boolean;
       /** Dados somados ou tirados, já com sinal: "+1d4" (Bênção), "-1d4" (Perdição). */
       bonusDice: string[];
+      /** Falha automática (Atordoado, Paralisado…: Força e Destreza). */
+      autoFail: boolean;
     }
   >;
   skills: Record<
@@ -142,6 +144,13 @@ export interface SheetDerived {
   resistances: { type: DamageType; source: string }[];
   /** Lembretes das habilidades e magias ativas ("Ataques contra você têm Vantagem"). */
   notes: SourcedNote[];
+  /**
+   * O que depende de posição, visão ou alvo (Enfeitiçado: não atacar quem o enfeitiçou). A ficha
+   * não decide: avisa que é com o jogador e o Mestre.
+   */
+  decisions: SourcedNote[];
+  /** Ações que o personagem não pode usar agora e de onde vem (Incapacitado, Lentidão…). */
+  restrictions: { actions: boolean; bonusActions: boolean; reactions: boolean; sources: string[] };
   /** Classe, características, recursos e o que dá para ligar (ADR-010). */
   engine: CharacterEngine;
   spellcasting: SpellcastingView | null;
@@ -312,6 +321,7 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
       .filter((e) => e.effect.on.includes(on))
       .map((e) => `-${e.effect.dice}`),
   ];
+  const autoFail = new Set(of('auto-fail-save').flatMap((e) => e.effect.on));
   // Exaustão: soma (negativa) em todo Teste de D20.
   const d20Parts = of('d20-modifier').map((e) => effectPart(e, e.effect.value));
   const saves = mapAbilities((k) => {
@@ -328,6 +338,7 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
       advantage: hasAdvantage(effects, `save:${k}`),
       disadvantage: hasDisadvantage(effects, `save:${k}`),
       bonusDice: signedDice('save'),
+      autoFail: autoFail.has(k),
     };
   });
 
@@ -569,7 +580,21 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
   const resistances = of('resistance').flatMap((e) =>
     e.effect.damage.map((type) => ({ type, source: e.source.name })),
   );
-  notes.push(...of('note').map((e) => ({ text: e.effect.text, source: e.source.name })));
+  const noted = (e: SourcedEffect, text: string) => ({ text, source: e.source.name });
+  notes.push(...of('note').flatMap((e) => (e.effect.situational ? [] : [noted(e, e.effect.text)])));
+  const decisions = [
+    ...of('cannot-attack-target').map((e) => noted(e, e.effect.text)),
+    ...of('note').flatMap((e) => (e.effect.situational ? [noted(e, e.effect.text)] : [])),
+  ];
+  const cannot = of('cannot-act');
+  const cannotDo = (what: 'actions' | 'bonus-actions' | 'reactions') =>
+    cannot.some((e) => e.effect.what.includes(what));
+  const restrictions = {
+    actions: cannotDo('actions'),
+    bonusActions: cannotDo('bonus-actions'),
+    reactions: cannotDo('reactions'),
+    sources: [...new Set(cannot.map((e) => e.source.name))],
+  };
   const dcBonus = of('spell-dc-bonus').reduce((sum, e) => sum + value(e.effect.value), 0);
   const spellcasting = spellcastingView(sheet, engine.info, mods, prof, dcBonus);
   const spellAttack = spellcasting && {
@@ -597,6 +622,8 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
     attacks,
     resistances,
     notes,
+    decisions,
+    restrictions,
     engine,
     spellcasting,
     spellAttack,

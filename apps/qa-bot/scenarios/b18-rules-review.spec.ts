@@ -1,12 +1,14 @@
 /**
  * B18 — Regras que a ficha passou a saber (revisão do motor): tipo e propriedades da arma
  * (Arquearia e Ataque Furtivo seguem a arma, não o atributo); armadura e Escudo vestidos no
- * Inventário calculam a CA (Estilo Defesa só com armadura). O oráculo é o motor de regras.
+ * Inventário calculam a CA (Estilo Defesa só com armadura); Atordoado falha sozinho nas
+ * salvaguardas de Força e Destreza, tira as ações e encerra a Concentração. O oráculo é o motor
+ * de regras.
  */
 import { deriveSheet } from '@grimorio/rules';
 import { createBlankSheet, type LocalSheet } from '@grimorio/shared';
 import type { Page } from '@playwright/test';
-import { expect, openPage, test } from '../support/bot';
+import { expect, openPage, rollCount, test } from '../support/bot';
 
 const SHEET_KEY = 'grimorio.ficha.v1';
 
@@ -113,5 +115,33 @@ test.describe('B18 — regras da revisão do motor', { tag: '@B18' }, () => {
     expect(expected).toBe(19);
     await openColumn(page, 'Combate');
     await expect(ac).toHaveAttribute('data-value', String(expected));
+  });
+
+  test('Atordoado: falha sozinho em Força e Destreza, sem ações, Concentração encerrada', async ({
+    page,
+  }) => {
+    const s = sheetOf('cleric', 3, { wis: 16 });
+    s.state.concentration = 'bless';
+    s.state.active = ['spell:bless'];
+    await withSheet(page, s);
+    await openColumn(page, 'Combate');
+    await page.getByTestId('on-you.open').click();
+    await page.getByTestId('on-you.cond:stunned').click();
+    await page.getByTestId('on-you.done').click();
+
+    const sheet = await sheetNow(page);
+    expect(sheet.state.concentration).toBeUndefined();
+    expect(deriveSheet(sheet).saves.dex.autoFail).toBe(true);
+    await expect(page.getByTestId('powers.restrictions')).toContainText('Atordoado');
+
+    await openColumn(page, 'Personagem');
+    const before = await rollCount(page);
+    await page.getByTestId('save.dex.auto-fail').click();
+    await expect(page.getByRole('status').filter({ hasText: 'Falha automática' })).toBeVisible();
+    expect(await rollCount(page)).toBe(before);
+    // Constituição continua rolando normal.
+    await expect(page.getByTestId('save.con.roll')).toBeVisible();
+    await openColumn(page, 'Ações');
+    await expect(page.getByTestId('actions.restricted')).toContainText('Atordoado');
   });
 });

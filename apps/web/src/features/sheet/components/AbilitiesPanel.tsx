@@ -15,6 +15,7 @@ import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
+import { useToastStore } from '@/features/toast/store';
 import { useSheet } from '../hooks';
 import { useSheetStore } from '../store';
 import { AdvantageBadge, d20 } from './AdvantageBadge';
@@ -57,6 +58,7 @@ function CheckRow({
   onProficiency,
   advantage,
   disadvantage,
+  autoFail,
   testId,
 }: {
   save?: boolean;
@@ -70,8 +72,15 @@ function CheckRow({
   onProficiency: (v: ProficiencyLevel) => void;
   advantage: boolean;
   disadvantage: boolean;
+  /** Falha automática (Atordoado…): não rola, avisa com este texto. */
+  autoFail?: string | undefined;
   testId: string;
 }) {
+  const toast = useToastStore((s) => s.push);
+  const rowButton = cn(
+    'group flex h-8 w-auto min-w-0 justify-start gap-2 px-2 text-left text-base text-text hover:bg-surface-2 hover:text-text',
+    save && 'italic',
+  );
   return (
     <li
       className={cn(
@@ -86,19 +95,32 @@ function CheckRow({
         name={explainTitle}
         testId={`${testId}.prof`}
       />
-      <RollButton
-        rollLabel={rollLabel}
-        expression={expression}
-        ariaLabel={rollAria}
-        className={cn(
-          'group flex h-8 w-auto min-w-0 justify-start gap-2 px-2 text-left text-base text-text hover:bg-surface-2 hover:text-text',
-          save && 'italic',
-        )}
-      >
-        <span className="truncate">{label}</span>
-        <AdvantageBadge advantage={advantage} disadvantage={disadvantage} />
-        <D20Icon className={cn('size-4 shrink-0 text-accent', ROLL_HINT)} />
-      </RollButton>
+      {autoFail ? (
+        <button
+          type="button"
+          aria-label={autoFail}
+          onClick={() => toast(autoFail, 'info')}
+          className={cn(rowButton, 'items-center rounded-md transition-colors')}
+          data-testid={`${testId}.auto-fail`}
+        >
+          <span className="truncate">{label}</span>
+          <span className="rounded-full bg-danger-soft px-1.5 text-xs font-bold text-danger not-italic">
+            {ts.autoFail}
+          </span>
+        </button>
+      ) : (
+        <RollButton
+          rollLabel={rollLabel}
+          expression={expression}
+          ariaLabel={rollAria}
+          testId={`${testId}.roll`}
+          className={rowButton}
+        >
+          <span className="truncate">{label}</span>
+          <AdvantageBadge advantage={advantage} disadvantage={disadvantage} />
+          <D20Icon className={cn('size-4 shrink-0 text-accent', ROLL_HINT)} />
+        </RollButton>
+      )}
       <ExplainButton
         explained={bonus}
         title={explainTitle}
@@ -188,6 +210,7 @@ function AbilityCard({ ability }: { ability: AbilityKey }) {
           }
           advantage={save.advantage}
           disadvantage={save.disadvantage}
+          autoFail={save.autoFail ? ts.autoFailToast(name) : undefined}
           testId={`save.${ability}`}
         />
         {skills.map((skill) => {

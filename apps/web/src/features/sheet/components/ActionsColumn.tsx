@@ -422,6 +422,15 @@ export function ActionsColumn({ className }: { className?: string }) {
         </div>
 
         <Tabs.Content value="weapons" className={LIST_AREA}>
+          {derived.restrictions.actions ? (
+            <p
+              role="note"
+              className="mb-2 rounded-md bg-danger-soft px-3 py-2 text-sm font-semibold text-danger"
+              data-testid="actions.restricted"
+            >
+              {a.cannotAct(derived.restrictions.sources.join(', '))}
+            </p>
+          ) : null}
           {sheet.weapons.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted">{a.emptyWeapons}</p>
           ) : weapons.length === 0 && stored === 0 ? (

@@ -1,4 +1,5 @@
 import { type ActivationView, type ResourceView, type SheetNotice } from '@grimorio/rules';
+import { ABILITY_KEYS } from '@grimorio/shared';
 import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel } from '@/components/ui/panel';
@@ -155,7 +156,13 @@ export function PowersPanel({ className }: { className?: string }) {
   const { resources, activations } = derived.engine;
   const names = new Map(activations.map((a) => [a.id, a.name]));
   const resist = [...new Set(derived.resistances.map((r) => t.damageTypes[r.type]))];
-  const active = derived.notes.length > 0 || resist.length > 0;
+  const failing = ABILITY_KEYS.filter((k) => derived.saves[k].autoFail).map((k) => t.abilities[k]);
+  const limits = derived.restrictions;
+  const active =
+    derived.notes.length > 0 ||
+    resist.length > 0 ||
+    failing.length > 0 ||
+    limits.sources.length > 0;
 
   return (
     <Panel
@@ -184,8 +191,27 @@ export function PowersPanel({ className }: { className?: string }) {
         <div className="rounded-lg bg-surface-2 px-3 py-2 text-sm" data-testid="powers.active">
           <p className="font-bold">{p.activeTitle}</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5">
+            {limits.sources.length ? (
+              <li className="font-semibold text-danger" data-testid="powers.restrictions">
+                {p.restrictions(limits)} ({limits.sources.join(', ')})
+              </li>
+            ) : null}
+            {failing.length ? <li>{p.autoFail(failing.join(', '))}</li> : null}
             {resist.length ? <li>{p.resistances(resist.join(', '))}</li> : null}
             {derived.notes.map((n, i) => (
+              <li key={i}>{n.text}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {derived.decisions.length ? (
+        <div
+          className="rounded-lg border border-dashed border-border px-3 py-2 text-sm"
+          data-testid="powers.decisions"
+        >
+          <p className="font-bold">{p.decisionsTitle}</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">
+            {derived.decisions.map((n, i) => (
               <li key={i}>{n.text}</li>
             ))}
           </ul>

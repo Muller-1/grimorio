@@ -1,6 +1,12 @@
 import { freshAbilityState, type HpEvent, type LocalSheet } from '@grimorio/shared';
 import { SPELL_ACTIVE_PREFIX } from '../engine/character';
-import { CONDITION_PREFIX, EXHAUSTION_ID, exhaustionLevel, isOnYouKey } from '../engine/on-you';
+import {
+  CONDITION_PREFIX,
+  EXHAUSTION_ID,
+  exhaustionLevel,
+  isOnYouKey,
+  onYouEntry,
+} from '../engine/on-you';
 import { SPELL_EFFECTS } from '../spells/effects';
 import { deriveSheet, type SheetDerived } from './derive';
 
@@ -420,14 +426,21 @@ export function applySheetAction(
         return { sheet, notices: ['unknown-ability'] };
       }
       const on = sheet.state.active.includes(action.key);
-      return {
-        sheet: withState({
-          active: on
-            ? sheet.state.active.filter((id) => id !== action.key)
-            : [...sheet.state.active, action.key],
-        }),
-        notices,
+      const state = {
+        ...sheet.state,
+        active: on
+          ? sheet.state.active.filter((id) => id !== action.key)
+          : [...sheet.state.active, action.key],
       };
+      // Incapacitado (e o que inclui) encerra a Concentração.
+      const breaks = onYouEntry(action.key)?.effects.some(
+        (e) => e.type === 'cannot-act' && e.breaksConcentration,
+      );
+      if (!on && breaks && state.concentration) {
+        notices.push('concentration-ended');
+        return { sheet: { ...sheet, state: withoutConcentration(state) }, notices };
+      }
+      return { sheet: { ...sheet, state }, notices };
     }
 
     case 'set-exhaustion':
