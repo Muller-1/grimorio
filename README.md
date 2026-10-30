@@ -33,6 +33,7 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 | Etapa Magias no assistente (recomendadas do livro, Iniciado em Magia); visual mais limpo        | `features/builder/steps/SpellsStep.tsx` + `components/ui/ornament.tsx`    | ✔ (ADR-012)                                     |
 | Uso real: aviso de servidor acordando com novas tentativas; busca do Google (sitemap, canônico) | `features/auth/ServerStatus.tsx` + `app/seo.ts` + `scripts/prerender.mjs` | ✔ (ADR-013)                                     |
 | Campanha, parte 1: mesa com mestre e jogadores, ações sem conflito, resumo, curas propostas     | `features/campaigns` + `apps/api/src/modules/campaigns`                   | ✔ (ADR-014)                                     |
+| Revisão do motor: armadura no Inventário, propriedades da arma, condições, rodadas de combate   | `packages/rules/src/{inventory,engine,sheet}` + `features/sheet`          | ✔ (ADR-015)                                     |
 
 Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas para quem tiver o link
 (qualquer conta Google entra, ver ADR-009, decisão 5), com a API no Render, o banco no Neon e o
