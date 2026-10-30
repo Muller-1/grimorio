@@ -14,7 +14,6 @@ import { WARLOCK } from './warlock';
 import { WIZARD } from './wizard';
 
 export * from './common';
-export * from './feats';
 export * from './types';
 export { METAMAGIC } from './sorcerer';
 export { INVOCATIONS, type InvocationDef } from './warlock';

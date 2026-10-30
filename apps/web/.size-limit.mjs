@@ -74,6 +74,8 @@ export default [
     path: inDist(lazyChunk('LevelUpDialog', sheet)),
     gzip: true,
     // 100 → 108 kB: entraram as 52 magias (~8 kB) e os talentos do livro (~3 kB).
-    limit: '108 kB',
+    // 108 → 112 kB: os talentos saíram do pedaço da ficha e vêm com este diálogo (~5 kB a menos
+    // em /ficha; quem sobe de nível baixa a mesma coisa de antes).
+    limit: '112 kB',
   },
 ];
