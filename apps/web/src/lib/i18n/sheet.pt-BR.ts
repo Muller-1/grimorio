@@ -5,6 +5,7 @@ import type { SheetNotice, WeaponTraits } from '@grimorio/rules';
  * abas de magias e de inventário. Ficam fora do pt-BR.ts principal porque só essas páginas
  * (carregadas sob demanda) usam: assim não pesam no carregamento do resto do site.
  */
+
 export const sheetPtBR = {
   pageTitle: 'Ficha de personagem',
   unnamed: 'Personagem sem nome',
@@ -103,7 +104,8 @@ export const sheetPtBR = {
     speed: 'Deslocamento',
     rollInitiative: 'Rolar iniciativa',
     acManual: 'CA manual',
-    acManualHint: 'Use enquanto armaduras não estão no site. Ex.: Cota de Malha + Escudo = 18.',
+    acManualHint:
+      'A ficha calcula pela armadura vestida no Inventário. O número manual vale no lugar dela e do Escudo.',
     acAuto: 'Voltar ao cálculo (10 + Destreza)',
     speedEdit: 'Deslocamento em metros',
     speedValue: (m: string) => `${m} m`,
@@ -241,6 +243,7 @@ export const sheetPtBR = {
     disadvantage: 'Desvantagem',
     rollDamage: 'Dano',
     weaponKind: 'Tipo',
+    properties: 'Propriedades',
     traits: (t: WeaponTraits) => {
       const m = (n: number) => String(n).replace('.', ',');
       const distance = t.rangeM ? ` (${m(t.rangeM.normal)}/${m(t.rangeM.long)} m)` : '';
@@ -271,129 +274,6 @@ export const sheetPtBR = {
     disadvantageLabel: (name: string) => `Ataque com desvantagem: ${name}`,
     damageRollLabel: (name: string) => `Dano: ${name}`,
     critDamageLabel: (name: string) => `Dano crítico: ${name}`,
-  },
-
-  weaponEditor: {
-    titleNew: 'Nova arma',
-    titleEdit: 'Editar arma',
-    name: 'Nome',
-    namePlaceholder: 'Ex.: Espada Longa',
-    ability: 'Atributo',
-    abilityStr: 'Força',
-    abilityDex: 'Destreza',
-    abilityFinesse: 'Acuidade (o maior entre Força e Destreza)',
-    range: 'Tipo de arma',
-    melee: 'Corpo a corpo',
-    ranged: 'À distância',
-    flags: 'Propriedades da arma',
-    flag: {
-      finesse: 'Acuidade',
-      thrown: 'Arremesso',
-      twoHanded: 'Duas Mãos',
-      light: 'Leve',
-      reach: 'Extensão',
-    },
-    normalRange: 'Distância normal (m)',
-    longRange: 'Distância longa (m)',
-    proficient: 'Tenho proficiência com esta arma',
-    damageDice: 'Dados de dano',
-    damageDicePlaceholder: 'Ex.: 1d8',
-    damageDiceHint: 'Só os dados. O modificador do atributo é somado automaticamente.',
-    damageType: 'Tipo de dano',
-    noDamageType: '—',
-    magicBonus: 'Bônus mágico',
-    critRange: 'Crítico a partir de',
-    properties: 'Outras propriedades e maestria',
-    propertiesPlaceholder: 'Ex.: Maestria: Ágil, Versátil (1d10)',
-    notes: 'Anotações',
-    equipped: 'Equipada (o personagem está carregando)',
-    equippedHint: 'Arma guardada não aparece nos ataques e não conta no peso.',
-    weight: 'Peso (kg)',
-    weightAuto: (kg: string) => `Vazio: usa o peso do livro (${kg} kg).`,
-    weightNone: 'Vazio: sem peso.',
-    save: 'Salvar',
-    cancel: 'Cancelar',
-    nameRequired: 'Dê um nome à arma.',
-    invalidDice: 'Expressão de dano inválida.',
-    preview: (toHit: string, damage: string) => `Vai ficar: ataque ${toHit}, dano ${damage}`,
-  },
-
-  featureEditor: {
-    titleNew: 'Nova característica',
-    titleEdit: 'Editar característica',
-    name: 'Nome',
-    namePlaceholder: 'Ex.: Retomar o Fôlego',
-    text: 'Descrição',
-    textPlaceholder: 'O que ela faz, quantos usos, quando recarrega…',
-    source: 'De onde vem',
-    save: 'Salvar',
-    cancel: 'Cancelar',
-    nameRequired: 'Dê um nome à característica.',
-  },
-
-  /** Aba Inventário: moedas, peso e itens. */
-  inventory: {
-    gold: 'Peças de Ouro',
-    goldEdit: 'Peças de Ouro (PO)',
-    coins: {
-      cp: 'Cobre (PC)',
-      sp: 'Prata (PP)',
-      ep: 'Electro (PE)',
-      gp: 'Ouro (PO)',
-      pp: 'Platina (PL)',
-    },
-    otherCoins: 'Outras moedas',
-    coinsHint: '1 PO = 10 PP = 100 PC · 1 PE = 5 PP · 1 PL = 10 PO · 50 moedas pesam 0,5 kg.',
-    load: 'Peso carregado',
-    loadValue: (carried: string, capacity: string) => `${carried} / ${capacity}`,
-    kg: 'kg',
-    loadHint: (mult: string) =>
-      `Capacidade de Carga: Força × ${mult} kg. Arrastar, levantar ou empurrar: até o dobro.`,
-    loadOver:
-      'Acima da Capacidade de Carga: você só consegue arrastar ou empurrar, com Deslocamento de até 1,5 m.',
-    loadOverDrag: 'Acima do dobro da Capacidade de Carga: você não consegue sair do lugar.',
-    unknownWeights: (n: number) =>
-      n === 1
-        ? '1 coisa sem peso: edite para incluir na conta.'
-        : `${n} coisas sem peso: edite para incluir na conta.`,
-    weapons: 'Armas',
-    weaponsHint: 'Equipada = carregando. A guardada sai dos ataques e do peso.',
-    items: 'Itens',
-    equipped: 'Equipada',
-    stored: 'Guardada',
-    carried: 'Com você',
-    storedItem: 'Guardado',
-    toggleWeapon: (name: string, on: boolean) =>
-      on ? `${name}: equipada (toque para guardar)` : `${name}: guardada (toque para equipar)`,
-    toggleItem: (name: string, on: boolean) =>
-      on ? `${name}: com você (toque para guardar)` : `${name}: guardado (toque para levar)`,
-    each: (kg: string) => `${kg} kg cada`,
-    total: (kg: string) => `${kg} kg`,
-    noWeight: 'sem peso',
-    qty: (name: string) => `Quantidade de ${name}`,
-    more: (name: string) => `Mais um: ${name}`,
-    less: (name: string) => `Menos um: ${name}`,
-    editItem: (name: string) => `Editar ${name}`,
-    add: 'Adicionar item',
-    empty: 'Nenhum item ainda. Use “Adicionar item”.',
-    emptyWeapons: 'Nenhuma arma. Adicione na aba Armas.',
-    editor: {
-      titleNew: 'Novo item',
-      titleEdit: 'Editar item',
-      name: 'Item',
-      namePlaceholder: 'Ex.: Corda, Tocha, Poção de Cura',
-      quantity: 'Quantidade',
-      weight: 'Peso de cada um (kg)',
-      weightAuto: (kg: string) => `Vazio: usa o peso do livro (${kg} kg).`,
-      weightNone: 'Vazio: sem peso (não entra na conta).',
-      carried: 'Com você (conta no peso)',
-      notes: 'Anotações',
-      save: 'Salvar',
-      cancel: 'Cancelar',
-      remove: 'Remover',
-      nameRequired: 'Dê um nome ao item.',
-    },
-    moved: 'O equipamento inicial agora fica no Inventário, com o ouro nas moedas.',
   },
 
   levelUp: {

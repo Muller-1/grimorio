@@ -124,6 +124,23 @@ export const FeatureSchema = z.object({
 export const COIN_KEYS = ['cp', 'sp', 'ep', 'gp', 'pp'] as const;
 export type CoinKey = (typeof COIN_KEYS)[number];
 
+/**
+ * Armadura ou Escudo (cap. 6): os números ficam no item, então armadura do livro e armadura
+ * inventada funcionam igual. Vestida = `equipped` (ausente = sim).
+ */
+export const ArmorSchema = z.object({
+  kind: z.enum(['light', 'medium', 'heavy', 'shield']),
+  /** CA base (Escudo: o bônus, normalmente 2). */
+  base: int().min(0).max(30),
+  /** Teto da Destreza somada: ausente = sem teto (Leve); 2 (Média); 0 (Pesada). */
+  dexCap: int().min(0).max(10).optional(),
+  /** Força exigida: abaixo dela, −3 m de Deslocamento. */
+  strength: int().min(1).max(30).optional(),
+  stealthDisadvantage: z.boolean().optional(),
+  /** Bônus mágico (+1, +2, +3). */
+  bonus: int().min(-5).max(5).optional(),
+});
+
 export const ItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().max(80),
@@ -133,6 +150,7 @@ export const ItemSchema = z.object({
   /** Com o personagem (conta no peso). Ausente = sim. Armadura e escudo: vestidos. */
   equipped: z.boolean().optional(),
   notes: z.string().max(500).optional(),
+  armor: ArmorSchema.optional(),
 });
 
 export const InventorySchema = z.object({
@@ -304,6 +322,7 @@ export type HpEvent = z.infer<typeof HpEventSchema>;
 export type Weapon = z.infer<typeof WeaponSchema>;
 export type Feature = z.infer<typeof FeatureSchema>;
 export type Item = z.infer<typeof ItemSchema>;
+export type ItemArmor = z.infer<typeof ArmorSchema>;
 export type Inventory = z.infer<typeof InventorySchema>;
 export type AbilityScores = Record<AbilityKey, number>;
 

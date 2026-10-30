@@ -1,4 +1,5 @@
 import type { Item, Weapon } from '@grimorio/shared';
+import { armorItemData, knownArmor } from './armor';
 import { itemKey, knownWeightKg, splitQuantity } from './weights';
 
 /** Nome da característica que as fichas de antes do inventário usavam para o equipamento. */
@@ -37,12 +38,15 @@ export function startingItems(list: string[], weapons: Weapon[], newId: () => st
     const { quantity, name } = splitQuantity(entry);
     const sameStaff = /\(cajado\)$/i.test(name) && weaponKeys.has(itemKey('Cajado'));
     const kg = sameStaff ? 0 : knownWeightKg(name);
+    const armor = knownArmor(name);
     items.push({
       id: newId(),
       name: name.slice(0, 80),
       quantity,
       ...(kg !== undefined ? { weightKg: kg } : {}),
       ...(sameStaff ? { notes: 'É a arma Cajado (o peso conta lá).' } : {}),
+      // Armadura do equipamento inicial já vem vestida (é a que o personagem usa).
+      ...(armor ? { armor: armorItemData(armor) } : {}),
     });
   }
   return items;

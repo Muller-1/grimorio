@@ -81,7 +81,8 @@ export type Effect =
   /** Multiplica o Deslocamento no fim das contas (Lentidão: metade; Contido: 0). */
   | { type: 'speed-multiplier'; factor: number }
   | { type: 'resistance'; damage: DamageType[] }
-  | { type: 'ac-bonus'; value: Scaling }
+  /** Soma na CA. `requiresArmor`: só vestindo armadura Leve, Média ou Pesada (Estilo Defesa). */
+  | { type: 'ac-bonus'; value: Scaling; requiresArmor?: boolean }
   /** Defesa sem Armadura: CA base = 10 + Destreza + estes atributos (sem armadura). */
   | { type: 'ac-formula'; base: number; abilities: AbilityKey[]; shield: boolean }
   /** CA mínima (Pele-Casca: 17). */

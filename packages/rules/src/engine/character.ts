@@ -160,10 +160,7 @@ const FIGHTING_STYLE_EFFECTS: Record<string, { name: string; effects: Effect[] }
   },
   defense: {
     name: 'Defesa',
-    effects: [
-      { type: 'ac-bonus', value: 1 },
-      { type: 'note', text: 'Estilo Defesa: +1 na CA só vale usando armadura.' },
-    ],
+    effects: [{ type: 'ac-bonus', value: 1, requiresArmor: true }],
   },
 };
 
@@ -279,8 +276,13 @@ export function characterEngine(
       effects.push({ effect, source: { kind: 'activation', name: a.name } });
     }
   }
-  for (const c of choicesOf(sheet, 'fighting-style')) {
-    const style = c.id ? FIGHTING_STYLE_EFFECTS[c.id] : undefined;
+  // Estilos escolhidos ao subir de nível e o do nível 1 (assistente de criação).
+  const styles = new Set([
+    ...choicesOf(sheet, 'fighting-style').map((c) => c.id),
+    sheet.creation?.fightingStyleId,
+  ]);
+  for (const id of styles) {
+    const style = id ? FIGHTING_STYLE_EFFECTS[id] : undefined;
     for (const effect of style?.effects ?? []) {
       effects.push({ effect, source: { kind: 'fighting-style', name: style!.name } });
     }

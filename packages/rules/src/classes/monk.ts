@@ -40,6 +40,7 @@ export const MONK: ClassProgression = {
       level: 1,
       name: 'Defesa sem Armadura',
       text: 'Sem armadura nem Escudo, sua CA base é 10 + Destreza + Sabedoria.',
+      passive: [{ type: 'ac-formula', base: 10, abilities: ['wis'], shield: false }],
     },
     {
       id: 'monks-focus',

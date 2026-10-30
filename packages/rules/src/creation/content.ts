@@ -539,50 +539,9 @@ export const WEAPONS = {
 
 export type WeaponId = keyof typeof WEAPONS;
 
-export type ArmorKind = 'light' | 'medium' | 'heavy' | 'shield';
-
-export interface ArmorDef {
-  id: string;
-  name: string;
-  kind: ArmorKind;
-  /** CA base (escudo: bônus). */
-  base: number;
-  /** Teto do modificador de Destreza: `null` = sem teto; 0 = não soma. */
-  dexCap: number | null;
-  /** Força mínima; abaixo dela, −3 m de deslocamento. */
-  strength?: number;
-  stealthDisadvantage?: boolean;
-}
-
-export const ARMOR = {
-  leather: { id: 'leather', name: 'Armadura de Couro', kind: 'light', base: 11, dexCap: null },
-  'studded-leather': {
-    id: 'studded-leather',
-    name: 'Armadura de Couro Batido',
-    kind: 'light',
-    base: 12,
-    dexCap: null,
-  },
-  'chain-shirt': {
-    id: 'chain-shirt',
-    name: 'Cota de Malha Parcial',
-    kind: 'medium',
-    base: 13,
-    dexCap: 2,
-  },
-  'chain-mail': {
-    id: 'chain-mail',
-    name: 'Cota de Malha',
-    kind: 'heavy',
-    base: 16,
-    dexCap: 0,
-    strength: 13,
-    stealthDisadvantage: true,
-  },
-  shield: { id: 'shield', name: 'Escudo', kind: 'shield', base: 2, dexCap: 0 },
-} as const satisfies Record<string, ArmorDef>;
-
-export type ArmorId = keyof typeof ARMOR;
+// Armaduras: a tabela completa do cap. 6 fica no Inventário (a ficha também usa).
+export { ARMOR, type ArmorDef, type ArmorId, type ArmorKind } from '../inventory/armor';
+import type { ArmorId, ArmorKind } from '../inventory/armor';
 
 /** Um pacote de equipamento inicial (opção A, B ou C). */
 export interface EquipmentPack {

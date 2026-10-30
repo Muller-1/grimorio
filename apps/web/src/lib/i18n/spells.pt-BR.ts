@@ -169,6 +169,8 @@ export const spellsPtBR = {
   customSaveBtn: 'Salvar',
   customCancel: 'Cancelar',
   customNameRequired: 'Dê um nome à magia.',
+  customDamageType: 'Tipo de dano',
+  customNoDamageType: '—',
   customInvalidDice: 'Dados de dano inválidos.',
 
   credits:

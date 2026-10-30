@@ -1,19 +1,26 @@
-import { itemUnitWeightKg, knownWeightKg, weaponWeightKg } from '@grimorio/rules';
-import { COIN_KEYS, type Item } from '@grimorio/shared';
+import {
+  armorItemData,
+  itemUnitWeightKg,
+  knownArmor,
+  knownWeightKg,
+  weaponWeightKg,
+} from '@grimorio/rules';
+import { COIN_KEYS, type Item, type ItemArmor } from '@grimorio/shared';
 import { Coins, Minus, Pencil, Plus, Scale, TriangleAlert } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
-import { Input, Label, Textarea } from '@/components/ui/input';
+import { Input, Label, Select, Textarea } from '@/components/ui/input';
 import { NumberField } from '@/components/ui/number-field';
 import { useSheet } from '@/features/sheet/hooks';
 import { useSheetStore } from '@/features/sheet/store';
 import { formatKg } from '@/lib/format';
+import { te } from '@/lib/i18n/editors';
 import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
 import { newId } from '@/ports/ids';
 
-const inv = ts.inventory;
+const inv = te.inventory;
 
 /** Normaliza para busca (sem acentos e sem maiúsculas). */
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -53,6 +60,22 @@ function CarryToggle({
   );
 }
 
+type ArmorKind = ItemArmor['kind'];
+const ARMOR_KINDS: ArmorKind[] = ['light', 'medium', 'heavy', 'shield'];
+/** Números típicos de cada tipo, para quem inventa uma armadura (cap. 6). */
+const KIND_DEFAULTS: Record<ArmorKind, ItemArmor> = {
+  light: { kind: 'light', base: 11 },
+  medium: { kind: 'medium', base: 13, dexCap: 2 },
+  heavy: { kind: 'heavy', base: 16, dexCap: 0 },
+  shield: { kind: 'shield', base: 2 },
+};
+
+/** Os números são os do livro para este nome? (aí trocar o nome troca os números junto) */
+function isBookArmor(item: Item): boolean {
+  const def = knownArmor(item.name);
+  return Boolean(def && JSON.stringify(armorItemData(def)) === JSON.stringify(item.armor));
+}
+
 function ItemEditor({ initial, onClose }: { initial: Item | null; onClose: () => void }) {
   const edit = useSheetStore((s) => s.edit);
   const e = inv.editor;
@@ -61,8 +84,39 @@ function ItemEditor({ initial, onClose }: { initial: Item | null; onClose: () =>
     initial?.weightKg !== undefined ? String(initial.weightKg).replace('.', ',') : '',
   );
   const [error, setError] = useState<string | null>(null);
-  const ids = { name: useId(), qty: useId(), weight: useId(), notes: useId(), carried: useId() };
+  const ids = {
+    name: useId(),
+    qty: useId(),
+    weight: useId(),
+    notes: useId(),
+    carried: useId(),
+    armor: useId(),
+    base: useId(),
+    bonus: useId(),
+    strength: useId(),
+    stealth: useId(),
+  };
   const book = knownWeightKg(item.name);
+  const armor = item.armor;
+  const setArmor = (patch: Partial<ItemArmor> | null) =>
+    setItem((prev) => {
+      const next = { ...prev };
+      if (patch === null) delete next.armor;
+      else next.armor = { ...(prev.armor ?? KIND_DEFAULTS.light), ...patch };
+      return next;
+    });
+  // Nome de armadura do livro preenche os números (se ainda não foram mudados à mão).
+  const setName = (name: string) =>
+    setItem((prev) => {
+      const next = { ...prev, name };
+      const def = knownArmor(name);
+      if (def && (!prev.armor || isBookArmor(prev))) next.armor = armorItemData(def);
+      return next;
+    });
+  const numberOr = (v: string, min: number, max: number): number | undefined => {
+    const n = Math.trunc(Number(v));
+    return v.trim() !== '' && Number.isFinite(n) && n >= min && n <= max ? n : undefined;
+  };
 
   const save = () => {
     const name = item.name.trim();
@@ -72,6 +126,12 @@ function ItemEditor({ initial, onClose }: { initial: Item | null; onClose: () =>
     if (kg !== undefined && Number.isFinite(kg) && kg >= 0 && kg <= 1000) clean.weightKg = kg;
     else delete clean.weightKg;
     if (!clean.notes?.trim()) delete clean.notes;
+    // Campos opcionais apagados não ficam como "undefined" na ficha.
+    if (clean.armor) {
+      clean.armor = Object.fromEntries(
+        Object.entries(clean.armor).filter(([, v]) => v !== undefined),
+      ) as ItemArmor;
+    }
     edit((d) => {
       const i = d.inventory.items.findIndex((x) => x.id === clean.id);
       if (i >= 0) d.inventory.items[i] = clean;
@@ -120,7 +180,7 @@ function ItemEditor({ initial, onClose }: { initial: Item | null; onClose: () =>
             value={item.name}
             maxLength={80}
             placeholder={e.namePlaceholder}
-            onChange={(ev) => setItem({ ...item, name: ev.target.value })}
+            onChange={(ev) => setName(ev.target.value)}
             data-testid="item.name"
           />
         </div>
@@ -168,8 +228,99 @@ function ItemEditor({ initial, onClose }: { initial: Item | null; onClose: () =>
             }}
             className="size-4 accent-[var(--accent)]"
           />
-          {e.carried}
+          {armor ? e.wornArmor : e.carried}
         </label>
+        <div className="col-span-2">
+          <Label htmlFor={ids.armor}>{e.armor}</Label>
+          <Select
+            id={ids.armor}
+            value={armor?.kind ?? ''}
+            onChange={(ev) => {
+              const kind = ev.target.value as ArmorKind | '';
+              setArmor(kind === '' ? null : { ...KIND_DEFAULTS[kind], bonus: armor?.bonus });
+            }}
+            data-testid="item.armor.kind"
+          >
+            <option value="">{e.notArmor}</option>
+            {ARMOR_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {inv.armorKinds[k]}
+              </option>
+            ))}
+          </Select>
+        </div>
+        {armor ? (
+          <>
+            <div>
+              <Label htmlFor={ids.base}>
+                {armor.kind === 'shield' ? e.shieldBonus : e.armorBase}
+              </Label>
+              <Input
+                id={ids.base}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={30}
+                value={armor.base}
+                onChange={(ev) => {
+                  const n = numberOr(ev.target.value, 0, 30);
+                  if (n !== undefined) setArmor({ base: n });
+                }}
+                data-testid="item.armor.base"
+              />
+            </div>
+            <div>
+              <Label htmlFor={ids.bonus}>{e.armorBonus}</Label>
+              <Select
+                id={ids.bonus}
+                value={armor.bonus ?? 0}
+                onChange={(ev) => {
+                  const n = Number(ev.target.value);
+                  setArmor({ bonus: n === 0 ? undefined : n });
+                }}
+              >
+                {[0, 1, 2, 3].map((n) => (
+                  <option key={n} value={n}>
+                    {n === 0 ? '—' : `+${n}`}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            {armor.kind !== 'shield' ? (
+              <>
+                <div>
+                  <Label htmlFor={ids.strength}>{e.armorStrength}</Label>
+                  <Input
+                    id={ids.strength}
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={30}
+                    placeholder="—"
+                    value={armor.strength ?? ''}
+                    onChange={(ev) => setArmor({ strength: numberOr(ev.target.value, 1, 30) })}
+                  />
+                </div>
+                <label
+                  htmlFor={ids.stealth}
+                  className="flex items-center gap-2 self-end pb-2 text-sm"
+                >
+                  <input
+                    id={ids.stealth}
+                    type="checkbox"
+                    checked={Boolean(armor.stealthDisadvantage)}
+                    onChange={(ev) =>
+                      setArmor({ stealthDisadvantage: ev.target.checked || undefined })
+                    }
+                    className="size-4 accent-[var(--accent)]"
+                  />
+                  {e.stealth}
+                </label>
+              </>
+            ) : null}
+            <p className="col-span-2 -mt-1 text-xs text-muted">{e.armorHint}</p>
+          </>
+        ) : null}
         <div className="col-span-2">
           <Label htmlFor={ids.notes}>{e.notes}</Label>
           <Textarea
@@ -411,6 +562,7 @@ export default function InventoryTab({
                   </div>
                   <div className="flex items-center gap-1.5">
                     <p className="min-w-0 flex-1 truncate text-xs text-muted">
+                      {item.armor ? `${inv.armorMeta(item.armor.kind, item.armor.base)} · ` : ''}
                       {unit === undefined
                         ? inv.noWeight
                         : item.quantity > 1
@@ -448,8 +600,8 @@ export default function InventoryTab({
                     </div>
                     <CarryToggle
                       on={on}
-                      onLabel={inv.carried}
-                      offLabel={inv.storedItem}
+                      onLabel={item.armor ? inv.worn : inv.carried}
+                      offLabel={item.armor ? inv.stored : inv.storedItem}
                       ariaLabel={inv.toggleItem(item.name, on)}
                       onToggle={() =>
                         edit((d) => {

@@ -13,6 +13,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Input, Label, Select, Textarea } from '@/components/ui/input';
 import { formatKg, formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { te } from '@/lib/i18n/editors';
 import { ts } from '@/lib/i18n/sheet';
 import { newId } from '@/ports/ids';
 import { useSheet } from '../hooks';
@@ -73,7 +74,7 @@ export function WeaponEditor({
     normal: useId(),
     long: useId(),
   };
-  const e = ts.weaponEditor;
+  const e = te.weaponEditor;
   const [weight, setWeight] = useState(() =>
     initial?.weightKg !== undefined ? String(initial.weightKg).replace('.', ',') : '',
   );
@@ -393,7 +394,7 @@ export function FeatureEditor({
   const nameId = useId();
   const textId = useId();
   const sourceId = useId();
-  const e = ts.featureEditor;
+  const e = te.featureEditor;
 
   const save = () => {
     if (f.name.trim() === '') return setError(e.nameRequired);

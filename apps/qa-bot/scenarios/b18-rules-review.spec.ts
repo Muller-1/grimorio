@@ -1,6 +1,7 @@
 /**
  * B18 — Regras que a ficha passou a saber (revisão do motor): tipo e propriedades da arma
- * (Arquearia e Ataque Furtivo seguem a arma, não o atributo). O oráculo é o motor de regras.
+ * (Arquearia e Ataque Furtivo seguem a arma, não o atributo); armadura e Escudo vestidos no
+ * Inventário calculam a CA (Estilo Defesa só com armadura). O oráculo é o motor de regras.
  */
 import { deriveSheet } from '@grimorio/rules';
 import { createBlankSheet, type LocalSheet } from '@grimorio/shared';
@@ -81,5 +82,36 @@ test.describe('B18 — regras da revisão do motor', { tag: '@B18' }, () => {
     expect(expected).toBe(5);
     await expect(toHit).toHaveAttribute('data-value', String(expected));
     await expect(page.getByTestId('attack.w1.traits')).toHaveText('Corpo a corpo · Acuidade');
+  });
+
+  test('armadura no Inventário: CA calculada, Defesa só vestida, Escudo pelo nome', async ({
+    page,
+  }) => {
+    const s = sheetOf('paladin', 2, { str: 15, dex: 14 });
+    s.progression!.levels = [{ level: 2, choices: [{ kind: 'fighting-style', id: 'defense' }] }];
+    // Ficha de antes da tabela de armaduras: o item tem o nome do livro, sem os números.
+    s.inventory.items = [{ id: 'i1', name: 'Cota de Malha', quantity: 1 }];
+    await withSheet(page, s);
+    await openColumn(page, 'Combate');
+    const ac = page.getByTestId('stat.ac');
+    // Cota de Malha 16 + Defesa 1 (a ficha reconhece a armadura ao abrir).
+    await expect(ac).toHaveAttribute('data-value', '17');
+
+    await openColumn(page, 'Ações');
+    await page.getByRole('tab', { name: 'Inventário' }).click();
+    await page.getByTestId('inventory.item.i1.carried').click();
+    let sheet = await sheetNow(page);
+    expect(deriveSheet(sheet).armorClass.value).toBe(12);
+
+    await page.getByTestId('inventory.item.i1.carried').click();
+    await page.getByTestId('inventory.add').click();
+    await page.getByTestId('item.name').fill('Escudo');
+    await expect(page.getByTestId('item.armor.kind')).toHaveValue('shield');
+    await page.getByTestId('item.save').click();
+    sheet = await sheetNow(page);
+    const expected = deriveSheet(sheet).armorClass.value;
+    expect(expected).toBe(19);
+    await openColumn(page, 'Combate');
+    await expect(ac).toHaveAttribute('data-value', String(expected));
   });
 });

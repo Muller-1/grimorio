@@ -163,7 +163,7 @@ function WeaponCard({
             <dd data-testid={`attack.${weapon.id}.traits`}>{a.traits(attack.traits)}</dd>
             {weapon.properties ? (
               <>
-                <dt className="text-muted">{ts.weaponEditor.properties}</dt>
+                <dt className="text-muted">{a.properties}</dt>
                 <dd>{weapon.properties}</dd>
               </>
             ) : null}

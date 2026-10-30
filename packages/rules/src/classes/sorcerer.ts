@@ -172,7 +172,10 @@ export const SORCERER: ClassProgression = {
           level: 3,
           name: 'Resiliência Dracônica',
           text: 'PV máximo +3, e +1 a cada nível de Feiticeiro depois disso. Sem armadura, sua CA base é 10 + Destreza + Carisma.',
-          passive: [{ type: 'hp-max-bonus', value: { classLevel: true } }],
+          passive: [
+            { type: 'hp-max-bonus', value: { classLevel: true } },
+            { type: 'ac-formula', base: 10, abilities: ['cha'], shield: true },
+          ],
         },
         {
           id: 'draconic-spells',

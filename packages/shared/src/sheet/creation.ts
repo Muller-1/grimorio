@@ -31,6 +31,8 @@ export const CreationRecordSchema = z.object({
   backgroundId: contentId,
   /** Escolha obrigatória da classe no nível 1 (Ordem Divina/Primal, Invocação do Bruxo). */
   classOptionId: contentId.optional(),
+  /** Estilo de Luta escolhido no nível 1 (Guerreiro). Fichas antigas não têm. */
+  fightingStyleId: contentId.optional(),
   /** Maestria em Arma: tipos de arma escolhidos (ids do conteúdo, ex.: "greataxe"). */
   weaponMasteries: z.array(contentId).max(6).optional(),
   /** Atributos ANTES do bônus do antecedente. */

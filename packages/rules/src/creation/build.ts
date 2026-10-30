@@ -12,7 +12,6 @@ import {
   CREATION_RECORD_VERSION,
   createBlankSheet,
   LocalSheetSchema,
-  type AbilityKey,
   type CreationRecord,
   type Feature,
   type FeatureSource,
@@ -24,11 +23,10 @@ import {
 } from '@grimorio/shared';
 import { knownWeightKg } from '../inventory/weights';
 import { startingItems } from '../inventory/starting';
-import { abilityModifier, deriveSheet } from '../sheet/derive';
+import { deriveSheet } from '../sheet/derive';
 import { finalScores } from './abilities';
 import { weaponProficient } from './mastery';
 import {
-  ARMOR,
   CREATION_CONTENT_VERSION,
   CUSTOM_BACKGROUND_GOLD,
   CUSTOM_ID,
@@ -36,7 +34,6 @@ import {
   MASTERY_PROPERTIES,
   ORIGIN_FEATS,
   WEAPONS,
-  type ArmorDef,
   type ArmorKind,
   type ClassDef,
   type EquipmentPack,
@@ -141,61 +138,6 @@ function toSheetWeapon(
   };
 }
 
-interface ArmorClassResult {
-  /** `undefined` = sem armadura: a ficha calcula 10 + Destreza sozinha. */
-  value: number | undefined;
-  explanation: string;
-  /** Força abaixo do exigido pela armadura pesada: −3 m de deslocamento. */
-  slowedByArmor: boolean;
-  stealthDisadvantage: boolean;
-}
-
-function armorClass(
-  cls: ClassDef,
-  armorIds: readonly (keyof typeof ARMOR)[],
-  scores: Record<AbilityKey, number>,
-  defenseStyle: boolean,
-): ArmorClassResult {
-  const mod = (k: AbilityKey) => abilityModifier(scores[k]);
-  const pieces = armorIds.map((id) => ARMOR[id] as ArmorDef);
-  const body = pieces.find((a) => a.kind !== 'shield');
-  const shield = pieces.some((a) => a.kind === 'shield');
-  const parts: string[] = [];
-  let total: number;
-
-  if (body) {
-    const dex = body.dexCap === null ? mod('dex') : Math.min(mod('dex'), body.dexCap);
-    total = body.base + dex;
-    parts.push(`${body.name} ${body.base}`);
-    if (body.dexCap !== 0) parts.push(`Destreza ${dex >= 0 ? '+' : ''}${dex}`);
-  } else if (cls.unarmoredDefense) {
-    const other = cls.unarmoredDefense;
-    total = 10 + mod('dex') + mod(other);
-    parts.push(
-      `Defesa sem Armadura 10`,
-      `Destreza ${mod('dex') >= 0 ? '+' : ''}${mod('dex')}`,
-      `${other === 'con' ? 'Constituição' : 'Sabedoria'} ${mod(other) >= 0 ? '+' : ''}${mod(other)}`,
-    );
-  } else {
-    total = 10 + mod('dex');
-  }
-  if (shield) {
-    total += 2;
-    parts.push('Escudo +2');
-  }
-  if (defenseStyle && body) {
-    total += 1;
-    parts.push('Estilo Defesa +1');
-  }
-  const custom = Boolean(body || shield || cls.unarmoredDefense);
-  return {
-    value: custom ? total : undefined,
-    explanation: custom ? `CA ${total} = ${parts.join(' + ')}` : '',
-    slowedByArmor: Boolean(body?.strength && scores.str < body.strength),
-    stealthDisadvantage: Boolean(body?.stealthDisadvantage),
-  };
-}
-
 /** Monta a ficha. `null` se alguma etapa ainda tem pendência. */
 export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): LocalSheet | null {
   const pending = firstIncompleteStep(draft);
@@ -247,18 +189,12 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     });
   }
 
-  const ac = armorClass(
-    cls,
-    [...cPack.armor, ...bPack.armor],
-    scores,
-    draft.fightingStyleId === 'defense',
-  );
-
-  let speedFt =
+  // A CA, a Desvantagem em Furtividade e os −3 m da armadura pesada saem da armadura vestida
+  // no Inventário (o motor calcula); o deslocamento guardado é o da espécie.
+  const speedFt =
     draft.speciesId === CUSTOM_ID
       ? draft.customSpecies.speedFt
       : (speciesOption?.speedFt ?? species?.speedFt ?? 30);
-  if (ac.slowedByArmor) speedFt = Math.max(0, speedFt - 10);
 
   // ---------- características (o que a ficha local não tem campo próprio) ----------
   const features: Feature[] = [];
@@ -281,14 +217,6 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     add(`Estilo de Luta: ${style.name}`, style.text);
   }
   source = 'training';
-  if (ac.explanation) {
-    const notes = [
-      ac.explanation,
-      ac.slowedByArmor ? 'Força abaixo de 13: −3 m de Deslocamento com esta armadura.' : '',
-      ac.stealthDisadvantage ? 'Desvantagem em Destreza (Furtividade) com esta armadura.' : '',
-    ].filter(Boolean);
-    add('Classe de Armadura', notes.join(' '));
-  }
 
   source = 'species';
   if (species) {
@@ -372,6 +300,7 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
     ...(draft.abilityMethod === 'rolled' && draft.rolled ? { rolledScores: draft.rolled } : {}),
     backgroundBonus: draft.backgroundBonus,
     ...(classOption ? { classOptionId: classOption.id } : {}),
+    ...(draft.fightingStyleId ? { fightingStyleId: draft.fightingStyleId } : {}),
     ...(masteries.size ? { weaponMasteries: [...masteries] } : {}),
     classSkills: draft.classSkills,
     extraSkills: [...draft.speciesSkills, ...draft.featSkills],
@@ -402,7 +331,6 @@ export function buildCharacterSheet(draft: CreationDraft, ctx: BuildContext): Lo
   sheet.combat = {
     hitDie: cls.hitDie,
     speedFt,
-    ...(ac.value === undefined ? {} : { armorClassOverride: ac.value }),
     ...(hpPerLevel ? { hpBonusPerLevel: hpPerLevel } : {}),
     ...(feats.includes('alert') ? { initiativeProficiency: true } : {}),
   };

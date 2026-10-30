@@ -258,9 +258,18 @@ describe('ficha montada', () => {
       ['Arco Curto', true, 'dex'],
     ]);
     expect(sheet.build.skillProficiencies).toMatchObject({ athletics: 1, intimidation: 1 });
-    expect(sheet.features.find((f) => f.name === 'Classe de Armadura')?.text).toContain(
-      'CA 17 = Cota de Malha 16 + Estilo Defesa +1',
-    );
+    // A CA sai da armadura vestida no Inventário, não de um ajuste manual.
+    expect(sheet.combat.armorClassOverride).toBeUndefined();
+    expect(sheet.creation?.fightingStyleId).toBe('defense');
+    expect(sheet.inventory.items.find((i) => i.name === 'Cota de Malha')?.armor).toMatchObject({
+      kind: 'heavy',
+      base: 16,
+    });
+    expect(d.armorClass.parts).toEqual([
+      { source: { kind: 'armor', name: 'Cota de Malha' }, value: 16 },
+      { source: { kind: 'effect', name: 'Defesa' }, value: 1 },
+    ]);
+    expect(d.skills.stealth.disadvantage).toBe(true);
   });
 
   it('armas do assistente guardam alcance, Acuidade e as outras propriedades', () => {
@@ -301,7 +310,16 @@ describe('ficha montada', () => {
       x.baseScores = { str: 8, dex: 15, con: 14, int: 12, wis: 13, cha: 10 };
       x.backgroundBonus = { dex: 2, con: 1 };
     });
-    expect(buildCharacterSheet(d, ctx)!.combat.speedFt).toBe(20);
+    const sheet = buildCharacterSheet(d, ctx)!;
+    // O deslocamento guardado é o da espécie; a ficha tira os 3 m enquanto a armadura estiver vestida.
+    expect(sheet.combat.speedFt).toBe(30);
+    // (Só a armadura, para o peso do resto não entrar na conta.)
+    const onlyArmor = {
+      ...sheet,
+      weapons: [],
+      inventory: { ...sheet.inventory, items: sheet.inventory.items.filter((i) => i.armor) },
+    };
+    expect(deriveSheet(onlyArmor).speedFt).toBe(20);
   });
 
   it('Bárbaro Anão: Defesa sem Armadura e +1 PV por nível', () => {
@@ -312,6 +330,7 @@ describe('ficha montada', () => {
     const d = deriveSheet(sheet);
     // For 15+2, Des 13+1, Con 14 → CA 10 + 2 + 2 = 14; PV 12 + 2 + 1
     expect(d.armorClass.value).toBe(14);
+    expect(sheet.combat.armorClassOverride).toBeUndefined();
     expect(d.hpMax.value).toBe(15);
     expect(d.hpMax.parts.at(-1)).toEqual({ source: { kind: 'trait' }, value: 1 });
     const level5 = deriveSheet({ ...sheet, build: { ...sheet.build, level: 5 } });

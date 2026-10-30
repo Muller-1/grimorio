@@ -40,7 +40,9 @@ export type PartSource =
   | { kind: 'trait' }
   | { kind: 'override' }
   /** Característica, habilidade ligada ou magia (o nome vem do conteúdo das regras). */
-  | { kind: 'effect'; name: string };
+  | { kind: 'effect'; name: string }
+  /** Armadura ou Escudo vestido (o nome é o do item no Inventário). */
+  | { kind: 'armor'; name: string };
 
 export interface ExplainedPart {
   source: PartSource;
@@ -294,6 +296,12 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
         e.effect.type === type,
     );
 
+  // Armadura e Escudo vestidos (Inventário). Ficam aqui porque mudam CA, Furtividade e Deslocamento.
+  const worn = sheet.inventory.items.filter((i) => i.armor && i.equipped !== false);
+  const bodyArmor = worn.find((i) => i.armor!.kind !== 'shield');
+  const shield = worn.find((i) => i.armor!.kind === 'shield');
+  const notes: SourcedNote[] = [];
+
   const extraSaveProf = new Set(of('save-proficiency').flatMap((e) => e.effect.on));
   /** Dados com sinal para uma jogada (Bênção +1d4, Perdição −1d4). */
   const signedDice = (on: 'attack' | 'save' | 'damage') => [
@@ -347,22 +355,36 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
           bonus: explained(parts),
           proficiency,
           advantage: hasAdvantage(effects, `check:${ability}`),
-          disadvantage: hasDisadvantage(effects, `check:${ability}`),
+          disadvantage:
+            hasDisadvantage(effects, `check:${ability}`) ||
+            (skill === 'stealth' && Boolean(bodyArmor?.armor!.stealthDisadvantage)),
         },
       ];
     }),
   ) as SheetDerived['skills'];
 
-  // CA: ajuste manual (armadura do assistente) ou 10 + Destreza; fórmulas alternativas
-  // (Armadura Arcana) valem se forem maiores; bônus (Escudo da Fé) somam; mínimos (Pele-Casca).
-  let acParts: ExplainedPart[] =
-    sheet.combat.armorClassOverride !== undefined
-      ? [{ source: { kind: 'override' }, value: sheet.combat.armorClassOverride }]
-      : [
-          { source: { kind: 'base' }, value: 10 },
-          { source: { kind: 'ability', ability: 'dex' }, value: mods.dex },
-        ];
-  for (const e of of('ac-formula')) {
+  // CA (cap. 6): ajuste manual, ou armadura vestida (Destreza até o teto dela), ou 10 + Destreza.
+  // Sem armadura, as fórmulas alternativas (Defesa sem Armadura, Armadura Arcana, Resiliência
+  // Dracônica) valem se forem maiores; as que pedem "sem Escudo" não valem com ele. O Escudo soma
+  // (exceto no ajuste manual, que já é o total); bônus somam; mínimos (Pele-Casca) por último.
+  const override = sheet.combat.armorClassOverride;
+  let acParts: ExplainedPart[];
+  if (override !== undefined) {
+    acParts = [{ source: { kind: 'override' }, value: override }];
+  } else if (bodyArmor) {
+    const a = bodyArmor.armor!;
+    const dex = a.dexCap === undefined ? mods.dex : Math.min(mods.dex, a.dexCap);
+    acParts = [{ source: { kind: 'armor', name: bodyArmor.name }, value: a.base }];
+    if (a.dexCap !== 0) acParts.push({ source: { kind: 'ability', ability: 'dex' }, value: dex });
+    if (a.bonus) acParts.push({ source: { kind: 'magic' }, value: a.bonus });
+  } else {
+    acParts = [
+      { source: { kind: 'base' }, value: 10 },
+      { source: { kind: 'ability', ability: 'dex' }, value: mods.dex },
+    ];
+  }
+  for (const e of bodyArmor ? [] : of('ac-formula')) {
+    if (shield && !e.effect.shield) continue;
     const alt: ExplainedPart[] = [
       effectPart(e, e.effect.base),
       { source: { kind: 'ability', ability: 'dex' }, value: mods.dex },
@@ -373,7 +395,20 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
     ];
     if (explained(alt).value > explained(acParts).value) acParts = alt;
   }
-  for (const e of of('ac-bonus')) acParts.push(effectPart(e, value(e.effect.value)));
+  if (shield && override === undefined) {
+    const value = shield.armor!.base + (shield.armor!.bonus ?? 0);
+    acParts.push({ source: { kind: 'armor', name: shield.name }, value });
+  }
+  for (const e of of('ac-bonus')) {
+    if (e.effect.requiresArmor && !bodyArmor) {
+      notes.push({
+        text: `${e.source.name}: +${value(e.effect.value)} na CA só vestindo armadura (marque a armadura como vestida no Inventário).`,
+        source: e.source.name,
+      });
+      continue;
+    }
+    acParts.push(effectPart(e, value(e.effect.value)));
+  }
   for (const e of of('ac-minimum')) {
     const total = explained(acParts).value;
     if (total < e.effect.value) acParts.push(effectPart(e, e.effect.value - total));
@@ -510,10 +545,21 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
   // Bônus e penalidades somam; depois os multiplicadores (Lentidão: metade; Contido: 0).
   const speedFactor = of('speed-multiplier').reduce((f, e) => f * e.effect.factor, 1);
   const load = carryingLoad(sheet);
+  // Armadura que pede mais Força do que o personagem tem: −3 m enquanto vestida.
+  const required = bodyArmor?.armor!.strength;
+  const armorSlow = required !== undefined && abilities.str.score < required ? -10 : 0;
+  if (armorSlow) {
+    notes.push({
+      text: `${bodyArmor!.name}: Força ${required} exigida; −3 m de Deslocamento enquanto vestida.`,
+      source: bodyArmor!.name,
+    });
+  }
   const speedFt = Math.max(
     0,
     Math.floor(
-      ((sheet.combat.speedFt + of('speed-bonus').reduce((sum, e) => sum + value(e.effect.ft), 0)) *
+      ((sheet.combat.speedFt +
+        armorSlow +
+        of('speed-bonus').reduce((sum, e) => sum + value(e.effect.ft), 0)) *
         speedFactor) /
         5,
     ) * 5,
@@ -523,7 +569,7 @@ export function deriveSheet(sheet: LocalSheet): SheetDerived {
   const resistances = of('resistance').flatMap((e) =>
     e.effect.damage.map((type) => ({ type, source: e.source.name })),
   );
-  const notes = of('note').map((e) => ({ text: e.effect.text, source: e.source.name }));
+  notes.push(...of('note').map((e) => ({ text: e.effect.text, source: e.source.name })));
   const dcBonus = of('spell-dc-bonus').reduce((sum, e) => sum + value(e.effect.value), 0);
   const spellcasting = spellcastingView(sheet, engine.info, mods, prof, dcBonus);
   const spellAttack = spellcasting && {

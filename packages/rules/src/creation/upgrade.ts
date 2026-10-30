@@ -1,12 +1,23 @@
-import type { Feature, FeatureSource, LocalSheet } from '@grimorio/shared';
+import type { AbilityKey, Feature, FeatureSource, LocalSheet } from '@grimorio/shared';
 import { CLASS_PROGRESSIONS } from '../classes';
+import { armorItemData, knownArmor, needsArmorUpgrade, type ArmorDef } from '../inventory/armor';
 import {
   parseStartingEquipment,
   STARTING_EQUIPMENT_FEATURE,
   startingItems,
 } from '../inventory/starting';
 import { subclassOf } from '../levelup/plan';
-import { CLASSES, SPECIES, type ClassId } from './content';
+import { abilityModifier } from '../sheet/derive';
+import { finalScores } from './abilities';
+import {
+  ARMOR,
+  BACKGROUNDS,
+  CLASSES,
+  FIGHTING_STYLES,
+  SPECIES,
+  type ClassDef,
+  type ClassId,
+} from './content';
 
 /**
  * Fichas de antes do inventário (v2): as características não diziam de onde vinham e o
@@ -21,7 +32,17 @@ export function upgradeSheetContent(
   sheet: LocalSheet,
   ctx: { newId: () => string },
 ): { sheet: LocalSheet; movedEquipment: boolean } | null {
-  if (sheet.features.every((f) => f.source)) return null;
+  const sources = sheet.features.every((f) => f.source) ? null : upgradeSources(sheet, ctx);
+  const base = sources?.sheet ?? sheet;
+  const armored = upgradeArmor(base, Boolean(sources?.movedEquipment));
+  if (!sources && !armored) return null;
+  return { sheet: armored ?? base, movedEquipment: Boolean(sources?.movedEquipment) };
+}
+
+function upgradeSources(
+  sheet: LocalSheet,
+  ctx: { newId: () => string },
+): { sheet: LocalSheet; movedEquipment: boolean } {
   const next = JSON.parse(JSON.stringify(sheet)) as LocalSheet;
   const guess = sourceGuesser(sheet);
   let movedEquipment = false;
@@ -44,6 +65,73 @@ export function upgradeSheetContent(
   }
   next.features = features;
   return { sheet: next, movedEquipment };
+}
+
+/**
+ * Fichas de antes das armaduras no Inventário: a armadura do livro ganha os números (CA, teto de
+ * Destreza, Força, Furtividade) e passa a calcular a CA. Nas fichas do assistente, que gravava a
+ * CA como ajuste manual e já tirava os 3 m da armadura pesada do deslocamento:
+ * - se o ajuste manual é o número que o assistente calculou, ele sai (a ficha calcula igual, e
+ *   agora acompanha mudanças de Destreza ou de armadura); se o jogador mudou, fica;
+ * - sem ajuste manual, o Estilo de Luta do nível 1 passa para o registro da criação (a ficha
+ *   soma Defesa e Arquearia sozinha);
+ * - os 3 m voltam para o deslocamento guardado: agora a ficha tira enquanto a armadura está vestida.
+ * `null` = nada a fazer.
+ */
+function upgradeArmor(sheet: LocalSheet, movedEquipment: boolean): LocalSheet | null {
+  if (!needsArmorUpgrade(sheet) && !movedEquipment) return null;
+  const next = JSON.parse(JSON.stringify(sheet)) as LocalSheet;
+  next.inventory.items = next.inventory.items.map((item) => {
+    const def = item.armor ? undefined : knownArmor(item.name);
+    return def ? { ...item, armor: armorItemData(def) } : item;
+  });
+
+  const record = next.creation;
+  const cls = record ? CLASSES[record.classId as ClassId] : undefined;
+  if (!record || !cls) return next;
+  const style = Object.values(FIGHTING_STYLES).find((f) =>
+    sheet.features.some((x) => x.name === `Estilo de Luta: ${f.name}`),
+  );
+  const classPack = cls.equipment.find((p) => p.option === record.classEquipment);
+  const bgPack = BACKGROUNDS[record.backgroundId]?.equipment.find(
+    (p) => p.option === record.backgroundEquipment,
+  );
+  const wizard = wizardArmorClass(
+    cls,
+    [...(classPack?.armor ?? []), ...(bgPack?.armor ?? [])].map((id) => ARMOR[id]),
+    finalScores(record.baseAbilities, record.backgroundBonus),
+    style?.id === 'defense',
+  );
+  if (next.combat.armorClassOverride === wizard.value) delete next.combat.armorClassOverride;
+  if (wizard.slowedByArmor) next.combat.speedFt = Math.min(300, next.combat.speedFt + 10);
+  if (next.combat.armorClassOverride === undefined && style && !record.fightingStyleId) {
+    record.fightingStyleId = style.id;
+  }
+  return next;
+}
+
+/** A CA que o assistente gravava como ajuste manual (antes das armaduras no Inventário). */
+function wizardArmorClass(
+  cls: ClassDef,
+  pieces: readonly ArmorDef[],
+  scores: Record<AbilityKey, number>,
+  defenseStyle: boolean,
+): { value: number | undefined; slowedByArmor: boolean } {
+  const mod = (k: AbilityKey) => abilityModifier(scores[k]);
+  const body = pieces.find((a) => a.kind !== 'shield');
+  const shield = pieces.some((a) => a.kind === 'shield');
+  let total = 10 + mod('dex');
+  if (body) {
+    total = body.base + (body.dexCap === null ? mod('dex') : Math.min(mod('dex'), body.dexCap));
+  } else if (cls.unarmoredDefense) {
+    total += mod(cls.unarmoredDefense);
+  }
+  if (shield) total += 2;
+  if (defenseStyle && body) total += 1;
+  return {
+    value: body || shield || cls.unarmoredDefense ? total : undefined,
+    slowedByArmor: Boolean(body?.strength && scores.str < body.strength),
+  };
 }
 
 /** Descobre a origem pelo nome, com as listas da classe, da subclasse e da espécie da ficha. */

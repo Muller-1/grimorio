@@ -26,7 +26,8 @@ export function partLabel(source: PartSource): string {
     case 'override':
       return ts.explain.override;
     case 'effect':
-      // Nome da característica ou magia (vem do conteúdo das regras, já em português).
+    case 'armor':
+      // Nome da característica, magia ou armadura (já em português).
       return source.name;
   }
 }

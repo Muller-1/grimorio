@@ -1,7 +1,7 @@
 import { createBlankSheet, type LocalSheet } from '@grimorio/shared';
 import { describe, expect, it } from 'vitest';
 import { buildCharacterSheet } from '../creation/build';
-import { emptyDraft, withBackground, withClass } from '../creation/draft';
+import { emptyDraft, withBackground, withClass, type CreationDraft } from '../creation/draft';
 import { CLASSES, BACKGROUNDS } from '../creation/content';
 import { upgradeSheetContent } from '../creation/upgrade';
 import { suggestBackgroundBonus } from '../creation/abilities';
@@ -97,6 +97,81 @@ describe('equipamento inicial no inventário', () => {
   });
 });
 
+/** Guerreiro do assistente como era antes das armaduras no Inventário (CA no ajuste manual). */
+function oldFighter(edit: (d: CreationDraft) => void = () => {}): LocalSheet {
+  const cls = CLASSES.fighter;
+  let d = withClass(emptyDraft(), 'fighter');
+  d = withBackground(d, 'soldier');
+  d.classSkills = ['acrobatics', 'perception'];
+  d.speciesId = 'orc';
+  d.languages = ['Anão', 'Élfico'];
+  d.abilityMethod = 'standard-array';
+  d.baseScores = { ...cls.standardArray };
+  d.backgroundBonus = suggestBackgroundBonus(BACKGROUNDS.soldier!.abilities, cls.primary);
+  d.fightingStyleId = 'defense';
+  d.weaponMasteries = ['greatsword', 'flail', 'javelin'];
+  d.name = 'Bruna';
+  edit(d);
+  const built = buildCharacterSheet(d, ctx)!;
+  const { fightingStyleId: _style, ...creation } = built.creation!;
+  return {
+    ...built,
+    combat: { ...built.combat, armorClassOverride: 17 },
+    creation,
+    inventory: {
+      ...built.inventory,
+      items: built.inventory.items.map(({ armor: _a, ...item }) => item),
+    },
+    features: [
+      ...built.features,
+      {
+        id: 'ca',
+        name: 'Classe de Armadura',
+        text: 'CA 17 = Cota de Malha 16 + Estilo Defesa +1',
+        source: 'training',
+      },
+    ],
+  };
+}
+
+describe('fichas de antes das armaduras no Inventário', () => {
+  it('a armadura é reconhecida e a CA manual do assistente dá lugar à calculada', () => {
+    const old = oldFighter();
+    expect(deriveSheet(old).armorClass.value).toBe(17);
+    const out = upgradeSheetContent(old, ctx)!;
+    expect(out.sheet.combat.armorClassOverride).toBeUndefined();
+    expect(out.sheet.creation?.fightingStyleId).toBe('defense');
+    expect(out.sheet.inventory.items.find((i) => i.name === 'Cota de Malha')?.armor?.base).toBe(16);
+    expect(deriveSheet(out.sheet).armorClass.value).toBe(17);
+    expect(upgradeSheetContent(out.sheet, ctx)).toBeNull();
+  });
+
+  it('CA manual mudada pelo jogador fica como está', () => {
+    const old = oldFighter();
+    old.combat.armorClassOverride = 19;
+    const out = upgradeSheetContent(old, ctx)!;
+    expect(out.sheet.combat.armorClassOverride).toBe(19);
+    expect(out.sheet.creation?.fightingStyleId).toBeUndefined();
+    // A Defesa do assistente já estava no número dele: continua 19.
+    expect(deriveSheet(out.sheet).armorClass.value).toBe(19);
+  });
+
+  it('Força baixa: o deslocamento que o assistente tirava volta, e a ficha tira enquanto vestida', () => {
+    const old = oldFighter((d) => {
+      d.baseScores = { str: 8, dex: 15, con: 14, int: 12, wis: 13, cha: 10 };
+      d.backgroundBonus = { dex: 2, con: 1 };
+    });
+    old.combat.speedFt = 20; // como o assistente gravava
+    old.combat.armorClassOverride = 17;
+    const out = upgradeSheetContent(old, ctx)!;
+    expect(out.sheet.combat.speedFt).toBe(30);
+    // (Só a armadura, para o peso do resto não entrar na conta.)
+    const items = out.sheet.inventory.items.filter((i) => i.armor);
+    const onlyArmor = { ...out.sheet, weapons: [], inventory: { ...out.sheet.inventory, items } };
+    expect(deriveSheet(onlyArmor).speedFt).toBe(20);
+  });
+});
+
 describe('fichas de antes do inventário (v2)', () => {
   it('ganham a origem de cada característica e o equipamento vai para o inventário', () => {
     const built = barbarian();
@@ -104,6 +179,7 @@ describe('fichas de antes do inventário (v2)', () => {
       ...built,
       features: [
         ...built.features.map(({ source: _s, ...f }) => f),
+        { id: 'ca', name: 'Classe de Armadura', text: 'CA 14 = Defesa sem Armadura 10 + …' },
         { id: 'eq', name: 'Equipamento inicial', text: OLD_TEXT },
         { id: 'mine', name: 'Odeia goblins', text: 'Anotação minha.' },
       ],

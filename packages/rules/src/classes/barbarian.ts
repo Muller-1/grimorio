@@ -63,6 +63,7 @@ export const BARBARIAN: ClassProgression = {
       level: 1,
       name: 'Defesa sem Armadura',
       text: 'Sem armadura, sua CA base é 10 + Destreza + Constituição. Pode usar Escudo.',
+      passive: [{ type: 'ac-formula', base: 10, abilities: ['con'], shield: true }],
     },
     {
       id: 'weapon-mastery',

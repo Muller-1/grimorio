@@ -1,3 +1,4 @@
+import { needsArmorUpgrade } from '@grimorio/rules';
 import { createBlankSheet } from '@grimorio/shared';
 import { ArrowLeft, Wand2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -113,8 +114,10 @@ export default function SheetPage({
     if (mode === 'local') openLocal();
   }, [mode, openLocal]);
 
-  // Ficha de antes do inventário: organiza as características e o equipamento (uma vez).
-  const needsUpgrade = useSheetStore((s) => s.sheet.features.some((f) => !f.source));
+  // Ficha antiga: organiza características, equipamento e armaduras (uma vez).
+  const needsUpgrade = useSheetStore(
+    (s) => s.sheet.features.some((f) => !f.source) || needsArmorUpgrade(s.sheet),
+  );
   useEffect(() => {
     if (!needsUpgrade) return;
     let cancelled = false;
