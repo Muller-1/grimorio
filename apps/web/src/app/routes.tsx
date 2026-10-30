@@ -77,8 +77,16 @@ const PAGES: readonly PageRoute[] = [
     element: (
       <div className="mx-auto max-w-5xl px-4 py-8">
         <DiceIntro />
-        {/* O título já está na tela: enquanto o rolador chega, só o d20 rolando embaixo dele. */}
-        <Suspense fallback={<InlineLoader label={t.common.loading} />}>
+        {/* O título já está na tela: enquanto o rolador chega, só o d20 rolando embaixo dele.
+            A altura da tela inteira deixa o rodapé fora da vista: ele não "pula" quando o
+            rolador aparece (Lighthouse, CLS ≤ 0,1). */}
+        <Suspense
+          fallback={
+            <div className="min-h-dvh">
+              <InlineLoader label={t.common.loading} />
+            </div>
+          }
+        >
           <DicePage />
         </Suspense>
       </div>
