@@ -10,6 +10,7 @@ const fixed = (values: number[]) => {
 
 describe('diceStore', () => {
   beforeEach(() => {
+    useDiceStore.getState().setStaging(false);
     useDiceStore.getState().clear();
     setRng(null);
   });
@@ -36,6 +37,30 @@ describe('diceStore', () => {
     const r = useDiceStore.getState().roll({ label: 'x', expression: '1d' });
     expect(r.ok).toBe(false);
     expect(useDiceStore.getState().history).toHaveLength(0);
+  });
+
+  it('com a bandeja na tela, a rolagem só entra no histórico quando os dados param', () => {
+    const dice = () => useDiceStore.getState();
+    dice().setStaging(true);
+    const a = dice().roll({ label: 'A', expression: '1d20' });
+    expect(dice().history).toHaveLength(0);
+    expect(dice().pending?.label).toBe('A');
+    // Outra rolagem antes de os dados pararem: a primeira nunca apareceu e não entra.
+    const b = dice().roll({ label: 'B', expression: '1d20' });
+    if (!a.ok || !b.ok) throw new Error('rolagem inválida');
+    dice().commit(a.entry.id);
+    expect(dice().history).toHaveLength(0);
+    dice().commit(b.entry.id);
+    expect(dice().history.map((e) => e.label)).toEqual(['B']);
+    expect(dice().pending).toBeNull();
+
+    // A bandeja sai da tela (painel fechado) no meio do giro: entra na hora.
+    dice().roll({ label: 'C', expression: '1d20' });
+    dice().setStaging(false);
+    expect(dice().history.map((e) => e.label)).toEqual(['C', 'B']);
+    // Sem bandeja, direto no histórico, como sempre.
+    dice().roll({ label: 'D', expression: '1d20' });
+    expect(dice().history.map((e) => e.label)).toEqual(['D', 'C', 'B']);
   });
 
   it('naturalD20 só vale com exatamente um d20 mantido', () => {

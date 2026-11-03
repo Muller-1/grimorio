@@ -135,6 +135,21 @@ test.describe('B19 — botão flutuante de rolar dados', { tag: '@B19' }, () => 
     const kept = result.terms[0]!.dice.findIndex((d) => d.kept);
     await expect(dice.nth(kept)).toHaveAttribute('data-mark', 'high');
     await expect(dice.nth(1 - kept)).toHaveAttribute('data-out', '');
+    // Entra no histórico (e na notificação) quando os dados param.
+    await expect(page.getByTestId('roll.tray')).toContainText('2d20kh1');
+
+    // Rolar duas vezes seguidas: a primeira nem chegou a aparecer e não entra no histórico.
+    await input.fill('1d20+7');
+    await rollBy(page, () => input.press('Enter'));
+    const second = await rollBy(page, () => input.press('Enter'));
+    await expect(page.getByTestId('roll.last.total')).toHaveAttribute(
+      'data-value',
+      String(second.total),
+    );
+    await page.getByRole('button', { name: 'Ver histórico de rolagens' }).first().click();
+    const history = page.locator('[data-testid^="roll.history."]');
+    // 1d20+7 (só a segunda), 2d20kh1 e 8d6.
+    await expect(history).toHaveCount(3);
   });
 
   test('rolar pela ficha com o painel aberto anima na bandeja sem fechar nem apagar o campo', async ({

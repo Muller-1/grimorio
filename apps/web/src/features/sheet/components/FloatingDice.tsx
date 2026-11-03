@@ -151,8 +151,11 @@ interface Drag {
   samples: { t: number; x: number; y: number }[];
 }
 
-/** Id da última rolagem (ou `null` se não houve nenhuma). */
-const lastRollId = () => useDiceStore.getState().history[0]?.id ?? null;
+/** Id da última rolagem, mesmo se ainda estiver girando na bandeja (ou `null` se não houve). */
+const lastRollId = () => {
+  const dice = useDiceStore.getState();
+  return (dice.pending ?? dice.history[0])?.id ?? null;
+};
 
 const prefersReducedMotion = () =>
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -181,7 +184,8 @@ export default function FloatingDice() {
   const [expression, setExpression] = useState('1d20');
   /** Rolagem que a bandeja não mostra (a que já existia ao abrir, ou antes de voltar a digitar). */
   const [baseline, setBaseline] = useState<string | null>(null);
-  const last = useDiceStore((s) => s.history[0]);
+  const last = useDiceStore((s) => s.pending ?? s.history[0]);
+  const pending = useDiceStore((s) => s.pending);
   const animate = useDiceStore((s) => s.animate);
   const screen = useScreen();
   const tray = useTrayArea((s) => s.area);
@@ -216,26 +220,22 @@ export default function FloatingDice() {
   const entry = open && last && last.id !== baseline ? last : null;
   const motion = animate && !prefersReducedMotion();
 
-  // A notificação do resultado espera os dados pararem de girar na bandeja. Antes de pintar a
-  // tela: senão ela aparece por um quadro e some. Só se o desenho estiver na tela na hora da
-  // rolagem (com o teclado do celular aberto não há dado girando para esperar); se ele aparecer
-  // depois, a notificação já mostrada não some de novo.
-  const drawingNow = useRef(drawing);
+  // Com os dados girando na tela, a rolagem só entra no histórico (e na notificação) quando eles
+  // param; clicar de novo antes disso troca a rolagem, e a que não apareceu não entra. Sem o
+  // desenho (painel fechado, teclado do celular aberto, "reduzir movimento"), entra na hora.
+  // Antes de pintar a tela: a notificação não chega a aparecer por um quadro.
+  const staging = open && motion && drawing > 0;
   useLayoutEffect(() => {
-    drawingNow.current = drawing;
-  });
-  const heldId = entry && motion ? entry.id : null;
-  const holdFor = entry && motion ? rollDuration(resultTray(entry.result)) : 0;
+    useDiceStore.getState().setStaging(staging);
+  }, [staging]);
+  useLayoutEffect(() => () => useDiceStore.getState().setStaging(false), []);
+  const pendingId = pending?.id;
+  const settleIn = pending ? rollDuration(resultTray(pending.result)) : 0;
   useLayoutEffect(() => {
-    if (!heldId || holdFor === 0 || drawingNow.current === 0) return;
-    const area = useTrayArea.getState();
-    area.hold(heldId);
-    const timer = setTimeout(() => area.release(heldId), holdFor);
-    return () => {
-      clearTimeout(timer);
-      area.release(heldId);
-    };
-  }, [heldId, holdFor]);
+    if (!pendingId) return;
+    const timer = setTimeout(() => useDiceStore.getState().commit(pendingId), settleIn);
+    return () => clearTimeout(timer);
+  }, [pendingId, settleIn]);
 
   // O resto do painel muda com a mensagem de erro e a legenda: medido sempre que ele aparece ou muda.
   useLayoutEffect(() => {

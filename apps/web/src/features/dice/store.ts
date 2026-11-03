@@ -109,11 +109,23 @@ export function validateShortcut(
 interface DiceState {
   /** Mais recente primeiro. Só desta sessão (não é salvo). */
   history: RollEntry[];
+  /**
+   * Rolagem girando na bandeja do botão flutuante: só entra no histórico quando os dados param
+   * (`commit`). Se outra rolagem começar antes, ela toma o lugar desta, que nem chegou a aparecer
+   * e não vai para o histórico (clicar várias vezes seguidas não enche o histórico).
+   */
+  pending: RollEntry | null;
+  /** A bandeja está na tela e os dados giram: as rolagens esperam por ela em `pending`. */
+  staging: boolean;
   shortcuts: RollShortcut[];
   shortcutsRecovered: boolean;
   /** Animação ao rolar (preferência deste navegador). "Reduzir movimento" do sistema sempre vence. */
   animate: boolean;
   roll(request: RollRequest): RollOutcome;
+  /** Os dados da rolagem `id` pararam: ela entra no histórico. */
+  commit(id: string): void;
+  /** Sem bandeja na tela, a rolagem que estava girando entra no histórico na hora. */
+  setStaging(staging: boolean): void;
   clear(): void;
   addShortcut(input: ShortcutInput): ShortcutOutcome;
   updateShortcut(id: string, input: ShortcutInput): ShortcutOutcome;
@@ -124,9 +136,14 @@ interface DiceState {
 const HISTORY_LIMIT = 100;
 const initial = loadShortcuts();
 
+const withEntry = (history: RollEntry[], entry: RollEntry) =>
+  [entry, ...history].slice(0, HISTORY_LIMIT);
+
 /** Único caminho para rolar dados no site (plano v2, 8, princípio 3). */
 export const useDiceStore = create<DiceState>((set, get) => ({
   history: [],
+  pending: null,
+  staging: false,
   shortcuts: initial.shortcuts,
   shortcutsRecovered: initial.recovered,
   animate: safeStorage.get(ANIMATION_STORAGE_KEY) !== '0',
@@ -141,7 +158,8 @@ export const useDiceStore = create<DiceState>((set, get) => ({
       result: result.value,
       ...(request.critRange !== undefined ? { critRange: request.critRange } : {}),
     };
-    set((s) => ({ history: [entry, ...s.history].slice(0, HISTORY_LIMIT) }));
+    if (get().staging) set({ pending: entry });
+    else set((s) => ({ history: withEntry(s.history, entry) }));
     emit({
       type: 'roll',
       label: entry.label,
@@ -151,8 +169,23 @@ export const useDiceStore = create<DiceState>((set, get) => ({
     return { ok: true, entry };
   },
 
+  commit(id) {
+    const pending = get().pending;
+    if (pending?.id !== id) return;
+    set((s) => ({ pending: null, history: withEntry(s.history, pending) }));
+  },
+
+  setStaging(staging) {
+    const { pending } = get();
+    if (!staging && pending) {
+      set((s) => ({ staging, pending: null, history: withEntry(s.history, pending) }));
+    } else if (staging !== get().staging) {
+      set({ staging });
+    }
+  },
+
   clear() {
-    set({ history: [] });
+    set({ history: [], pending: null });
   },
 
   addShortcut(input) {

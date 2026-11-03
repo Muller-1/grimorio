@@ -239,9 +239,11 @@ Regras de interação:
     sem apagar o que foi digitado; tocar no campo ou digitar volta para os dados do campo. Tocar
     num dado da ficha não fecha o painel, nem arrastar a página (no celular é assim que se chega
     ao dado); qualquer outro toque fora fecha. Com o painel fechado, só aparece a notificação.
-  - A notificação do resultado espera os dados pararem. Sem espaço (teclado do celular aberto,
-    tela baixa), o desenho some e fica só a linha com o nome e o total; aí a notificação não
-    espera.
+  - A rolagem só entra no histórico (e na notificação) quando os dados param. Clicar de novo
+    antes disso rola outra vez, e a rolagem que não chegou a aparecer não entra no histórico.
+    Fechar o painel no meio do giro põe a rolagem no histórico na hora. Sem espaço (teclado do
+    celular aberto, tela baixa), o desenho some e fica só a linha com o nome e o total; aí a
+    rolagem entra na hora.
 
 No celular as três colunas viram abas (Personagem, Combate, Ações) presas abaixo da barra do
 site, com troca por gesto de deslizar. A faixa de identidade vira: retrato e nome com o "…" no

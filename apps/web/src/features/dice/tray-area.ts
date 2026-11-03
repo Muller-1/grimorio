@@ -12,19 +12,11 @@ interface TrayAreaState {
   /** Onde está o resultado da última rolagem agora; `null` quando ele não está na tela. */
   area: ScreenArea | null;
   set(area: ScreenArea | null): void;
-  /**
-   * Rolagem cujo resultado espera os dados pararem na bandeja do botão flutuante (para a
-   * notificação não contar o total antes da animação).
-   */
-  heldId: string | null;
-  hold(id: string): void;
-  release(id: string): void;
 }
 
 /**
  * A bandeja de resultado diz onde está, para quem flutua na tela (o botão de rolar da ficha)
- * sair da frente enquanto ela aparece. O botão, por sua vez, segura a notificação enquanto os
- * dados giram no painel dele.
+ * sair da frente enquanto ela aparece.
  */
 export const useTrayArea = create<TrayAreaState>((set, get) => ({
   area: null,
@@ -38,13 +30,6 @@ export const useTrayArea = create<TrayAreaState>((set, get) => ({
         now.left === area.left &&
         now.right === area.right);
     if (!same) set({ area });
-  },
-  heldId: null,
-  hold(id) {
-    set({ heldId: id });
-  },
-  release(id) {
-    if (get().heldId === id) set({ heldId: null });
   },
 }));
 

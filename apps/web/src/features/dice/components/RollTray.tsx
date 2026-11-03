@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { t } from '@/lib/i18n';
 import { useDiceStore } from '../store';
-import { usePublishTrayArea, useTrayArea } from '../tray-area';
+import { usePublishTrayArea } from '../tray-area';
 import { RollHistory } from './RollHistory';
 import { RollResultView } from './RollResultView';
 
@@ -26,19 +26,17 @@ export function RollTray() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const area = useRef<HTMLDivElement>(null);
   usePublishTrayArea(area);
-  // Com o painel de dados aberto, o resultado espera os dados pararem de girar.
-  const heldId = useTrayArea((s) => s.heldId);
   const last = history[0];
-  const visible = last ? last.id !== hiddenId && last.id !== heldId : false;
+  const visible = last ? last.id !== hiddenId : false;
 
   // Cada rolagem nova aparece de novo e recomeça a contagem.
   useEffect(() => {
-    if (!last || hold || last.id === hiddenId || last.id === heldId) return;
+    if (!last || hold || last.id === hiddenId) return;
     timer.current = setTimeout(() => setHiddenId(last.id), VISIBLE_MS);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [last, hold, hiddenId, heldId]);
+  }, [last, hold, hiddenId]);
 
   return (
     <>
@@ -83,7 +81,7 @@ export function RollTray() {
           </div>
         ) : null}
       </div>
-      {!visible && last && last.id !== heldId ? (
+      {!visible && last ? (
         <Button
           variant="outline"
           size="icon"

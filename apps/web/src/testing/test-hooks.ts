@@ -39,7 +39,11 @@ declare global {
 export function installTestHooks(): void {
   window.__APP_TEST__ = {
     build: { version: siteConfig.version, commit: siteConfig.commit },
-    getLastRoll: () => useDiceStore.getState().history[0]?.result ?? null,
+    // A última rolagem feita, mesmo se ainda estiver girando na bandeja (fora do histórico).
+    getLastRoll: () => {
+      const dice = useDiceStore.getState();
+      return (dice.pending ?? dice.history[0])?.result ?? null;
+    },
     getSheet: () => useSheetStore.getState().sheet,
     getDerived: () => deriveSheet(useSheetStore.getState().sheet),
     setRngSeed: (seed) => setRng(seed === null ? null : seededRng(seed)),
