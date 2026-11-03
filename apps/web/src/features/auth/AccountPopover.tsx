@@ -1,4 +1,4 @@
-import { CircleHelp, LogOut, ScrollText } from 'lucide-react';
+import { CircleHelp, LogOut, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,8 @@ import { Avatar } from './Avatar';
 import { useAuthStore } from './store';
 
 /**
- * Menu da conta (logado). Carregado sob demanda: o balão (Radix) só pesa para quem entrou.
+ * Menu da conta (logado): primeiros passos, configurações, sair e o tema de cores. Com a conta,
+ * a barra fica só com o avatar. Carregado sob demanda: o balão (Radix) só pesa para quem entrou.
  */
 export default function AccountPopover() {
   const user = useAuthStore((s) => s.user);
@@ -43,16 +44,15 @@ export default function AccountPopover() {
       </div>
       <div className="mt-3 grid gap-1 border-t border-border pt-3">
         <Button asChild variant="ghost" size="sm" className="justify-start">
-          <Link to="/personagens">
-            <ScrollText className="size-4" aria-hidden="true" />
-            {t.auth.myCharacters}
-          </Link>
-        </Button>
-        {/* No celular, ajuda e tema saem da barra e ficam aqui. */}
-        <Button asChild variant="ghost" size="sm" className="justify-start md:hidden">
-          <Link to="/comecar">
+          <Link to="/comecar" data-testid="account.help">
             <CircleHelp className="size-4" aria-hidden="true" />
             {t.footer.start}
+          </Link>
+        </Button>
+        <Button asChild variant="ghost" size="sm" className="justify-start">
+          <Link to="/configuracoes" data-testid="account.settings">
+            <Settings className="size-4" aria-hidden="true" />
+            {t.nav.settings}
           </Link>
         </Button>
         <Button
@@ -73,7 +73,7 @@ export default function AccountPopover() {
           {leaving ? t.auth.signingOut : t.auth.signOut}
         </Button>
       </div>
-      <ThemeOptions className="mt-3 border-t border-border pt-3 md:hidden" />
+      <ThemeOptions className="mt-3 border-t border-border pt-3" />
     </Popover>
   );
 }

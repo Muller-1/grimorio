@@ -1,4 +1,4 @@
-import { CircleHelp, Menu, X } from 'lucide-react';
+import { CircleHelp, Menu, Settings, X } from 'lucide-react';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { BrandMark } from '@/components/ui/d20-icon';
@@ -91,7 +91,7 @@ function MainNav({ className }: { className?: string }) {
 
 const iconButton = 'grid size-11 place-items-center rounded-lg text-text hover:bg-surface-2';
 
-/** Celular, sem conta: as abas, os primeiros passos e o tema ficam neste menu. */
+/** Celular, sem conta: as abas, os primeiros passos, as configurações e o tema ficam neste menu. */
 function MobileMenu() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -140,6 +140,9 @@ function MobileMenu() {
             <Link to="/comecar" className={item}>
               {t.footer.start}
             </Link>
+            <Link to="/configuracoes" className={item} data-testid="nav.menu.settings">
+              {t.nav.settings}
+            </Link>
           </nav>
           <ThemeOptions className="mt-3 border-t border-border pt-3 text-sm" />
         </div>
@@ -149,9 +152,9 @@ function MobileMenu() {
 }
 
 /**
- * Barra superior (docs/design.md): marca à esquerda, abas no meio, ajuda, tema e conta à
- * direita. No celular, quem não entrou vê "Entrar" e o menu; quem entrou vê as abas e a conta
- * (tema e ajuda ficam no menu da conta).
+ * Barra superior (docs/design.md): marca à esquerda, abas no meio e, à direita, a conta. Quem
+ * entrou acha ajuda, configurações e tema no menu da conta; quem não entrou vê os três como
+ * botões (no celular, no menu ☰) e "Entrar".
  */
 function Header() {
   const signedIn = useAuthStore((s) => s.status === 'signed-in');
@@ -177,16 +180,29 @@ function Header() {
         <MainNav className={cn(!signedIn && 'max-md:hidden')} />
 
         <div className="flex shrink-0 items-center gap-1">
-          <Link
-            to="/comecar"
-            className={cn(iconButton, 'max-md:hidden')}
-            aria-label={t.nav.help}
-            title={t.nav.help}
-            data-testid="nav.help"
-          >
-            <CircleHelp className="size-5" strokeWidth={1.8} aria-hidden="true" />
-          </Link>
-          <ThemePicker className="max-md:hidden" />
+          {signedIn ? null : (
+            <>
+              <Link
+                to="/comecar"
+                className={cn(iconButton, 'max-md:hidden')}
+                aria-label={t.nav.help}
+                title={t.nav.help}
+                data-testid="nav.help"
+              >
+                <CircleHelp className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              </Link>
+              <Link
+                to="/configuracoes"
+                className={cn(iconButton, 'max-md:hidden')}
+                aria-label={t.nav.settings}
+                title={t.nav.settings}
+                data-testid="nav.settings"
+              >
+                <Settings className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              </Link>
+              <ThemePicker className="max-md:hidden" />
+            </>
+          )}
           <AccountMenu />
           {signedIn ? null : <MobileMenu />}
         </div>

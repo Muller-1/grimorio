@@ -102,6 +102,7 @@ export const ptBR = {
     accountsUnavailable:
       'O servidor de contas não respondeu. A ficha deste navegador e os dados continuam funcionando.',
     help: 'Primeiros passos: como jogar e criar o personagem',
+    settings: 'Configurações',
     mainLabel: 'Navegação principal',
     skipToContent: 'Pular para o conteúdo',
     footerLabel: 'Links do site',
@@ -427,7 +428,6 @@ export const ptBR = {
     signingOut: 'Saindo…',
     account: 'Conta',
     accountMenu: (name: string) => `Conta de ${name}`,
-    myCharacters: 'Meus personagens',
     signOutFailed: 'Não foi possível sair agora. Tente de novo.',
     server: {
       waking:

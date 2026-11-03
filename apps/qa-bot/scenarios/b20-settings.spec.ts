@@ -140,4 +140,16 @@ test.describe('B20 — configurações', { tag: '@B20' }, () => {
     const left = await page.evaluate(() => Object.keys(localStorage).sort());
     expect(left).toEqual(['outro-site.preferencia']);
   });
+
+  test('as Configurações estão a um toque na barra', async ({ page, isMobile }) => {
+    await openPage(page, '/dados');
+    if (isMobile) {
+      await page.getByTestId('nav.menu').click();
+      await page.getByTestId('nav.menu.settings').click();
+    } else {
+      await page.getByTestId('nav.settings').click();
+    }
+    await page.waitForURL(/\/configuracoes$/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Configurações');
+  });
 });

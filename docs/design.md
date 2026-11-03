@@ -160,15 +160,16 @@ Fixa no topo (`sticky`, 64 px), fundo `surface`, filete `rule` embaixo.
 - Esquerda: marca (d20 + "GRIMÓRIO" em Cinzel).
 - Centro: navegação em pílula (Fichas, Campanhas, Dados); o item ativo fica em `accent` com texto
   `accent-contrast`.
-- Direita: ajuda, paleta (tema) e a conta.
-- **Celular, visitante:** a navegação e a paleta vão para o menu ☰ (`nav.menu`), que também traz
-  as opções de tema.
-- **Celular, logado:** a navegação fica no meio da barra (mais estreita) e o tema e a ajuda passam
-  para o balão da conta.
+- Direita, visitante: ajuda, Configurações (engrenagem), paleta (tema) e "Entrar".
+- Direita, logado: só o avatar. Primeiros passos, Configurações, Sair e as opções de tema ficam
+  no balão da conta (no computador e no celular).
+- **Celular, visitante:** a navegação, a ajuda, as Configurações e as opções de tema vão para o
+  menu ☰ (`nav.menu`).
+- **Celular, logado:** a navegação fica no meio da barra (mais estreita).
 
 ### 5.1.1 Configurações (`/configuracoes`)
 
-Preferências deste navegador, fora do Google (por enquanto, sem link na barra). Três painéis: **Conforto** (tema, animações
+Preferências deste navegador, fora do Google. Três painéis: **Conforto** (tema, animações
 Ligadas/Desligadas, fonte Padrão/Mais legível, como cartões de opção), **Dados** (interruptor do
 botão flutuante da ficha) e **Seus dados** (exportar um `.json`; apagar, com uma janela que
 lista o que some, diz se as fichas da conta ficam e avisa em `danger-soft` que não dá para
