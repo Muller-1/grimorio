@@ -1,3 +1,15 @@
+/**
+ * Tela de carregamento animada, de tela inteira: o d20 lançado sobre o círculo arcano, com uma
+ * frase e uma dica de jogo (docs/design.md).
+ *
+ * GUARDADA: hoje nenhuma página usa (as páginas sob demanda mostram o `PageLoader`, de
+ * ./InlineLoader). Fica para uma parte mais pesada do site, que demore de verdade para abrir.
+ * Por estar sem uso, ela não entra no site publicado, nem o CSS dela (./loading-screen.css).
+ *
+ * Para voltar a usar: importe `LoadingScreen` onde precisar e tire a linha
+ * `@source not "../features/screens/LoadingScreen.tsx"` de styles/index.css (ela impede o
+ * Tailwind de gerar as classes deste arquivo enquanto ele não é usado).
+ */
 import {
   useEffect,
   useId,
@@ -8,10 +20,11 @@ import {
   type RefObject,
   type SetStateAction,
 } from 'react';
-import { D20Die, D20Facets, Diamond } from '@/components/ui/d20-icon';
+import { D20Facets, Diamond } from '@/components/ui/d20-icon';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { getRng } from '@/ports/rng';
+import { Corridor, useTip } from './InlineLoader';
+import './loading-screen.css';
 import { ArtLayer, SCENE, SceneBackdrop } from './scene';
 
 /** Uma frase e uma face do d20 a cada lançamento (o mesmo ritmo da animação). */
@@ -79,24 +92,6 @@ function useThrowSteps(
       clearTimeout(midAir);
     };
   }, [dieRef, setStep]);
-}
-
-/** Uma dica de jogo, sorteada uma vez por tela. */
-export function useTip(): string {
-  const tips = t.screens.tips;
-  const [index] = useState(() => getRng().int(0, tips.length - 1));
-  return tips[index]!;
-}
-
-/** O losango que corre de um lado ao outro do filete. */
-function Corridor({ className }: { className?: string }) {
-  return (
-    <div aria-hidden="true" className={cn('relative h-0.5 bg-border', className)}>
-      <span className="gr-corridor absolute inset-x-0 -top-1 h-2.5">
-        <span className="block size-2.5 rotate-45 bg-border-strong shadow-[0_0_0_2px_var(--bg)] dark:bg-text dark:shadow-[0_0_10px_rgb(199_203_211/0.7)]" />
-      </span>
-    </div>
-  );
 }
 
 /** O círculo arcano girando em camadas, com o d20 sendo lançado no meio. */
@@ -298,8 +293,8 @@ const LOADING_VIGNETTE =
   'bg-[radial-gradient(ellipse_75%_70%_at_50%_45%,rgb(251_248_242/0.85)_0%,rgb(251_248_242/0)_60%,rgb(122_46_30/0.1)_100%)]';
 
 /**
- * Tela de carregamento (página sob demanda, ficha da conta…). Cobre a tela inteira, mas só
- * aparece depois de ~0,35 s: o que carrega rápido não pisca.
+ * Tela de carregamento de tela inteira (guardada, ver o começo do arquivo). Cobre a tela toda,
+ * mas só aparece depois de ~0,35 s: o que carrega rápido não pisca.
  */
 export function LoadingScreen() {
   const [step, setStep] = useState(0);
@@ -345,23 +340,6 @@ export function LoadingScreen() {
         <span className="label-caps text-xs tracking-[0.16em]">{t.screens.tipLabel}</span>
         <p className="text-base leading-normal text-pretty text-muted">{tip}</p>
       </footer>
-    </div>
-  );
-}
-
-/** Carregando dentro da página (lista de personagens, ficha da conta): o d20 rolando. */
-export function InlineLoader({ label, className }: { label: string; className?: string }) {
-  return (
-    <div
-      role="status"
-      className={cn('flex flex-col items-center gap-3 py-16 text-center', className)}
-    >
-      <span className="gr-roll relative size-[60px]">
-        <span className="absolute -inset-3 hidden rounded-full bg-[radial-gradient(closest-side,rgb(92_194_174/0.3),rgb(92_194_174/0))] dark:block" />
-        <D20Die className="relative size-full" value={20} strokeWidth={6} />
-      </span>
-      <p className="text-muted">{label}</p>
-      <Corridor className="mt-1 w-48" />
     </div>
   );
 }

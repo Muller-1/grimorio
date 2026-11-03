@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/input';
 import { ServerStatus } from '@/features/auth/ServerStatus';
 import { useAuthStore } from '@/features/auth/store';
-import { InlineLoader } from '@/features/screens/LoadingScreen';
+import { InlineLoader } from '@/features/screens/InlineLoader';
 import type { ApiResult } from '@/lib/api';
 import { t } from '@/lib/i18n';
 import { tcp } from '@/lib/i18n/campaign';

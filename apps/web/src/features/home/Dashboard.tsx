@@ -17,7 +17,7 @@ import { conditionName } from '@/features/campaigns/conditions';
 import { getCharacter, listCharacters } from '@/features/characters/api';
 import { DiceExpressionInput } from '@/features/dice/components/DiceExpressionInput';
 import { useDiceStore, type RollEntry } from '@/features/dice/store';
-import { InlineLoader, useTip } from '@/features/screens/LoadingScreen';
+import { InlineLoader, useTip } from '@/features/screens/InlineLoader';
 import { d20 } from '@/features/sheet/components/AdvantageBadge';
 import { formatModifier } from '@/lib/format';
 import { t } from '@/lib/i18n';

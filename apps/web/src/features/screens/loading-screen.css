@@ -1,0 +1,141 @@
+/*
+ * Animações da tela de carregamento de tela inteira (LoadingScreen.tsx, guardada). Só entram no
+ * site quando o componente for usado. As cores vêm das variáveis --sc-* de .gr-scene e os
+ * giros/cintilar dos @keyframes gr-spin, gr-spin-rev e gr-flicker (styles/motion.css).
+ */
+
+/* ---------- carregamento: d20 lançado e o círculo arcano ---------- */
+
+/* Texto que troca (frase do carregamento): sobe um pouco e aparece. */
+@keyframes gr-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes gr-throw {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  18% {
+    transform: translateY(-22px) rotate(60deg) scale(0.97);
+  }
+  45% {
+    transform: translateY(-30px) rotate(250deg) scale(0.93);
+  }
+  68% {
+    transform: translateY(0) rotate(352deg) scale(1.04);
+  }
+  78% {
+    transform: translateY(-5px) rotate(364deg) scale(1);
+  }
+  88%,
+  100% {
+    transform: translateY(0) rotate(360deg) scale(1);
+  }
+}
+@keyframes gr-throw-shadow {
+  0%,
+  88%,
+  100% {
+    transform: scale(1);
+    opacity: var(--hi, 0.55);
+  }
+  45% {
+    transform: scale(0.62);
+    opacity: var(--lo, 0.25);
+  }
+  68% {
+    transform: scale(1.06);
+    opacity: 0.6;
+  }
+  78% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+}
+@keyframes gr-trace {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+@keyframes gr-ripple {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 0;
+  }
+}
+
+.gr-throw {
+  animation: gr-throw 2.4s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+  transform-origin: 50% 55%;
+}
+.gr-throw-shadow {
+  animation: gr-throw-shadow 2.4s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+}
+.gr-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+}
+.gr-spin-60 {
+  animation: gr-spin 60s linear infinite;
+}
+.gr-spin-28 {
+  animation: gr-spin 28s linear infinite;
+}
+.gr-spin-orbit {
+  animation: gr-spin 4.8s linear infinite;
+}
+.gr-sweep-ring {
+  animation: gr-spin 3.6s linear infinite;
+}
+.gr-spin-rev-16 {
+  animation: gr-spin-rev 16s linear infinite;
+}
+
+.gr-spin-rev-40 {
+  animation: gr-spin-rev 40s linear infinite;
+}
+.gr-trace {
+  animation: gr-trace 4.8s ease-in-out infinite;
+}
+.gr-ripple {
+  animation: gr-ripple 2.4s ease-out 1.63s infinite;
+}
+.gr-flicker {
+  animation: gr-flicker 2.4s ease-in-out infinite;
+}
+.gr-rise {
+  animation: gr-rise 0.5s ease-out both;
+}
+/* Feixe que varre o anel do carregamento. */
+.gr-sweep {
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 285deg,
+    var(--sc-sweep) 352deg,
+    transparent 360deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 32%, #000 33%, #000 66%, transparent 67%);
+  mask: radial-gradient(circle, transparent 32%, #000 33%, #000 66%, transparent 67%);
+}

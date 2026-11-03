@@ -11,7 +11,7 @@ import { startOffline, startSync, stopSync } from './sync';
 import { SyncIndicator } from './SyncIndicator';
 import { TableBar } from '@/features/campaigns/TableBar';
 import { ForbiddenScreen } from '@/features/screens/ForbiddenScreen';
-import { InlineLoader, LoadingScreen } from '@/features/screens/LoadingScreen';
+import { InlineLoader, PageLoader } from '@/features/screens/InlineLoader';
 
 // Carregada sob demanda, como na rota /ficha: a ficha continua sendo um pedaço separado do site.
 const SheetPage = lazy(() => import('@/features/sheet/SheetPage'));
@@ -73,13 +73,7 @@ export default function AccountSheetPage() {
 
   if (load === 'ready') {
     return (
-      <Suspense
-        fallback={
-          <div className="min-h-dvh">
-            <LoadingScreen />
-          </div>
-        }
-      >
+      <Suspense fallback={<PageLoader />}>
         <SheetPage mode="account" status={<SyncIndicator />} banner={<TableBar id={id} />} />
       </Suspense>
     );

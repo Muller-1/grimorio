@@ -1,6 +1,7 @@
 /*
- * Animações das cenas ilustradas (docs/design.md): carregamento, telas de erro, ilustração da
- * página inicial e o d20 que rola. "Reduzir movimento" do sistema desliga tudo (regra em
+ * Animações das cenas ilustradas (docs/design.md): telas de erro, ilustração da página inicial e
+ * o d20 que rola. A tela de carregamento de tela inteira (guardada) tem o CSS dela em
+ * features/screens/loading-screen.css. "Reduzir movimento" do sistema desliga tudo (regra em
  * index.css).
  *
  * Regra para ficar leve: o que se mexe é uma camada inteira (um <svg> ou <div> por cima do
@@ -30,18 +31,7 @@
     opacity: var(--hi, 1);
   }
 }
-/* Texto que troca (frase do carregamento, resultado): sobe um pouco e aparece. */
-@keyframes gr-rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-/* A tela de carregamento só aparece se demorar: carregamentos rápidos não piscam. */
+/* O carregamento só aparece se demorar: carregamentos rápidos não piscam. */
 @keyframes gr-appear {
   from {
     opacity: 0;
@@ -71,118 +61,8 @@
   }
 }
 
-/* ---------- carregamento: d20 lançado e o círculo arcano ---------- */
-
-@keyframes gr-throw {
-  0% {
-    transform: translateY(0) rotate(0deg) scale(1);
-  }
-  18% {
-    transform: translateY(-22px) rotate(60deg) scale(0.97);
-  }
-  45% {
-    transform: translateY(-30px) rotate(250deg) scale(0.93);
-  }
-  68% {
-    transform: translateY(0) rotate(352deg) scale(1.04);
-  }
-  78% {
-    transform: translateY(-5px) rotate(364deg) scale(1);
-  }
-  88%,
-  100% {
-    transform: translateY(0) rotate(360deg) scale(1);
-  }
-}
-@keyframes gr-throw-shadow {
-  0%,
-  88%,
-  100% {
-    transform: scale(1);
-    opacity: var(--hi, 0.55);
-  }
-  45% {
-    transform: scale(0.62);
-    opacity: var(--lo, 0.25);
-  }
-  68% {
-    transform: scale(1.06);
-    opacity: 0.6;
-  }
-  78% {
-    transform: scale(0.95);
-    opacity: 0.5;
-  }
-}
-@keyframes gr-trace {
-  0% {
-    stroke-dashoffset: 1;
-  }
-  50% {
-    stroke-dashoffset: 0;
-  }
-  100% {
-    stroke-dashoffset: -1;
-  }
-}
-@keyframes gr-ripple {
-  0% {
-    transform: scale(0.55);
-    opacity: 0.85;
-  }
-  100% {
-    transform: scale(1.05);
-    opacity: 0;
-  }
-}
-
 .gr-appear {
   animation: gr-appear 0.3s ease-out 0.35s both;
-}
-.gr-throw {
-  animation: gr-throw 2.4s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
-  transform-origin: 50% 55%;
-}
-.gr-throw-shadow {
-  animation: gr-throw-shadow 2.4s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
-}
-.gr-layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  transform-origin: 50% 50%;
-}
-.gr-spin-60 {
-  animation: gr-spin 60s linear infinite;
-}
-.gr-spin-28 {
-  animation: gr-spin 28s linear infinite;
-}
-.gr-spin-orbit {
-  animation: gr-spin 4.8s linear infinite;
-}
-.gr-sweep-ring {
-  animation: gr-spin 3.6s linear infinite;
-}
-.gr-spin-rev-16 {
-  animation: gr-spin-rev 16s linear infinite;
-}
-
-.gr-spin-rev-40 {
-  animation: gr-spin-rev 40s linear infinite;
-}
-.gr-trace {
-  animation: gr-trace 4.8s ease-in-out infinite;
-}
-.gr-ripple {
-  animation: gr-ripple 2.4s ease-out 1.63s infinite;
-}
-.gr-flicker {
-  animation: gr-flicker 2.4s ease-in-out infinite;
-}
-.gr-rise {
-  animation: gr-rise 0.5s ease-out both;
 }
 .gr-corridor {
   animation: gr-corridor 2.4s ease-in-out infinite;
@@ -230,6 +110,42 @@
 .gr-glint {
   --lo: 0.25;
   animation: gr-flicker 3.2s ease-in-out infinite;
+}
+/* A faísca dá uma volta no anel de runas a cada 12 s. */
+.gr-hero-orbit {
+  animation: gr-spin 12s linear infinite;
+}
+/* De 7 em 7 s o d20 rola: pula, dá uma volta inteira, quica e cai no 20. O eixo é o meio do
+   dado na ilustração (270, 192 de 540 × 500). */
+@keyframes gr-hero-roll {
+  0%,
+  70%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  76% {
+    transform: translateY(-18px) rotate(110deg) scale(0.96);
+  }
+  83% {
+    transform: translateY(-24px) rotate(290deg) scale(0.94);
+  }
+  89% {
+    transform: translateY(0) rotate(368deg) scale(1.03);
+  }
+  93% {
+    transform: translateY(-4px) rotate(357deg) scale(1);
+  }
+  97% {
+    transform: translateY(0) rotate(360deg) scale(1);
+  }
+}
+.gr-hero-roll {
+  animation: gr-hero-roll 7s cubic-bezier(0.45, 0.05, 0.35, 1) 2s infinite;
+  transform-origin: 50% 38.4%;
+}
+/* A estrela do grimório acende e apaga (opacidade entre --lo e --hi). */
+.gr-hero-seal {
+  animation: gr-flicker 4s ease-in-out infinite;
 }
 
 /* ---------- d20 pequeno que rola (botões e carregamentos dentro da página) ---------- */
@@ -418,7 +334,7 @@
   transform-origin: 50% 14.5%;
 }
 
-/* ---------- cores das cenas (carregamento e telas de erro) ---------- */
+/* ---------- cores das cenas (telas de erro e carregamento) ---------- */
 
 .gr-scene {
   --sc-backdrop: none;
@@ -484,18 +400,4 @@
   --sc-lock: #e7ecec;
   --sc-sheen: #e9fffa;
   --sc-sweep: rgb(92 194 174 / 0.3);
-}
-
-/* Feixe que varre o anel do carregamento. */
-.gr-sweep {
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    transparent 285deg,
-    var(--sc-sweep) 352deg,
-    transparent 360deg
-  );
-  -webkit-mask: radial-gradient(circle, transparent 32%, #000 33%, #000 66%, transparent 67%);
-  mask: radial-gradient(circle, transparent 32%, #000 33%, #000 66%, transparent 67%);
 }

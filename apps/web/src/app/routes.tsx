@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
-import { InlineLoader, LoadingScreen } from '@/features/screens/LoadingScreen';
+import { InlineLoader, PageLoader } from '@/features/screens/InlineLoader';
 import { AppErrorBoundary } from '@/features/screens/ServerErrorScreen';
 import { DiceIntro } from '@/pages/DiceIntro';
 import HomePage from '@/pages/HomePage';
@@ -25,20 +25,7 @@ const CampaignsPage = lazy(() => import('@/features/campaigns/CampaignsPage'));
 const CampaignPage = lazy(() => import('@/features/campaigns/CampaignPage'));
 
 function Loading({ children }: { children: ReactNode }) {
-  return (
-    // A tela de carregamento cobre tudo (e só aparece se demorar). O espaço vazio embaixo dela
-    // ocupa a tela toda: o rodapé fica fora da vista e não "pula" quando a página chega
-    // (Lighthouse, CLS ≤ 0,1).
-    <Suspense
-      fallback={
-        <div className="min-h-dvh">
-          <LoadingScreen />
-        </div>
-      }
-    >
-      {children}
-    </Suspense>
-  );
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }
 
 /**
@@ -216,7 +203,7 @@ export function AppRoutes() {
         <Route
           path="*"
           element={
-            <Suspense fallback={<LoadingScreen />}>
+            <Suspense fallback={<PageLoader />}>
               <NotFoundScreen />
             </Suspense>
           }

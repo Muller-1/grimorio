@@ -227,10 +227,17 @@ Telas inteiras, com cabeçalho próprio (sem a barra do site) e fundo de papel c
 
 | Tela | Arte | Texto e ações |
 | --- | --- | --- |
-| **Carregamento** | d20 lançado sobre um círculo arcano em camadas que giram em sentidos opostos; sombra que acompanha o pulo; ondas no chão | frase do jogo sorteada; o losango corre no filete |
+| **Carregamento** (guardada) | d20 lançado sobre um círculo arcano em camadas que giram em sentidos opostos; sombra que acompanha o pulo; ondas no chão | frase do jogo sorteada; o losango corre no filete |
 | **404** | mapa rasgado com trilha pontilhada que anda, bússola, pedaço solto flutuando e um d20 com "1" | "Esta página não está no mapa"; Voltar ao início, Rolar de novo (o dado gira e o texto comenta o novo resultado), Ver minhas fichas |
 | **500** | círculo partido que treme, rachadura brilhando, runas falhando, fumaça e faíscas | "A magia saiu pela culatra"; Tentar de novo, Avisar sobre o problema e o código do erro |
 | **403** | pergaminho lacrado balançando, brilho passando no lacre | "Esta parte é só do Mestre"; Ver resumo da ficha, Voltar à campanha |
+
+A tela de carregamento de tela inteira está **guardada**: nenhuma página usa hoje, e ela fica para
+uma parte mais pesada do site, que demore de verdade para abrir (`features/screens/LoadingScreen.tsx`,
+com o CSS em `loading-screen.css`; sem uso, nada dela entra no site publicado). Para voltar a usar,
+o começo do arquivo explica o passo a passo. Enquanto isso, a página que vem sob demanda mostra o
+`PageLoader` (`features/screens/InlineLoader.tsx`): o d20 pequeno rolando no lugar do conteúdo,
+com o cabeçalho do site à vista.
 
 O carregamento só aparece se demorar mais de 0,35 s, para carregamentos rápidos não piscarem. O
 500 fica no pacote principal (precisa aparecer até quando um pedaço do site não baixou).
@@ -267,13 +274,16 @@ segundo, sem recalcular a página a cada quadro.
 
 | Elemento | Quando | Animação | Duração | Curva |
 | --- | --- | --- | --- | --- |
-| Tela de carregamento | ao aparecer | surge (opacidade) | 0,3 s, após 0,35 s | ease-out |
-| d20 do carregamento | sempre | lançado e cai girando; sombra cresce e encolhe junto | 2,4 s | cubic-bezier(.45,.05,.35,1) |
+| Carregamento da página (e a tela guardada) | ao aparecer | surge (opacidade) | 0,3 s, após 0,35 s | ease-out |
+| d20 do carregamento (tela guardada) | sempre | lançado e cai girando; sombra cresce e encolhe junto | 2,4 s | cubic-bezier(.45,.05,.35,1) |
 | Círculos arcanos | sempre | giram (60 s, 28 s, 16 s inverso, 40 s inverso); órbita 4,8 s; varredura 3,6 s | — | linear |
 | Glifos e estrelas | sempre | cintilam entre `--lo` e `--hi` | 2,4–4 s | ease-in-out |
 | Frase e resultados | ao trocar | sobem 6 px e aparecem | 0,5 s | ease-out |
 | Losango do filete | sempre | vai e volta | 2,4 s | ease-in-out |
 | Arte da página inicial | sempre | círculo 90 s e 60 s inverso; d20 flutua | 4,8 s | ease-in-out |
+| d20 da página inicial | a cada 7 s (começa em 2 s) | pula, dá uma volta inteira, quica e cai no 20 | 7 s | cubic-bezier(.45,.05,.35,1) |
+| Faísca do anel (página inicial) | sempre | dá a volta no anel de runas | 12 s | linear |
+| Estrela do grimório (página inicial) | sempre | acende e apaga | 4 s | ease-in-out |
 | d20 pequeno (carregando dentro da página) | sempre | rola com leve encolhida | 1,8 s | cubic-bezier(.5,.1,.3,1) |
 | Trilha do 404 | sempre | tracejado anda | 1,4 s | linear |
 | d20 do 404 | "Rolar de novo" | gira rápido | 0,3 s por volta | linear |

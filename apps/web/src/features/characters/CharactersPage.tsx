@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { ServerStatus } from '@/features/auth/ServerStatus';
 import { useAuthStore } from '@/features/auth/store';
-import { InlineLoader } from '@/features/screens/LoadingScreen';
+import { InlineLoader } from '@/features/screens/InlineLoader';
 import { useToastStore } from '@/features/toast/store';
 import { formatDateTime } from '@/lib/format';
 import { t } from '@/lib/i18n';

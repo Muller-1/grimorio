@@ -42,6 +42,41 @@ test.describe('B1 — fumaça', { tag: '@B1' }, () => {
     await expect(page.getByTestId('start.create')).toBeVisible();
   });
 
+  test('a ilustração da inicial anima: o d20 rola, a faísca corre e a estrela acende', async ({
+    page,
+  }) => {
+    await openPage(page, '/');
+    const running = await page.evaluate(() =>
+      document
+        .getAnimations()
+        .filter((a) => a.playState === 'running')
+        .map((a) => (a as CSSAnimation).animationName),
+    );
+    expect(running).toEqual(expect.arrayContaining(['gr-hero-roll', 'gr-float', 'gr-spin']));
+    for (const piece of ['.gr-hero-orbit', '.gr-hero-seal']) {
+      const name = await page
+        .locator(piece)
+        .evaluate((el) => (el.getAnimations()[0] as CSSAnimation | undefined)?.animationName);
+      expect(name, piece).toBeTruthy();
+    }
+  });
+
+  test('página que demora para chegar mostra o d20 rolando, sem a tela de carregamento grande', async ({
+    page,
+  }) => {
+    await openPage(page, '/');
+    // Segura o pedaço da ficha um pouco: dá tempo de o carregamento aparecer.
+    await page.route(/\/assets\/SheetPage-[\w-]+\.js$/, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await route.continue();
+    });
+    await page.getByTestId('home.blank').click();
+    await expect(page.getByTestId('page.loading')).toBeVisible();
+    await expect(page.getByTestId('loading.screen')).toHaveCount(0);
+    await expect(page.getByTestId('levelup.open')).toBeVisible();
+    await expect(page.getByTestId('page.loading')).toHaveCount(0);
+  });
+
   test('no assistente, Avançar com pendência leva até ela', async ({ page }) => {
     await openPage(page, '/criar');
     await expect(page.getByTestId('wizard.next')).toHaveAttribute('data-ready', 'false');

@@ -3,6 +3,8 @@
    como classes: nenhuma é usada como classe, e cortá-las tira CSS que ninguém usa. */
 @source not inline('container filter inline outline ring sepia static table transform visible');
 @import './motion.css';
+/* Tela de carregamento guardada (sem uso): ver o começo de features/screens/LoadingScreen.tsx. */
+@source not "../features/screens/LoadingScreen.tsx";
 
 /*
  * Fontes servidas pelo próprio site (a CSP não deixa buscar de fora): Alegreya Sans 400 e 700 no

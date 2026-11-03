@@ -7,7 +7,7 @@ import { Ornament } from '@/components/ui/ornament';
 import { StrokeIcon, type IconName } from '@/components/ui/stroke-icon';
 import { ServerStatus } from '@/features/auth/ServerStatus';
 import { SIGNED_IN_HINT_KEY, useAuthStore } from '@/features/auth/store';
-import { InlineLoader } from '@/features/screens/LoadingScreen';
+import { InlineLoader } from '@/features/screens/InlineLoader';
 import { ArtLayer } from '@/features/screens/scene';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -61,8 +61,9 @@ const TEXT_LINES =
   'M96 352Q170 340 246 356M96 366Q170 354 246 370M96 380Q160 369 220 381M96 398Q170 386 246 402M96 412Q170 400 246 416M96 426Q150 416 200 424M296 412Q370 400 444 412M296 426Q360 416 420 424';
 
 /**
- * A ilustração do topo: o círculo arcano girando devagar, o d20 flutuando e o grimório aberto.
- * Só desenho (o leitor de tela pula).
+ * A ilustração do topo: o círculo arcano girando devagar com uma faísca correndo pelo anel, o
+ * d20 flutuando (e rolando de vez em quando, sempre caindo no 20) e o grimório aberto com a
+ * estrela acendendo. Só desenho (o leitor de tela pula).
  */
 function HeroArt() {
   return (
@@ -104,6 +105,14 @@ function HeroArt() {
         </g>
         <circle cx="270" cy="200" r="148" strokeWidth="1" className="stroke-ornament" />
       </svg>
+      {/* A faísca que corre pelo anel: uma camada inteira girando (só transform). */}
+      <div className="gr-hero-layer gr-hero-orbit">
+        <svg className="size-full" viewBox="0 0 540 500">
+          <circle cx="270" cy="12" r="11" className="fill-ornament opacity-20" />
+          <circle cx="270" cy="12" r="6" className="fill-ornament opacity-40" />
+          <circle cx="270" cy="12" r="3" className="fill-gold dark:fill-text" />
+        </svg>
+      </div>
       <svg className="gr-hero-layer gr-spin-rev-60" viewBox="0 0 540 500" fill="none">
         <g strokeWidth="1.2" className="stroke-ornament">
           <rect x="180.5" y="110.5" width="179" height="179" />
@@ -154,11 +163,13 @@ function HeroArt() {
         </g>
       </ArtLayer>
       <div className="gr-hero-layer gr-float">
-        <svg className="size-full" viewBox="0 0 540 500">
-          <g transform="translate(196 118) scale(0.74)">
-            <D20Facets value={20} edgeClassName="stroke-seal-line dark:stroke-ornament" />
-          </g>
-        </svg>
+        <div className="gr-hero-layer gr-hero-roll">
+          <svg className="size-full" viewBox="0 0 540 500">
+            <g transform="translate(196 118) scale(0.74)">
+              <D20Facets value={20} edgeClassName="stroke-seal-line dark:stroke-ornament" />
+            </g>
+          </svg>
+        </div>
       </div>
       <svg className="gr-hero-layer" viewBox="0 0 540 500">
         <ellipse
@@ -214,6 +225,20 @@ function HeroArt() {
           className="fill-ornament stroke-gold dark:stroke-border-strong"
         />
       </svg>
+      {/* A estrela do grimório acende e apaga devagar (camada própria, só opacidade). */}
+      <ArtLayer art={HERO} box={[338, 340, 64, 64]} className="gr-hero-seal [--hi:0.95] [--lo:0]">
+        <circle cx="370" cy="372" r="30" className="fill-accent opacity-15" />
+        <g
+          fill="none"
+          strokeWidth="2.2"
+          strokeLinejoin="round"
+          className="stroke-gold dark:stroke-[#9fe8d8]"
+        >
+          <circle cx="370" cy="372" r="26" />
+          <polygon points="370,348 391,384 349,384" />
+          <polygon points="370,396 349,360 391,360" />
+        </g>
+      </ArtLayer>
     </div>
   );
 }

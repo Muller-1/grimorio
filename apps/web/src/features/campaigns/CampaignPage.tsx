@@ -21,7 +21,7 @@ import { Popover } from '@/components/ui/popover';
 import { ServerStatus } from '@/features/auth/ServerStatus';
 import { useAuthStore } from '@/features/auth/store';
 import { listCharacters } from '@/features/characters/api';
-import { InlineLoader } from '@/features/screens/LoadingScreen';
+import { InlineLoader } from '@/features/screens/InlineLoader';
 import { useToastStore } from '@/features/toast/store';
 import { formatDateTime } from '@/lib/format';
 import { tcp } from '@/lib/i18n/campaign';
