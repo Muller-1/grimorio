@@ -221,7 +221,26 @@ Regras de interação:
   cima (fica abaixo da barra do site e das abas) nem embaixo (deixa livre o botão do
   histórico). Quando o resultado da rolagem aparece na mesma faixa, botão e painel sobem para
   não cobrir; quando ele some, voltam. O lugar fica salvo no navegador. No teclado: setas
-  esquerda/direita trocam de lado, cima/baixo mudam a altura; Esc fecha o painel.
+  esquerda/direita trocam de lado, cima/baixo mudam a altura; Esc fecha o painel. A distância da
+  borda (16 px) conta a partir da barra de rolagem, não da borda da janela.
+- **Bandeja de dados** (`components/DiceTray.tsx` e `dice-tray.css`, contas em
+  `features/dice/tray.ts`), dentro do painel do botão flutuante: um hexágono com o lado reto em
+  cima, visto bem de cima, com paredes em tons chapados (a luz vem do alto à esquerda), feltro,
+  borda e botões de pressão nos cantos. Pergaminho: feltro vinho e borda dourada; Obsidiana:
+  feltro petróleo e borda prateada (as cores são as `--die-*` e `--metal-*` do d20 ilustrado).
+  - Mostra os dados do que está digitado e muda a cada letra. Cada tipo tem a sua forma: d4
+    triângulo, d6 quadrado, d8 losango, d10 e d% pipa, d12 pentágono, d20 hexágono com o
+    triângulo; os outros (d2, d3, d1000…) são redondos. Até 7 dados; acima disso, só o total.
+  - Contornos finos para manter/tirar: verde nos maiores (`kh`, `dh`), vermelho nos menores
+    (`kl`, `dl`). No `k` o contorno vai nos que ficam; no `d`, nos que saem. Antes de rolar, a
+    quantidade certa de dados ganha o contorno; depois, ele passa para os que a função escolheu,
+    e os que não contam ficam apagados. Uma legenda embaixo explica ("maiores ficam").
+  - Com o painel aberto, toda rolagem (do campo ou de qualquer dado da ficha) gira na bandeja
+    sem apagar o que foi digitado; tocar no campo ou digitar volta para os dados do campo. Tocar
+    num dado da ficha não fecha o painel; qualquer outro toque fora fecha. Com o painel fechado,
+    só aparece a notificação.
+  - A notificação do resultado espera os dados pararem. Sem espaço (teclado do celular aberto,
+    tela baixa), o desenho some e fica só a linha com o nome e o total.
 
 No celular as três colunas viram abas (Personagem, Combate, Ações) presas abaixo da barra do
 site, com troca por gesto de deslizar. A faixa de identidade vira: retrato e nome com o "…" no
@@ -300,6 +319,8 @@ segundo, sem recalcular a página a cada quadro.
 | Pergaminho do 403 | sempre | balança 1,2° | 6 s | ease-in-out |
 | Resultado de dado | ao rolar | "pula" e assenta | 0,45 s | cubic-bezier(.2,.8,.2,1) |
 | Botão flutuante de dados | ao soltar, ao abrir o painel, ao resultado aparecer | desliza até o lugar com um leve balanço | 0,42 s | cubic-bezier(.22,1.2,.36,1) |
+| Dados da bandeja | ao rolar com o painel aberto | giram cada um do seu jeito (d4 pião, d6 tomba, d8 vira como moeda, d10 balança, d12 rola, d20 pula e gira) com as faces passando; param um de cada vez e o número aparece | 0,65 s + 0,11 s por dado | cubic-bezier(.25,.7,.35,1) |
+| Total da bandeja | quando o último dado para | aparece crescendo | 0,22 s | cubic-bezier(.2,.8,.2,1) |
 
 ---
 

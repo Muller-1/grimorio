@@ -11,8 +11,8 @@ import type { ScreenArea } from '@/features/dice/tray-area';
 
 export type Side = 'left' | 'right';
 
-/** Distância da borda da tela até o botão e o painel. */
-export const EDGE = 12;
+/** Distância da borda da tela (sem a barra de rolagem) até o botão e o painel. */
+export const EDGE = 16;
 /** Espaço livre embaixo (o botão do histórico de rolagens mora ali). */
 export const BOTTOM_RESERVE = 64;
 /** Entre o botão e o painel. */
@@ -20,7 +20,10 @@ export const PANEL_GAP = 10;
 /** Entre o botão (ou o painel) e o resultado da rolagem. */
 export const TRAY_GAP = 12;
 /** Largura máxima do painel. */
-export const PANEL_WIDTH = 340;
+export const PANEL_WIDTH = 320;
+/** Altura do desenho da bandeja de dados: o máximo, e o mínimo para valer a pena mostrar. */
+export const TRAY_MAX_HEIGHT = 184;
+export const TRAY_MIN_HEIGHT = 96;
 /** Movimento mínimo (px) para um toque virar arrasto. */
 export const DRAG_THRESHOLD = 6;
 
@@ -98,6 +101,23 @@ export function floorLine(input: FloatingInput, groupWidth: number): number {
 /** Até onde o botão pode subir (abaixo do cabeçalho e da parte escondida pela rolagem do teclado). */
 export function ceilingLine(input: FloatingInput): number {
   return Math.max(input.home.top, input.visible.top + EDGE);
+}
+
+/** Maior altura de painel que cabe acima (ou abaixo) do botão, agora. */
+export function panelRoom(input: FloatingInput): number {
+  const groupWidth = Math.max(input.size, panelWidth(input.width));
+  const free = floorLine(input, groupWidth) - ceilingLine(input) - input.size - PANEL_GAP;
+  return Math.max(0, free);
+}
+
+/**
+ * Altura do desenho da bandeja: o que sobra do espaço do painel depois do resto dele (`rest`:
+ * título, campo, dica). Sem espaço para um desenho que valha a pena (teclado do celular aberto,
+ * tela baixa), ele some e fica só a linha do total.
+ */
+export function trayHeight(room: number, rest: number): number {
+  const height = Math.min(TRAY_MAX_HEIGHT, Math.floor(room - rest));
+  return height >= TRAY_MIN_HEIGHT ? height : 0;
 }
 
 /** Onde o botão e o painel ficam. */

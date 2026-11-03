@@ -102,6 +102,72 @@ test.describe('B19 — botão flutuante de rolar dados', { tag: '@B19' }, () => 
     expect(back.y).toBeCloseTo(before.y, 0);
   });
 
+  test('a bandeja mostra os dados do que é digitado, com os contornos de manter e tirar', async ({
+    page,
+  }) => {
+    await page.getByTestId('floating-dice.button').click();
+    const input = page.getByTestId('floating-dice.input');
+    const tray = page.getByTestId('floating-dice.tray');
+    const dice = tray.locator('.gr-die');
+
+    await expect(dice).toHaveCount(1); // 1d20 de começo
+    await input.fill('4d6dl1');
+    await expect(dice).toHaveCount(4);
+    await expect(tray.locator('.gr-die[data-mark="low"]')).toHaveCount(1);
+    await input.fill('2d20kh1+1d4');
+    await expect(dice).toHaveCount(3);
+    await expect(tray.locator('.gr-die[data-mark="high"]')).toHaveCount(1);
+    await expect(tray.locator('[data-shape="d4"]')).toHaveCount(1);
+    await input.fill('2d20kl1');
+    await expect(tray.locator('.gr-die[data-mark="low"]')).toHaveCount(1);
+
+    // Mais de 7 dados: nada de dados, só o total depois de rolar.
+    await input.fill('8d6');
+    await expect(tray).toHaveAttribute('data-kind', 'many');
+    await expect(dice).toHaveCount(0);
+    await rollBy(page, () => input.press('Enter'));
+    await expect(tray).toHaveAttribute('data-rolled', 'true');
+    await expect(page.getByTestId('roll.tray')).toBeVisible();
+
+    // Rolado com 2 dados: o contorno vai no dado que de fato ficou.
+    await input.fill('2d20kh1');
+    const result = await rollBy(page, () => input.press('Enter'));
+    const kept = result.terms[0]!.dice.findIndex((d) => d.kept);
+    await expect(dice.nth(kept)).toHaveAttribute('data-mark', 'high');
+    await expect(dice.nth(1 - kept)).toHaveAttribute('data-out', '');
+  });
+
+  test('rolar pela ficha com o painel aberto anima na bandeja sem fechar nem apagar o campo', async ({
+    page,
+  }) => {
+    await page.getByTestId('floating-dice.button').click();
+    const input = page.getByTestId('floating-dice.input');
+    const tray = page.getByTestId('floating-dice.tray');
+    await input.fill('3d8+2');
+    // No celular o painel cobre o meio da tela: o jogador rola a ficha até o dado ficar acima dele.
+    const strength = page.getByTestId('ability.str.roll');
+    await strength.evaluate((el) => {
+      el.scrollIntoView({ block: 'start' });
+      window.scrollBy(0, -140);
+    });
+    await rollBy(page, () => strength.click());
+    await expect(page.getByTestId('floating-dice.panel')).toBeVisible();
+    await expect(tray).toHaveAttribute('data-rolled', 'true');
+    await expect(tray.locator('.gr-die')).toHaveCount(1);
+    await expect(input).toHaveValue('3d8+2');
+    // A notificação aparece quando o dado para.
+    await expect(page.getByTestId('roll.tray')).toBeVisible();
+
+    // Tocar no campo volta para os dados digitados.
+    await input.click();
+    await expect(tray).not.toHaveAttribute('data-rolled', 'true');
+    await expect(tray.locator('.gr-die')).toHaveCount(3);
+
+    // Um toque fora que não rola nada fecha o painel (na margem da página, logo abaixo do cabeçalho).
+    await page.mouse.click(6, 80);
+    await expect(page.getByTestId('floating-dice.panel')).toBeHidden();
+  });
+
   test('expressão errada avisa no painel; Esc fecha e devolve o foco ao botão', async ({
     page,
   }) => {
@@ -128,7 +194,7 @@ test.describe('B19 — botão flutuante de rolar dados', { tag: '@B19' }, () => 
     // Para a esquerda, no meio da tela: encosta na borda esquerda.
     const left = await drag(page, isMobile, { x: viewport.width * 0.3, y: viewport.height / 2 });
     await expect(wrap).toHaveAttribute('data-side', 'left');
-    expect(left.x).toBeCloseTo(12, 0);
+    expect(left.x).toBeCloseTo(16, 0);
     expect(Math.abs(left.y + left.height / 2 - viewport.height / 2)).toBeLessThan(30);
     // Arrastar não abre o painel.
     await expect(page.getByTestId('floating-dice.panel')).toBeHidden();
@@ -140,7 +206,8 @@ test.describe('B19 — botão flutuante de rolar dados', { tag: '@B19' }, () => 
     const bottom = await drag(page, isMobile, { x: viewport.width - 10, y: viewport.height });
     await expect(wrap).toHaveAttribute('data-side', 'right');
     expect(bottom.y + bottom.height).toBeLessThanOrEqual(viewport.height - 40);
-    expect(bottom.x + bottom.width).toBeCloseTo(viewport.width - 12, 0);
+    const inner = await page.evaluate(() => document.documentElement.clientWidth);
+    expect(bottom.x + bottom.width).toBeCloseTo(inner - 16, 0);
 
     // Volta para a esquerda e recarrega: o lugar foi lembrado.
     const saved = await drag(page, isMobile, { x: 20, y: viewport.height * 0.4 });

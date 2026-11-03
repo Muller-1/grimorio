@@ -413,5 +413,16 @@ export const sheetPtBR = {
     close: 'Fechar a rolagem de dados',
     title: 'Rolar dados',
     hint: 'Ex.: 1d20+5, 2d6+3, 2d20kh1 (vantagem). Arraste o botão para mudar de lugar.',
+    /** Bandeja de dados do painel. */
+    total: 'Total',
+    many: (count: number) => `${count} dados`,
+    manyHint: 'Com mais de 7 dados aparece só o total.',
+    /** Legenda dos contornos: o que cada função de manter/tirar escolhe. */
+    marks: {
+      kh: 'maiores ficam',
+      kl: 'menores ficam',
+      dh: 'maiores saem',
+      dl: 'menores saem',
+    },
   },
 } as const;

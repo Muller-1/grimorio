@@ -1,0 +1,407 @@
+/*
+ * Bandeja de dados do botão flutuante (DiceTray.tsx). Chega junto com o botão, fora do CSS
+ * inicial. Cores chapadas, sem degradê, tiradas das variáveis do d20 ilustrado: feltro vinho e
+ * borda dourada no Pergaminho, feltro petróleo e borda prateada no Obsidiana (as variáveis
+ * --die-* e --metal-* mudam sozinhas com o tema).
+ *
+ * Para ficar leve: cada dado é uma camada (<div>) e só `transform` e `opacity` se mexem. O
+ * número e a sombra das faces são camadas à parte por cima do desenho do dado. "Reduzir
+ * movimento" desliga as animações pela regra geral do index.css.
+ */
+
+.gr-tray-box {
+  margin-bottom: 0.625rem;
+}
+
+.gr-tray {
+  --tray-felt: var(--die-3);
+  --tray-wall-0: var(--die-1);
+  --tray-wall-1: var(--die-10);
+  --tray-wall-2: var(--die-2);
+  --tray-wall-3: var(--die-6);
+  --tray-wall-4: var(--die-5);
+  --tray-wall-5: var(--die-4);
+  --tray-rim: var(--ornament);
+  --tray-die: var(--die-face);
+  --tray-edge: var(--die-6);
+  --tray-ink: var(--die-5);
+  /* Os dados são claros nos dois temas: verde e vermelho escuros aparecem bem nos dois. */
+  --tray-high: #2a7a3b;
+  --tray-low: #b3261e;
+  position: relative;
+  aspect-ratio: 240 / 208;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.gr-tray-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.gr-tray-felt {
+  fill: var(--tray-felt);
+}
+.gr-tray-rim {
+  fill: none;
+  stroke: var(--tray-rim);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.gr-tray-snap {
+  fill: var(--metal-2);
+}
+.gr-tray-snap-dot {
+  fill: var(--metal-4);
+}
+
+/* ---------- dados ---------- */
+
+.gr-die {
+  position: absolute;
+  aspect-ratio: 1;
+}
+.gr-die-body,
+.gr-die-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.gr-die-face {
+  fill: var(--tray-die);
+  stroke: var(--tray-edge);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+/* Contorno fino de quem a função de manter/tirar escolhe (camada própria, que não apaga). */
+.gr-die-mark {
+  fill: none;
+  stroke: var(--tray-high);
+  stroke-width: 7;
+  stroke-linejoin: round;
+}
+.gr-die[data-mark='low'] .gr-die-mark {
+  stroke: var(--tray-low);
+}
+.gr-die-fade {
+  position: absolute;
+  inset: 0;
+}
+.gr-die-facet {
+  fill: none;
+  stroke: var(--tray-edge);
+  stroke-opacity: 0.28;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.gr-die-shade {
+  fill: #000;
+  opacity: 0;
+}
+.gr-die-layer text {
+  fill: var(--tray-ink);
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.gr-die-kind {
+  opacity: 0.65;
+}
+/* Dado que não conta no total (descartado por kh/kl/dh/dl). */
+.gr-die[data-out] .gr-die-fade {
+  opacity: 0.45;
+}
+
+/* ---------- textos ---------- */
+
+.gr-tray-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--die-face);
+  font-weight: 700;
+  font-size: 2.75rem;
+  line-height: 1;
+}
+.gr-tray-count {
+  font-size: 1.5rem;
+  opacity: 0.85;
+}
+
+.gr-tray-status {
+  display: flex;
+  min-height: 1.75rem;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.375rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.gr-tray-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  color: var(--text);
+  font-weight: 700;
+}
+.gr-tray-total strong {
+  color: var(--text);
+  font-size: 1.375rem;
+  line-height: 1;
+}
+/* Legenda dos contornos: um anel na cor do contorno antes do texto. */
+.gr-tray-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.gr-tray-key::before {
+  content: '';
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.2rem;
+  border: 2px solid #b3261e;
+  background: var(--die-face);
+}
+.gr-tray-key[data-mark='high']::before {
+  border-color: #2a7a3b;
+}
+
+/* ---------- rolagem: cada tipo de dado gira do seu jeito e para em --land ---------- */
+
+.gr-rolling .gr-die-body {
+  animation-duration: var(--land);
+  animation-timing-function: cubic-bezier(0.25, 0.7, 0.35, 1);
+  animation-fill-mode: both;
+}
+.gr-rolling [data-shape='d4'] .gr-die-body {
+  animation-name: gr-tumble-d4;
+}
+.gr-rolling [data-shape='d6'] .gr-die-body {
+  animation-name: gr-tumble-d6;
+}
+.gr-rolling [data-shape='d8'] .gr-die-body {
+  animation-name: gr-tumble-d8;
+}
+.gr-rolling [data-shape='d10'] .gr-die-body {
+  animation-name: gr-tumble-d10;
+}
+.gr-rolling [data-shape='d12'] .gr-die-body {
+  animation-name: gr-tumble-d12;
+}
+.gr-rolling [data-shape='d20'] .gr-die-body {
+  animation-name: gr-tumble-d20;
+}
+.gr-rolling [data-shape='round'] .gr-die-body {
+  animation-name: gr-tumble-round;
+}
+/* As faces passam: a sombra pisca em degraus enquanto o dado gira. */
+.gr-rolling .gr-die-shade {
+  animation: gr-die-faces var(--land) steps(1, end) both;
+}
+/* O número aparece quando o dado para; o total, quando o último para. */
+.gr-rolling .gr-die-num,
+.gr-rolling .gr-tray-total {
+  animation: gr-die-show 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) var(--land) both;
+}
+.gr-rolling .gr-die[data-out] .gr-die-fade {
+  animation: gr-die-out 0.25s ease-out var(--land) both;
+}
+
+@keyframes gr-die-show {
+  from {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes gr-die-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.45;
+  }
+}
+@keyframes gr-die-faces {
+  0% {
+    opacity: 0.3;
+  }
+  12% {
+    opacity: 0.06;
+  }
+  25% {
+    opacity: 0.34;
+  }
+  38% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.28;
+  }
+  63% {
+    opacity: 0.04;
+  }
+  76% {
+    opacity: 0.22;
+  }
+  88% {
+    opacity: 0.08;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* d4: gira como um pião e assenta. */
+@keyframes gr-tumble-d4 {
+  0% {
+    transform: translate(-18%, -22%) rotate(0deg) scale(0.8);
+  }
+  76% {
+    transform: translate(0, 0) rotate(1000deg) scale(1);
+  }
+  88% {
+    transform: rotate(1080deg) scale(1.08);
+  }
+  100% {
+    transform: rotate(1080deg) scale(1);
+  }
+}
+/* d6: tomba de lado a lado, achatando a cada quina. */
+@keyframes gr-tumble-d6 {
+  0% {
+    transform: translate(-45%, -15%) rotate(-30deg) scale(0.85);
+  }
+  20% {
+    transform: translate(-30%, 8%) rotate(60deg) scale(1.08, 0.86);
+  }
+  40% {
+    transform: translate(-14%, -6%) rotate(150deg) scale(0.88, 1.06);
+  }
+  60% {
+    transform: translate(-4%, 4%) rotate(240deg) scale(1.06, 0.9);
+  }
+  78% {
+    transform: translate(2%, 0) rotate(330deg) scale(0.95, 1.03);
+  }
+  90% {
+    transform: rotate(360deg) scale(1.06);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+/* d8: vira como uma moeda (estreita e volta) enquanto cai. */
+@keyframes gr-tumble-d8 {
+  0% {
+    transform: translateY(-25%) rotate(-25deg) scale(1, 1);
+  }
+  14% {
+    transform: translateY(-14%) rotate(-15deg) scale(0.08, 1);
+  }
+  28% {
+    transform: translateY(-4%) rotate(-5deg) scale(1, 1);
+  }
+  42% {
+    transform: translateY(-10%) rotate(5deg) scale(0.08, 1);
+  }
+  56% {
+    transform: translateY(0) rotate(10deg) scale(1, 1);
+  }
+  70% {
+    transform: translateY(-4%) rotate(4deg) scale(0.15, 1);
+  }
+  84% {
+    transform: rotate(0deg) scale(1.07);
+  }
+  100% {
+    transform: none;
+  }
+}
+/* d10: cai na ponta e balança como um pêndulo até parar. */
+@keyframes gr-tumble-d10 {
+  0% {
+    transform: translateY(-30%) rotate(-60deg) scale(0.85);
+  }
+  22% {
+    transform: translateY(0) rotate(45deg) scale(1);
+  }
+  42% {
+    transform: rotate(-30deg);
+  }
+  60% {
+    transform: rotate(18deg);
+  }
+  76% {
+    transform: rotate(-8deg) scale(1.05);
+  }
+  90% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+/* d12: rola como uma roda, passa um pouco e volta. */
+@keyframes gr-tumble-d12 {
+  0% {
+    transform: translateX(-60%) rotate(-540deg) scale(0.9);
+  }
+  70% {
+    transform: translateX(6%) rotate(25deg) scale(1);
+  }
+  86% {
+    transform: translateX(-2%) rotate(-6deg) scale(1.05);
+  }
+  100% {
+    transform: none;
+  }
+}
+/* d20: pula girando, quica e cai. */
+@keyframes gr-tumble-d20 {
+  0% {
+    transform: translateY(10%) rotate(0deg) scale(0.75);
+  }
+  30% {
+    transform: translateY(-38%) rotate(260deg) scale(1.22);
+  }
+  55% {
+    transform: translateY(0) rotate(470deg) scale(0.96);
+  }
+  70% {
+    transform: translateY(-12%) rotate(600deg) scale(1.08);
+  }
+  85% {
+    transform: translateY(0) rotate(700deg) scale(0.98);
+  }
+  100% {
+    transform: rotate(720deg);
+  }
+}
+/* Outros dados (d2, d3, d1000…): giram e assentam. */
+@keyframes gr-tumble-round {
+  0% {
+    transform: translate(30%, -20%) rotate(0deg) scale(0.8);
+  }
+  80% {
+    transform: translate(0, 0) rotate(700deg) scale(1.06);
+  }
+  100% {
+    transform: rotate(720deg);
+  }
+}

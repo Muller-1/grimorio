@@ -12,6 +12,8 @@ import { flushSync } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { D20Icon } from '@/components/ui/d20-icon';
 import { DiceExpressionInput } from '@/features/dice/components/DiceExpressionInput';
+import { useDiceStore } from '@/features/dice/store';
+import { resultTray, rollDuration } from '@/features/dice/tray';
 import { useTrayArea } from '@/features/dice/tray-area';
 import { ts } from '@/lib/i18n/sheet';
 import { cn } from '@/lib/utils';
@@ -23,12 +25,15 @@ import {
   EDGE,
   floorLine,
   layoutFloating,
+  panelRoom,
   rubberBand,
   sideAfterDrop,
+  trayHeight,
   velocity,
   type FloatingInput,
   type Side,
 } from '../floating-dice';
+import { DiceTray } from './DiceTray';
 
 /** Onde o jogador deixou o botão (lado e altura), neste navegador. */
 const POSITION_KEY = 'grimorio.ficha.dados-flutuante';
@@ -77,7 +82,8 @@ function readScreen(): Screen {
   // Com zoom de pinça a parte visível muda o tempo todo: aí vale a janela inteira.
   const useVisual = vv && Math.abs(vv.scale - 1) < 0.01;
   return {
-    width: window.innerWidth,
+    // Sem a barra de rolagem: com ela, o botão encostado à direita ficava cortado por baixo dela.
+    width: document.documentElement.clientWidth || window.innerWidth,
     height: window.innerHeight,
     wide: window.matchMedia?.(WIDE_QUERY).matches ?? true,
     visibleTop: useVisual ? vv.offsetTop : 0,
@@ -101,10 +107,14 @@ function useScreen(): Screen {
           : next;
       });
     const vv = window.visualViewport;
+    // A barra de rolagem aparece e some com o tamanho da página, sem a janela mudar de tamanho.
+    const page = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => update());
+    page?.observe(document.documentElement);
     window.addEventListener('resize', update);
     vv?.addEventListener('resize', update);
     vv?.addEventListener('scroll', update);
     return () => {
+      page?.disconnect();
       window.removeEventListener('resize', update);
       vv?.removeEventListener('resize', update);
       vv?.removeEventListener('scroll', update);
@@ -141,22 +151,38 @@ interface Drag {
   samples: { t: number; x: number; y: number }[];
 }
 
+/** Id da última rolagem (ou `null` se não houve nenhuma). */
+const lastRollId = () => useDiceStore.getState().history[0]?.id ?? null;
+
+const prefersReducedMotion = () =>
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
 /** Deslizar até a borda com um leve balanço (a mesma curva no botão e no painel). */
 const glide = 'duration-[420ms] ease-[cubic-bezier(0.22,1.2,0.36,1)] motion-reduce:transition-none';
 
 /**
  * Botão flutuante da ficha para rolar dados digitando. Mora na borda esquerda ou direita (o
  * jogador arrasta para trocar de lado e de altura; ao soltar, ele desliza até a borda mais
- * perto) e abre um painel com o campo de expressão. Quando o resultado da rolagem aparece embaixo
- * (ou o teclado do celular abre), botão e painel sobem para não ficar na frente, e voltam ao
- * lugar quando ele some.
+ * perto) e abre um painel com a bandeja de dados e o campo de expressão. Quando o resultado da
+ * rolagem aparece embaixo (ou o teclado do celular abre), botão e painel sobem para não ficar na
+ * frente, e voltam ao lugar quando ele some.
+ *
+ * A bandeja mostra os dados do que está digitado e, com o painel aberto, toda rolagem (do campo
+ * ou da ficha) gira nela sem apagar o que foi digitado; tocar no campo ou digitar volta para os
+ * dados do campo.
  */
 export default function FloatingDice() {
   const f = ts.floatingDice;
   const [position, setPosition] = useState(loadPosition);
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [panelHeight, setPanelHeight] = useState<number | null>(null);
+  /** Altura do painel sem o desenho da bandeja (título, campo, dica). */
+  const [rest, setRest] = useState<number | null>(null);
+  const [expression, setExpression] = useState('1d20');
+  /** Rolagem que a bandeja não mostra (a que já existia ao abrir, ou antes de voltar a digitar). */
+  const [baseline, setBaseline] = useState<string | null>(null);
+  const last = useDiceStore((s) => s.history[0]);
+  const animate = useDiceStore((s) => s.animate);
   const screen = useScreen();
   const tray = useTrayArea((s) => s.area);
   const panelId = useId();
@@ -179,16 +205,40 @@ export default function FloatingDice() {
     side: position.side,
     at: position.at,
     size: SIZE,
-    panelHeight: open && !dragging ? panelHeight : null,
+    panelHeight: null,
     tray,
   };
-  const layout = layoutFloating(base);
+  // O desenho da bandeja fica com o espaço que sobrar (some com o teclado do celular aberto).
+  const drawing = open && rest !== null ? trayHeight(panelRoom(base), rest) : 0;
+  const panelHeight = open && !dragging && rest !== null ? rest + drawing : null;
+  const layout = layoutFloating({ ...base, panelHeight });
 
-  // A altura do painel muda com a mensagem de erro: medida sempre que ele aparece ou muda.
+  const entry = open && last && last.id !== baseline ? last : null;
+  const motion = animate && !prefersReducedMotion();
+
+  // A notificação do resultado espera os dados pararem de girar na bandeja. Antes de pintar a
+  // tela: senão ela aparece por um quadro e some.
+  const heldId = entry && motion ? entry.id : null;
+  const holdFor = entry && motion ? rollDuration(resultTray(entry.result)) : 0;
+  useLayoutEffect(() => {
+    if (!heldId || holdFor === 0) return;
+    const area = useTrayArea.getState();
+    area.hold(heldId);
+    const timer = setTimeout(() => area.release(heldId), holdFor);
+    return () => {
+      clearTimeout(timer);
+      area.release(heldId);
+    };
+  }, [heldId, holdFor]);
+
+  // O resto do painel muda com a mensagem de erro e a legenda: medido sempre que ele aparece ou muda.
   useLayoutEffect(() => {
     const box = panelBox.current;
     if (!open || !box) return;
-    const measure = () => setPanelHeight(box.offsetHeight || null);
+    const measure = () => {
+      const art = box.querySelector<HTMLElement>('[data-tray-drawing]')?.offsetHeight ?? 0;
+      setRest(box.offsetHeight ? box.offsetHeight - art : null);
+    };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
@@ -210,19 +260,34 @@ export default function FloatingDice() {
   });
 
   // Toque fora fecha (o resultado da rolagem e o histórico não contam: são parte da rolagem).
+  // Quem toca num dado da ficha (ataque, perícia…) quer ver a rolagem na bandeja: aí não fecha.
   useEffect(() => {
     if (!open) return;
+    const outside = (target: EventTarget | null) => {
+      if (!(target instanceof Node)) return false;
+      if (panelWrap.current?.contains(target) || buttonWrap.current?.contains(target)) return false;
+      return !(
+        target instanceof Element && target.closest('[data-floating-keep], [role="dialog"]')
+      );
+    };
+    // Última rolagem quando o toque fora começou (`undefined` = o toque foi dentro).
+    let before: string | null | undefined;
     const onDown = (e: globalThis.PointerEvent) => {
-      const target = e.target;
-      if (!(target instanceof Node)) return;
-      if (panelWrap.current?.contains(target) || buttonWrap.current?.contains(target)) return;
-      if (target instanceof Element && target.closest('[data-floating-keep], [role="dialog"]')) {
-        return;
-      }
-      setOpen(false);
+      before = outside(e.target) ? lastRollId() : undefined;
+    };
+    // O clique chega aqui depois do botão da ficha ter rolado.
+    const onClick = (e: MouseEvent) => {
+      if (before === undefined || !outside(e.target)) return;
+      const rolled = lastRollId() !== before;
+      before = undefined;
+      if (!rolled) setOpen(false);
     };
     document.addEventListener('pointerdown', onDown);
-    return () => document.removeEventListener('pointerdown', onDown);
+    document.addEventListener('click', onClick);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('click', onClick);
+    };
   }, [open]);
 
   const save = (next: Position) => {
@@ -231,8 +296,12 @@ export default function FloatingDice() {
   };
 
   const openPanel = () => {
-    // Síncrono para o foco cair dentro do toque (senão o celular não abre o teclado).
-    flushSync(() => setOpen(true));
+    // Síncrono para o foco cair dentro do toque (senão o celular não abre o teclado). A bandeja
+    // abre com os dados do campo, não com a última rolagem.
+    flushSync(() => {
+      setBaseline(lastRollId());
+      setOpen(true);
+    });
     input.current?.focus({ preventScroll: true });
     input.current?.select();
   };
@@ -241,6 +310,9 @@ export default function FloatingDice() {
     setOpen(false);
     if (focusButton) button.current?.focus({ preventScroll: true });
   };
+
+  // Tocar no campo ou digitar volta a bandeja para os dados do campo.
+  const backToPreview = () => setBaseline(lastRollId());
 
   // Celular: depois de rolar, o teclado fecha para o resultado aparecer (o painel continua aberto).
   const afterRoll = () => {
@@ -393,10 +465,19 @@ export default function FloatingDice() {
                 <X className="size-4" />
               </Button>
             </div>
+            {open ? (
+              <DiceTray height={drawing} expression={expression} entry={entry} motion={motion} />
+            ) : null}
             <DiceExpressionInput
               compact
               inputRef={input}
+              initial={expression}
               onRolled={afterRoll}
+              onTextChange={(text) => {
+                setExpression(text);
+                backToPreview();
+              }}
+              onEdit={backToPreview}
               testIdPrefix="floating-dice"
             />
             <p className="mt-2 text-xs text-muted">{f.hint}</p>

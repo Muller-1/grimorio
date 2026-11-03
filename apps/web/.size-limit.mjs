@@ -64,6 +64,13 @@ export default [
     limit: '120 kB',
   },
   {
+    // Chega logo depois da ficha, com a bandeja de dados (o CSS dela vem à parte, fora do inicial).
+    name: 'Botão flutuante de dados (sob demanda, com a bandeja)',
+    path: inDist(lazyChunk('FloatingDice', sheet)),
+    gzip: true,
+    limit: '8 kB',
+  },
+  {
     name: 'Aba Magias (sob demanda, com a lista de magias)',
     path: inDist(lazyChunk('SpellsTab', sheet)),
     gzip: true,

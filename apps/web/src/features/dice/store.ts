@@ -84,7 +84,7 @@ export function loadShortcuts(): { shortcuts: RollShortcut[]; recovered: boolean
 }
 
 /** Rng que sempre dá o mínimo: serve para testar uma expressão sem gastar aleatoriedade. */
-const probeRng: Rng = { int: (min) => min };
+export const probeRng: Rng = { int: (min) => min };
 
 /**
  * Confere nome e expressão. A expressão precisa ser avaliável agora (sem variáveis,

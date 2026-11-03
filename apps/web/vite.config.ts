@@ -55,10 +55,11 @@ export default defineConfig({
             },
             // O rolador de dados inteiro (página, estado, histórico) num pedaço: /dados abre com
             // um pedido só além do que todo mundo baixa.
-            // Fora: a bandeja da ficha e o editor de atalho, que abrem um diálogo (vem sob demanda).
+            // Fora: a bandeja da ficha e o editor de atalho, que abrem um diálogo (vem sob demanda),
+            // e as contas da bandeja de dados do botão flutuante (tray.ts), que vão com o botão.
             {
               name: 'dice',
-              test: /src[\\/]features[\\/]dice[\\/](?!components[\\/](RollTray|ShortcutEditor))|packages[\\/]shared[\\/]src[\\/]dice[\\/]/,
+              test: /src[\\/]features[\\/]dice[\\/](?!components[\\/](RollTray|ShortcutEditor)|tray\.ts)|packages[\\/]shared[\\/]src[\\/]dice[\\/]/,
             },
             {
               name: 'rules',

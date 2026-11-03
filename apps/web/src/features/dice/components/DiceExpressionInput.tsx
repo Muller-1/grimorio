@@ -16,6 +16,10 @@ interface DiceExpressionInputProps {
   inputRef?: Ref<HTMLInputElement>;
   /** Chamado depois de cada rolagem que deu certo. */
   onRolled?: () => void;
+  /** A cada letra digitada (ex.: a bandeja do botão flutuante mostra os dados da expressão). */
+  onTextChange?: (text: string) => void;
+  /** O jogador tocou no campo ou entrou nele para digitar. */
+  onEdit?: () => void;
   /** Prefixo dos `data-testid` (há mais de um campo destes na mesma tela). */
   testIdPrefix?: string;
 }
@@ -27,6 +31,8 @@ export function DiceExpressionInput({
   initial = '1d20',
   inputRef,
   onRolled,
+  onTextChange,
+  onEdit,
   testIdPrefix = 'dice',
 }: DiceExpressionInputProps) {
   const roll = useDiceStore((s) => s.roll);
@@ -57,7 +63,12 @@ export function DiceExpressionInput({
           ref={inputRef}
           id={inputId}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            onTextChange?.(e.target.value);
+          }}
+          onPointerDown={onEdit}
+          onFocus={onEdit}
           className="h-11 min-w-0 font-mono text-base"
           autoComplete="off"
           autoCapitalize="off"

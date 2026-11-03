@@ -5,9 +5,13 @@ import {
   EDGE,
   layoutFloating,
   PANEL_GAP,
+  panelRoom,
   rubberBand,
   sideAfterDrop,
   TRAY_GAP,
+  TRAY_MAX_HEIGHT,
+  TRAY_MIN_HEIGHT,
+  trayHeight,
   velocity,
   yFromAt,
   type FloatingInput,
@@ -139,5 +143,28 @@ describe('botão flutuante: arrasto', () => {
       ]),
     ).toEqual({ x: 1, y: -0.5 });
     expect(velocity([{ t: 0, x: 0, y: 0 }])).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe('botão flutuante: bandeja de dados no painel', () => {
+  it('o espaço do painel é o que sobra entre o teto, o chão e o botão', () => {
+    // Celular de 800: chão em 800 - 64 (reserva de baixo), teto em 126.
+    expect(panelRoom(phone())).toBe(800 - BOTTOM_RESERVE - 126 - 52 - PANEL_GAP);
+    // Teclado aberto (só 420 px visíveis): sobra bem menos.
+    expect(panelRoom(phone({ visible: { top: 0, bottom: 420 } }))).toBe(
+      420 - EDGE - 126 - 52 - PANEL_GAP,
+    );
+    // Resultado da rolagem embaixo, na mesma faixa: o chão sobe até ele.
+    const tray = { top: 600, left: 12, right: 378 };
+    expect(panelRoom(phone({ tray }))).toBe(600 - TRAY_GAP - 126 - 52 - PANEL_GAP);
+    expect(panelRoom(phone({ visible: { top: 0, bottom: 150 } }))).toBe(0);
+  });
+
+  it('o desenho fica com o que sobra, até o máximo, e some se ficar pequeno demais', () => {
+    expect(trayHeight(1000, 200)).toBe(TRAY_MAX_HEIGHT);
+    expect(trayHeight(330.6, 200)).toBe(130);
+    expect(trayHeight(200 + TRAY_MIN_HEIGHT, 200)).toBe(TRAY_MIN_HEIGHT);
+    expect(trayHeight(200 + TRAY_MIN_HEIGHT - 1, 200)).toBe(0);
+    expect(trayHeight(0, 200)).toBe(0);
   });
 });
