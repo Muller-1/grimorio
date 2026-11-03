@@ -1,5 +1,6 @@
-import { Check, Palette } from 'lucide-react';
+import { Palette } from 'lucide-react';
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import { RadioCard } from '@/components/ui/radio-card';
 import { t } from '@/lib/i18n';
 import { currentTheme, setTheme, subscribeTheme, THEMES, type ThemeId } from '@/lib/theme';
 import { useDismiss } from '@/lib/use-dismiss';
@@ -45,8 +46,8 @@ function Swatch({ id }: { id: ThemeId }) {
 }
 
 /**
- * As opções de tema: no balão da barra e no menu do celular. As setas trocam o tema (grupo de
- * rádio do próprio navegador).
+ * As opções de tema: no balão da barra (sem conta), no menu da conta, no menu do celular e nas
+ * Configurações. As setas trocam o tema (grupo de rádio do próprio navegador).
  */
 export function ThemeOptions({ className }: { className?: string }) {
   const theme = useThemeChoice();
@@ -55,36 +56,19 @@ export function ThemeOptions({ className }: { className?: string }) {
       <legend className="font-display font-bold">{t.theme.title}</legend>
       <p className="text-xs text-muted">{t.theme.hint}</p>
       <div className="mt-2 grid gap-1">
-        {THEMES.map((id) => {
-          const option = t.theme.options[id];
-          const checked = theme === id;
-          return (
-            <label
-              key={id}
-              data-testid={`theme.option.${id}`}
-              className={cn(
-                'flex cursor-pointer items-center gap-3 rounded-lg border px-2.5 py-2',
-                'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus',
-                checked ? 'border-accent bg-accent-soft' : 'border-transparent hover:bg-surface-2',
-              )}
-            >
-              <input
-                type="radio"
-                name="grimorio-tema"
-                value={id}
-                checked={checked}
-                onChange={() => setTheme(id)}
-                className="sr-only"
-              />
-              <Swatch id={id} />
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold">{option.name}</span>
-                <span className="block text-xs text-muted">{option.text}</span>
-              </span>
-              {checked && <Check className="size-4 shrink-0 text-accent" aria-hidden="true" />}
-            </label>
-          );
-        })}
+        {THEMES.map((id) => (
+          <RadioCard
+            key={id}
+            name="grimorio-tema"
+            value={id}
+            checked={theme === id}
+            onSelect={() => setTheme(id)}
+            title={t.theme.options[id].name}
+            text={t.theme.options[id].text}
+            visual={<Swatch id={id} />}
+            testId={`theme.option.${id}`}
+          />
+        ))}
       </div>
     </fieldset>
   );

@@ -56,7 +56,6 @@ export type ShortcutOutcome =
 
 export const SHORTCUTS_STORAGE_KEY = 'grimorio.atalhos.v1';
 export const SHORTCUTS_BACKUP_KEY = 'grimorio.atalhos.backup';
-export const ANIMATION_STORAGE_KEY = 'grimorio.dados.animacao';
 
 /** Exemplos da primeira visita (o jogador pode editar ou apagar). */
 function exampleShortcuts(): RollShortcut[] {
@@ -119,8 +118,6 @@ interface DiceState {
   staging: boolean;
   shortcuts: RollShortcut[];
   shortcutsRecovered: boolean;
-  /** Animação ao rolar (preferência deste navegador). "Reduzir movimento" do sistema sempre vence. */
-  animate: boolean;
   roll(request: RollRequest): RollOutcome;
   /** Os dados da rolagem `id` pararam: ela entra no histórico. */
   commit(id: string): void;
@@ -130,7 +127,6 @@ interface DiceState {
   addShortcut(input: ShortcutInput): ShortcutOutcome;
   updateShortcut(id: string, input: ShortcutInput): ShortcutOutcome;
   removeShortcut(id: string): void;
-  setAnimate(animate: boolean): void;
 }
 
 const HISTORY_LIMIT = 100;
@@ -146,7 +142,6 @@ export const useDiceStore = create<DiceState>((set, get) => ({
   staging: false,
   shortcuts: initial.shortcuts,
   shortcutsRecovered: initial.recovered,
-  animate: safeStorage.get(ANIMATION_STORAGE_KEY) !== '0',
 
   roll(request) {
     const result = rollExpression(request.expression, { rng: getRng() });
@@ -210,11 +205,6 @@ export const useDiceStore = create<DiceState>((set, get) => ({
 
   removeShortcut(id) {
     set((s) => ({ shortcuts: s.shortcuts.filter((x) => x.id !== id) }));
-  },
-
-  setAnimate(animate) {
-    set({ animate });
-    safeStorage.set(ANIMATION_STORAGE_KEY, animate ? '1' : '0');
   },
 }));
 

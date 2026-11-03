@@ -171,7 +171,10 @@ function AbilityCard({ ability }: { ability: AbilityKey }) {
             <D20Icon strokeWidth={16} className="size-3 text-accent" />
           </span>
         </RollButton>
-        <h3 id={titleId} className="min-w-0 flex-1 text-[1.0625rem] leading-tight font-bold">
+        <h3
+          id={titleId}
+          className="min-w-0 flex-1 text-[1.0625rem] leading-tight font-bold hyphens-auto break-words"
+        >
           {name}
         </h3>
         <div className="flex min-w-[52px] flex-col items-center rounded-lg border border-border bg-bg px-1.5 pt-0.5 pb-1">

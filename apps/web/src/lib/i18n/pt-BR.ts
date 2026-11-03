@@ -73,6 +73,11 @@ export const ptBR = {
         title: 'Termos de uso · Grimório',
         description: 'Termos de uso do Grimório.',
       },
+      '/configuracoes': {
+        title: 'Configurações · Grimório',
+        description:
+          'Tema, animações, fonte, botão de dados da ficha e os dados guardados neste navegador.',
+      },
       '/privacidade': {
         title: 'Privacidade · Grimório',
         description: 'O que o Grimório guarda, onde e por quanto tempo.',
@@ -679,6 +684,7 @@ export const ptBR = {
         ['Ícones Lucide', 'ISC'],
         ['Fonte Cinzel (The Cinzel Project Authors)', 'SIL Open Font License 1.1'],
         ['Fonte Alegreya Sans (The Alegreya Sans Project Authors)', 'SIL Open Font License 1.1'],
+        ['Fonte Atkinson Hyperlegible (Braille Institute of America)', 'SIL Open Font License 1.1'],
       ] as [string, string][],
       rulesTitle: 'Regras do jogo',
       rules:
@@ -752,7 +758,7 @@ export const ptBR = {
         {
           title: 'O que fica no seu aparelho',
           body: [
-            'A ficha, os atalhos de dados e as preferências de animação e de tema de cores ficam guardados no armazenamento local do seu navegador. Eles nunca saem do seu aparelho e você pode apagá-los a qualquer momento limpando os dados do site nas configurações do navegador.',
+            'A ficha, os atalhos de dados e as preferências de tema, animações e fonte ficam guardados no armazenamento local do seu navegador. Eles nunca saem do seu aparelho. Em Configurações, você pode exportar tudo num arquivo ou apagar a qualquer momento.',
           ],
         },
         {
@@ -830,7 +836,7 @@ export const ptBR = {
         {
           title: 'O que fica no seu aparelho',
           body: [
-            'A ficha avulsa, os atalhos de dados, as preferências de animação e de tema de cores e o rascunho do assistente de criação ficam no armazenamento local do seu navegador. Você pode apagá-los limpando os dados do site nas configurações do navegador.',
+            'A ficha avulsa, os atalhos de dados, as preferências de tema, animações e fonte, o rascunho do assistente de criação e uma cópia das fichas da conta ficam no armazenamento local do seu navegador. Em Configurações, você pode exportar tudo num arquivo ou apagar a qualquer momento.',
           ],
         },
         {
@@ -927,8 +933,6 @@ export const ptBR = {
     close: 'Fechar',
     free: 'Rolagem livre',
     saveAsShortcut: 'Salvar como atalho',
-    animation: 'Animação',
-    animationHint: 'Desligada automaticamente se o seu sistema pede para reduzir movimento.',
     quick: {
       title: 'Rolagem rápida',
       count: 'Quantidade',

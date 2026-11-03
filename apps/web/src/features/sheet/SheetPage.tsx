@@ -9,6 +9,7 @@ import { RollTray } from '@/features/dice/components/RollTray';
 import { useToastStore } from '@/features/toast/store';
 import { t } from '@/lib/i18n';
 import { ts } from '@/lib/i18n/sheet';
+import { useFloatingDice } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
 import { AbilitiesPanel } from './components/AbilitiesPanel';
 import { ActionsColumn } from './components/ActionsColumn';
@@ -94,6 +95,7 @@ export default function SheetPage({
   const recovered = useSheetStore((s) => s.recoveredFromBadData);
   const replace = useSheetStore((s) => s.replace);
   const toast = useToastStore((s) => s.push);
+  const floatingDice = useFloatingDice();
   const [column, setColumn] = useState<Column>('character');
   const [confirm, setConfirm] = useState<Confirm>(null);
 
@@ -225,9 +227,12 @@ export default function SheetPage({
       </div>
 
       <RollTray />
-      <Suspense fallback={null}>
-        <FloatingDice />
-      </Suspense>
+      {/* O botão de rolar dados digitando pode ser desligado nas Configurações. */}
+      {floatingDice ? (
+        <Suspense fallback={null}>
+          <FloatingDice />
+        </Suspense>
+      ) : null}
 
       <Dialog
         open={confirm !== null}

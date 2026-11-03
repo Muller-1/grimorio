@@ -43,6 +43,27 @@
     U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201E,
     U+2022, U+2026, U+2039-203A, U+20AC, U+2122, U+2192, U+2212;
 }
+/* "Mais legível" (Configurações): só baixa quando `data-font` pede, fora do preload do HTML. */
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/atkinson-hyperlegible-400.woff2') format('woff2');
+  unicode-range:
+    U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201E,
+    U+2022, U+2026, U+2039-203A, U+20AC, U+2122, U+2192, U+2212;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/atkinson-hyperlegible-700.woff2') format('woff2');
+  unicode-range:
+    U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201E,
+    U+2022, U+2026, U+2039-203A, U+20AC, U+2122, U+2192, U+2212;
+}
 
 /*
  * Dois temas (docs/design.md): Pergaminho (claro, ouro nos detalhes) e Obsidiana (escuro,
@@ -171,6 +192,28 @@
   }
 }
 
+/* `motion-reduce:` e `motion-safe:` seguem a mesma escolha (o aparelho, ou as Configurações). */
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    &:where(:root:not([data-motion='on']) *) {
+      @slot;
+    }
+  }
+  &:where(:root[data-motion='off'] *) {
+    @slot;
+  }
+}
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:where(:root:not([data-motion='off']) *) {
+      @slot;
+    }
+  }
+  &:where(:root[data-motion='on'] *) {
+    @slot;
+  }
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -198,10 +241,24 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-focus: var(--focus);
-  --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
-  --font-sans: 'Alegreya Sans', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --font-display: var(--face-display);
+  --font-sans: var(--face-text);
   --font-mono: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
   --shadow-card: var(--shadow);
+}
+
+/* Fontes: Cinzel nos títulos e números, Alegreya Sans no texto. Com "Mais legível" escolhida
+   nas Configurações (`data-font` no <html>, lib/preferences.ts), a Atkinson Hyperlegible vai nos
+   dois. Num elemento, `data-font` vale só ali dentro (as amostras das Configurações). */
+:root,
+[data-font='default'] {
+  --face-display: 'Cinzel', Georgia, 'Times New Roman', serif;
+  --face-text: 'Alegreya Sans', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+}
+:root[data-font='legible'],
+[data-font='legible'] {
+  --face-display: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --face-text: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
 }
 
 /* A Alegreya Sans desenha menor que a fonte do sistema: os tamanhos pequenos sobem um pouco. */
@@ -289,18 +346,31 @@
   box-shadow: inset 0 0 0 1px var(--accent-inset);
 }
 
+/*
+ * Movimento (lib/preferences.ts): "Desligadas" nas Configurações (`data-motion='off'`) para tudo.
+ * Sem escolha, vale o que o aparelho pede ("reduzir movimento"); quem escolheu "Ligadas"
+ * (`data-motion='on'`) vê as animações mesmo assim.
+ */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  :root:not([data-motion='on']) *,
+  :root:not([data-motion='on']) *::before,
+  :root:not([data-motion='on']) *::after {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
+:root[data-motion='off'] *,
+:root[data-motion='off'] *::before,
+:root[data-motion='off'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
 
-/* Animação de rolagem (RF-77). "Reduzir movimento" do sistema desliga (regra acima). */
+/* Animação de rolagem (RF-77). Com o movimento desligado, a regra acima a desliga. */
 @keyframes roll-pop {
   0% {
     transform: scale(0.4) rotate(-25deg);

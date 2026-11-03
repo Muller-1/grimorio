@@ -9,13 +9,14 @@ import { useDiceStore } from '@/features/dice/store';
 import { useToastStore } from '@/features/toast/store';
 import { Button } from '@/components/ui/button';
 import { t } from '@/lib/i18n';
+import { useMotion } from '@/lib/preferences';
 
 /** Rolador de dados (Etapa 7): expressão livre, rolagem rápida, atalhos, histórico. */
 export default function DicePage() {
   const history = useDiceStore((s) => s.history);
   const clear = useDiceStore((s) => s.clear);
-  // A preferência continua na store; a opção de ligar/desligar vai para as configurações.
-  const animate = useDiceStore((s) => s.animate);
+  // A animação do resultado segue o movimento escolhido nas Configurações (ou o do aparelho).
+  const animate = useMotion() === 'on';
   const recovered = useDiceStore((s) => s.shortcutsRecovered);
   const toast = useToastStore((s) => s.push);
   const [draft, setDraft] = useState<{ label: string; expression: string } | null>(null);

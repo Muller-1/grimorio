@@ -23,6 +23,7 @@ const AccountSheetPage = lazy(() => import('@/features/characters/AccountSheetPa
 const CreatePage = lazy(() => import('@/features/builder/CreatePage'));
 const CampaignsPage = lazy(() => import('@/features/campaigns/CampaignsPage'));
 const CampaignPage = lazy(() => import('@/features/campaigns/CampaignPage'));
+const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
 
 function Loading({ children }: { children: ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
@@ -147,6 +148,18 @@ const PAGES: readonly PageRoute[] = [
     ),
     prerender: 'shell',
     lazyModule: 'src/features/campaigns/CampaignPage.tsx',
+  },
+  {
+    // Preferências deste navegador: nada a buscar no Google.
+    path: '/configuracoes',
+    index: false,
+    element: (
+      <Loading>
+        <SettingsPage />
+      </Loading>
+    ),
+    prerender: 'shell',
+    lazyModule: 'src/features/settings/SettingsPage.tsx',
   },
   { path: '/apoie', element: <SupportPage />, prerender: 'full' },
   { path: '/creditos', element: <CreditsPage />, prerender: 'full' },

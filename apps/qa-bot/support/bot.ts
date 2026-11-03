@@ -162,6 +162,7 @@ export const PAGES = [
   '/personagens',
   '/criar',
   '/entrar',
+  '/configuracoes',
   '/apoie',
   '/creditos',
   '/termos',

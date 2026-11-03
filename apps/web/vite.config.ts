@@ -51,7 +51,7 @@ export default defineConfig({
             // pedidos pequenos do que com alguns kB a mais no começo.
             {
               name: 'ui',
-              test: /src[\\/](components[\\/]ui[\\/](?!dialog|popover)|lib[\\/](utils|format)\.ts|ports[\\/](storage|events))|node_modules[\\/].*(lucide-react|tailwind-merge|class-variance-authority|clsx|react-slot|react-compose-refs|zustand|[\\/]react[\\/])/,
+              test: /src[\\/](components[\\/]ui[\\/](?!dialog|popover)|lib[\\/](utils|format|preferences)\.ts|ports[\\/](storage|events))|node_modules[\\/].*(lucide-react|tailwind-merge|class-variance-authority|clsx|react-slot|react-compose-refs|zustand|[\\/]react[\\/])/,
             },
             // O rolador de dados inteiro (página, estado, histórico) num pedaço: /dados abre com
             // um pedido só além do que todo mundo baixa.

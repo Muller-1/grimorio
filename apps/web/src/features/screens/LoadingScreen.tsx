@@ -22,6 +22,7 @@ import {
 } from 'react';
 import { D20Facets, Diamond } from '@/components/ui/d20-icon';
 import { t } from '@/lib/i18n';
+import { motionOff } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
 import { Corridor, useTip } from './InlineLoader';
 import './loading-screen.css';
@@ -75,7 +76,7 @@ function useThrowSteps(
   useEffect(() => {
     const next = () => setStep((s) => s + 1);
     const die = dieRef.current;
-    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const still = motionOff();
     if (!die || still) {
       const timer = setInterval(next, CYCLE_MS);
       return () => clearInterval(timer);

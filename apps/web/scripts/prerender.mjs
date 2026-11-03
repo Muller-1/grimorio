@@ -35,9 +35,10 @@ function preloadsFor(lazyModule) {
   return files;
 }
 // As fontes (três arquivos pequenos, usados em toda página): o HTML já pede todas logo no começo,
-// sem esperar o CSS chegar para descobrir que precisa delas.
+// sem esperar o CSS chegar para descobrir que precisa delas. A Atkinson ("Mais legível", nas
+// Configurações) fica de fora: só quem escolhe a fonte baixa os arquivos dela.
 const fontPreloads = (manifest['index.html']?.assets ?? [])
-  .filter((file) => file.endsWith('.woff2'))
+  .filter((file) => file.endsWith('.woff2') && !file.includes('atkinson'))
   .map((file) => `<link rel="preload" href="/${file}" as="font" type="font/woff2" crossorigin>`);
 if (fontPreloads.length === 0) throw new Error('Nenhuma fonte .woff2 no manifesto do Vite.');
 

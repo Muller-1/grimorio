@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { t } from '@/lib/i18n';
+import { useMotion } from '@/lib/preferences';
 import { useDiceStore } from '../store';
 import { usePublishTrayArea } from '../tray-area';
 import { RollHistory } from './RollHistory';
@@ -19,7 +20,7 @@ const VISIBLE_MS = 6000;
 export function RollTray() {
   const history = useDiceStore((s) => s.history);
   const clear = useDiceStore((s) => s.clear);
-  const animate = useDiceStore((s) => s.animate);
+  const animate = useMotion() === 'on';
   const [open, setOpen] = useState(false);
   const [hiddenId, setHiddenId] = useState<string | null>(null);
   const [hold, setHold] = useState(false);

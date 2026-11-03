@@ -1,10 +1,16 @@
 # Fontes
 
-Alegreya Sans (400 e 700) e Cinzel (700), as duas sob a SIL Open Font License 1.1 (textos
-completos em `LICENSE-alegreya-sans.txt` e `LICENSE-cinzel.txt`; nenhuma das duas reserva nome).
+Alegreya Sans (400 e 700) e Cinzel (700), as fontes do site, e Atkinson Hyperlegible (400 e
+700), a opção "Mais legível" das Configurações. As três estão sob a SIL Open Font License 1.1
+(textos completos em `LICENSE-alegreya-sans.txt`, `LICENSE-cinzel.txt` e
+`LICENSE-atkinson-hyperlegible.txt`), e nenhuma reserva nome.
 
-Os arquivos são recortes dos que o Fontsource distribui (`@fontsource/alegreya-sans` e
-`@fontsource/cinzel` 5.x, subconjunto "latin"), feitos com o `pyftsubset` do fontTools:
+A Atkinson não entra no `preload` do HTML (scripts/prerender.mjs): o navegador só baixa os dois
+arquivos (~10 kB cada) quando alguém escolhe a fonte ou abre as Configurações (a amostra usa ela).
+
+Os arquivos são recortes dos que o Fontsource distribui (`@fontsource/alegreya-sans`,
+`@fontsource/cinzel` e `@fontsource/atkinson-hyperlegible` 5.x, subconjunto "latin"), feitos com o
+`pyftsubset` do fontTools:
 
 ```sh
 pyftsubset ORIGEM.woff2 --flavor=woff2 --output-file=DESTINO.woff2 \

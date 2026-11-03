@@ -1,4 +1,5 @@
 import type { CreationIssue } from '@grimorio/rules';
+import { motionOff } from '@/lib/preferences';
 
 /**
  * Para onde levar o jogador quando algo falta (feedback dos testadores: "não soube onde clicar").
@@ -45,7 +46,7 @@ const FLASH_CLASS = 'wizard-flash';
 export function goToIssue(issue: CreationIssue): void {
   const el = document.getElementById(ISSUE_TARGETS[issue]);
   if (!el) return;
-  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  const reduced = motionOff();
   el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
   el.classList.remove(FLASH_CLASS);
   // Força o navegador a reiniciar a animação se o jogador clicar duas vezes seguidas.

@@ -16,6 +16,7 @@ import { useDiceStore } from '@/features/dice/store';
 import { resultTray, rollDuration } from '@/features/dice/tray';
 import { useTrayArea } from '@/features/dice/tray-area';
 import { ts } from '@/lib/i18n/sheet';
+import { useMotion } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
 import { safeStorage } from '@/ports/storage';
 import {
@@ -157,9 +158,6 @@ const lastRollId = () => {
   return (dice.pending ?? dice.history[0])?.id ?? null;
 };
 
-const prefersReducedMotion = () =>
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-
 /** Deslizar até a borda com um leve balanço (a mesma curva no botão e no painel). */
 const glide = 'duration-[420ms] ease-[cubic-bezier(0.22,1.2,0.36,1)] motion-reduce:transition-none';
 
@@ -186,7 +184,7 @@ export default function FloatingDice() {
   const [baseline, setBaseline] = useState<string | null>(null);
   const last = useDiceStore((s) => s.pending ?? s.history[0]);
   const pending = useDiceStore((s) => s.pending);
-  const animate = useDiceStore((s) => s.animate);
+  const motion = useMotion() === 'on';
   const screen = useScreen();
   const tray = useTrayArea((s) => s.area);
   const panelId = useId();
@@ -218,11 +216,10 @@ export default function FloatingDice() {
   const layout = layoutFloating({ ...base, panelHeight });
 
   const entry = open && last && last.id !== baseline ? last : null;
-  const motion = animate && !prefersReducedMotion();
 
   // Com os dados girando na tela, a rolagem só entra no histórico (e na notificação) quando eles
   // param; clicar de novo antes disso troca a rolagem, e a que não apareceu não entra. Sem o
-  // desenho (painel fechado, teclado do celular aberto, "reduzir movimento"), entra na hora.
+  // desenho (painel fechado, teclado do celular aberto, movimento desligado), entra na hora.
   // Antes de pintar a tela: a notificação não chega a aparecer por um quadro.
   const staging = open && motion && drawing > 0;
   useLayoutEffect(() => {

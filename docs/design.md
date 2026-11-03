@@ -90,6 +90,7 @@ como `dark:fill-[#…]` no componente.
 | ---------------- | ------------- | -------------------------------------------------------------------------- |
 | **Cinzel**       | 700           | títulos, nome do personagem, números grandes (CA, PV, modificadores), nomes de armas |
 | **Alegreya Sans**| 400, 700      | todo o resto                                                               |
+| **Atkinson Hyperlegible** | 400, 700 | no lugar das duas, com "Mais legível" escolhida nas Configurações |
 
 As duas vêm do próprio site, porque a CSP não deixa buscar fontes de fora: são recortes com o
 alfabeto latino e a pontuação que usamos, sem "hinting", ~14 kB cada (`src/assets/fonts`, com o
@@ -97,6 +98,12 @@ LEIA-ME de como foram feitos). Só três arquivos, e o HTML já pede os três lo
 (`preload`): o texto não espera o CSS para começar a baixar a fonte. Pesos intermediários
 (`font-medium`, `font-semibold`) caem no peso carregado mais próximo. Números usam algarismos
 alinhados (`lining-nums`) e, em colunas, `tabular`.
+
+A fonte "Mais legível" (Configurações) é a Atkinson Hyperlegible, feita pelo Braille Institute
+para baixa visão. `data-font="legible"` no `<html>` troca as variáveis `--face-display` e
+`--face-text`; ela não entra no `preload`, então só baixa (~10 kB por peso) para quem escolhe
+ou abre as Configurações. Como é mais larga, nomes longos em caixas estreitas quebram com hífen
+(`hyphens-auto`), nunca vazam.
 
 Escala (só o que mudou em relação ao Tailwind):
 
@@ -136,7 +143,8 @@ Títulos de tela usam Cinzel entre 1,5 e 3,3 rem (o título das cenas é fluido:
 | Ícones de traço | `components/ui/stroke-icon.tsx` | `StrokeIcon name="…"` | os ícones do quadro que não existem no Lucide (escudo, raio, pegadas, pergaminho…) |
 | Ornamento | `components/ui/ornament.tsx` | — | filete com losango no meio |
 | Avatar | `features/auth/Avatar.tsx` | `ringed` | só a inicial; com anel dourado quando é a conta logada |
-| Tema | `features/theme/ThemePicker.tsx` | `ThemePicker` (barra), `ThemeOptions` (menus) | grupo de rádio do navegador: as setas trocam o tema |
+| Tema | `features/theme/ThemePicker.tsx` | `ThemePicker` (barra), `ThemeOptions` (menus e Configurações) | grupo de rádio do navegador: as setas trocam o tema |
+| Opção em cartão | `components/ui/radio-card.tsx` | `RadioCard name value checked onSelect title text visual` | uma opção de grupo de rádio desenhada como cartão (tema, animações, fonte); marcada: borda `accent`, fundo `accent-soft` e ✓ |
 | Proficiência | `features/sheet/components/ProficiencyToggle.tsx` | `ProficiencyDot`, `ProficiencyToggle` | vazio → proficiente (cheio) → especialista (cheio com anel `ornament`) |
 | Interruptor | `components/ui/switch-track.tsx` | `SwitchTrack on check` | o desenho (trilho e bolinha) dentro de um `<button role="switch">`; a bolinha anda com `transform` |
 | Barra de rolagem | `styles/index.css` | — | vale para toda caixa que rola: fina (6 px visíveis em 12 px de área), trilho transparente, cor `ornament` (dourada/prateada) a 70%, cheia ao passar o mouse e `accent` ao arrastar; no Firefox, `scrollbar-width: thin` e a mesma cor |
@@ -157,6 +165,14 @@ Fixa no topo (`sticky`, 64 px), fundo `surface`, filete `rule` embaixo.
   as opções de tema.
 - **Celular, logado:** a navegação fica no meio da barra (mais estreita) e o tema e a ajuda passam
   para o balão da conta.
+
+### 5.1.1 Configurações (`/configuracoes`)
+
+Preferências deste navegador, fora do Google (por enquanto, sem link na barra). Três painéis: **Conforto** (tema, animações
+Ligadas/Desligadas, fonte Padrão/Mais legível, como cartões de opção), **Dados** (interruptor do
+botão flutuante da ficha) e **Seus dados** (exportar um `.json`; apagar, com uma janela que
+lista o que some, diz se as fichas da conta ficam e avisa em `danger-soft` que não dá para
+desfazer). Decisões no ADR-017.
 
 ### 5.2 Página inicial (visitante)
 
@@ -277,9 +293,12 @@ O carregamento só aparece se demorar mais de 0,35 s, para carregamentos rápido
 
 ## 6. Movimento
 
-Tudo em `styles/motion.css`. Com "reduzir movimento" ligado no sistema, todas as animações rodam
+Tudo em `styles/motion.css`. Com o movimento desligado, todas as animações e transições rodam
 uma vez só, sem duração (regra em `index.css`), e o que só aparece animado (fumaça, faíscas) fica
-parado à vista.
+parado à vista. "Desligado" é `data-motion="off"` no `<html>` (Configurações) ou, sem escolha, o
+"reduzir movimento" do sistema; quem escolhe "Ligadas" (`data-motion="on"`) vê as animações mesmo
+com o sistema pedindo menos. As variantes `motion-reduce:` e `motion-safe:` do Tailwind seguem a
+mesma regra, e o código que anima sozinho pergunta a `motionOff()` (`lib/preferences.ts`).
 
 Para ficar leve no celular, a regra é **animar a camada, não o desenho**:
 
@@ -364,7 +383,9 @@ segundo, sem recalcular a página a cada quadro.
 - **Leitores de tela:** salvaguardas são `checkbox`; perícias têm rótulo "Nome: estado" e o
   marcador é decorativo. Botões só com ícone têm `aria-label` (e `title`). Ilustrações das cenas
   são `aria-hidden`.
-- **Movimento:** "reduzir movimento" desliga as animações.
+- **Movimento:** "reduzir movimento" do sistema desliga as animações; nas Configurações dá para
+  desligar (ou ligar) só neste navegador.
+- **Leitura:** a fonte "Mais legível" (Atkinson Hyperlegible) vale para o site inteiro.
 - **Toque:** alvos de 44 px no mínimo.
 
 ---
@@ -384,7 +405,8 @@ ficha até 120 kB. Para manter o CSS no limite:
 O Lighthouse do CI (celular em 4G lenta, simulado) cobra LCP de até 2,5 s em `/` e `/dados`. O
 que pesou com o visual novo, e o que resolveu:
 
-- **Fontes:** só três arquivos recortados (~14 kB cada) e pedidos já no HTML (`preload`).
+- **Fontes:** só três arquivos recortados (~14 kB cada) e pedidos já no HTML (`preload`). A
+  Atkinson ("Mais legível") fica fora do `preload`.
 - **Número de pedidos:** o teste simula HTTP/1.1, com seis conexões; vinte arquivos pequenos
   custam mais do que um maior. Os grupos de `vite.config.ts` juntam as peças de interface usadas
   em quase toda página (`ui`) e o rolador de dados (`dice`).

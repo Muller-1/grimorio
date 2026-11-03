@@ -34,6 +34,7 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 | Uso real: aviso de servidor acordando com novas tentativas; busca do Google (sitemap, canônico) | `features/auth/ServerStatus.tsx` + `app/seo.ts` + `scripts/prerender.mjs` | ✔ (ADR-013)                                     |
 | Campanha, parte 1: mesa com mestre e jogadores, ações sem conflito, resumo, curas propostas     | `features/campaigns` + `apps/api/src/modules/campaigns`                   | ✔ (ADR-014)                                     |
 | Revisão do motor: armadura no Inventário, propriedades da arma, condições, rodadas de combate   | `packages/rules/src/{inventory,engine,sheet}` + `features/sheet`          | ✔ (ADR-015)                                     |
+| Configurações (`/configuracoes`): animações, fonte legível, botão de dados, exportar e apagar   | `features/settings` + `lib/preferences.ts` + `lib/local-data.ts`          | ✔ (ADR-017)                                     |
 
 Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas para quem tiver o link
 (qualquer conta Google entra, ver ADR-009, decisão 5), com a API no Render, o banco no Neon e o
@@ -114,6 +115,7 @@ pnpm --filter @grimorio/qa-bot exec playwright show-report   # relatório da úl
 | B12 — acessibilidade | axe sem violações sérias ou críticas nas páginas e nos diálogos                            |
 | B2 — assistente      | percorre a criação com escolhas aleatórias (pela semente) e confere a ficha com o motor    |
 | B14 — monitor        | abre `/dados` na produção, rola `1d20` e confere o total (sem ganchos; roda a cada 30 min) |
+| B20 — configurações  | animações, fonte, botão flutuante, exportar e apagar os dados deste navegador              |
 
 Toda execução imprime a semente. Os ganchos (`window.__APP_TEST__`) só existem no build de teste;
 o CI falha se eles aparecerem no build de produção. Em todos os cenários, qualquer erro no
@@ -182,7 +184,8 @@ grimorio/
   do back-end; 007: decisões do R2; 008: login com Google, fichas na conta e assistente;
   009: publicação com contas para um grupo de teste; 010: magias, subida de nível e
   habilidades que o site calcula; 011: inventário e ficha v3; 012: visual mais limpo e
-  magias no assistente; 013: correções para uso real, servidor acordando e busca do Google; 014: campanha, parte 1).
+  magias no assistente; 013: correções para uso real, servidor acordando e busca do Google; 014: campanha, parte 1;
+  015: revisão do motor; 017: configurações deste navegador).
 - `docs/publicacao.md` — passo a passo para colocar o site no ar, ligar o monitor B14, aparecer
   no Google e manter a API acordada.
 - `docs/plano-escala-e-campanha.md` — planejamento (sem código): concorrência na campanha
