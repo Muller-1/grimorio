@@ -16,15 +16,17 @@ interface Box {
 const box = async (page: Page, testId: string): Promise<Box> =>
   (await page.getByTestId(testId).boundingBox())!;
 
-/** Espera o botão parar (ele desliza até o lugar). */
+/**
+ * Espera o botão parar. Ele desliza até o lugar com um balanço que passa um pouco do ponto e
+ * volta: comparar duas posições seguidas pegava às vezes o meio do balanço (máquina lenta do CI).
+ * Aqui espera não sobrar nenhuma transição no botão.
+ */
 async function settled(page: Page): Promise<Box> {
-  let last = await box(page, 'floating-dice.button');
-  for (;;) {
-    await page.waitForTimeout(120);
-    const now = await box(page, 'floating-dice.button');
-    if (Math.abs(now.x - last.x) < 0.5 && Math.abs(now.y - last.y) < 0.5) return now;
-    last = now;
-  }
+  await page.waitForFunction(() => {
+    const wrap = document.querySelector('[data-testid="floating-dice"]');
+    return wrap !== null && wrap.getAnimations({ subtree: true }).length === 0;
+  });
+  return box(page, 'floating-dice.button');
 }
 
 /** Arrasta o botão com o dedo (celular) ou com o mouse (computador). */
@@ -138,10 +140,16 @@ test.describe('B19 — botão flutuante de rolar dados', { tag: '@B19' }, () => 
     // Entra no histórico (e na notificação) quando os dados param.
     await expect(page.getByTestId('roll.tray')).toContainText('2d20kh1');
 
-    // Rolar duas vezes seguidas: a primeira nem chegou a aparecer e não entra no histórico.
+    // Rolar duas vezes seguidas: a primeira nem chegou a aparecer e não entra no histórico. As
+    // duas no mesmo instante (dois Enter pelo Playwright podem levar mais que o giro numa
+    // máquina lenta, e aí a primeira para e entra, como deve).
     await input.fill('1d20+7');
-    await rollBy(page, () => input.press('Enter'));
-    const second = await rollBy(page, () => input.press('Enter'));
+    const second = await rollBy(page, () =>
+      input.evaluate((el: HTMLInputElement) => {
+        el.form!.requestSubmit();
+        el.form!.requestSubmit();
+      }),
+    );
     await expect(page.getByTestId('roll.last.total')).toHaveAttribute(
       'data-value',
       String(second.total),
