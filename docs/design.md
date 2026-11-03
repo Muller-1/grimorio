@@ -139,6 +139,7 @@ Títulos de tela usam Cinzel entre 1,5 e 3,3 rem (o título das cenas é fluido:
 | Tema | `features/theme/ThemePicker.tsx` | `ThemePicker` (barra), `ThemeOptions` (menus) | grupo de rádio do navegador: as setas trocam o tema |
 | Proficiência | `features/sheet/components/ProficiencyToggle.tsx` | `ProficiencyDot`, `ProficiencyToggle` | vazio → proficiente (cheio) → especialista (cheio com anel `ornament`) |
 | Interruptor | `components/ui/switch-track.tsx` | `SwitchTrack on check` | o desenho (trilho e bolinha) dentro de um `<button role="switch">`; a bolinha anda com `transform` |
+| Barra de rolagem | `styles/index.css` | — | vale para toda caixa que rola: fina (6 px visíveis em 12 px de área), trilho transparente, cor `ornament` (dourada/prateada) a 70%, cheia ao passar o mouse e `accent` ao arrastar; no Firefox, `scrollbar-width: thin` e a mesma cor |
 
 ---
 

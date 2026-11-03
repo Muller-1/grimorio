@@ -239,6 +239,34 @@
     -moz-appearance: textfield;
     appearance: textfield;
   }
+  /* Barra de rolagem de toda caixa que rola: fina, dourada no Pergaminho e prateada no
+     Obsidiana (a cor dos detalhes), e na cor de destaque enquanto é arrastada. O Firefox não
+     conhece os seletores -webkit-: lá vale a cor e a largura padrão do CSS. */
+  @supports not selector(::-webkit-scrollbar) {
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: var(--ornament) transparent;
+    }
+  }
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--ornament) 70%, transparent) padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ornament);
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background-color: var(--accent);
+  }
 }
 
 @layer utilities {
