@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 /* Palavras do código (`lista.filter`, `const table`, `variant: 'outline'`…) que o Tailwind lia
    como classes: nenhuma é usada como classe, e cortá-las tira CSS que ninguém usa. */
-@source not inline('container filter inline outline ring sepia static table transform visible');
+@source not inline('container filter inline outline resize ring sepia static table transform visible');
 @import './motion.css';
 /* Tela de carregamento guardada (sem uso): ver o começo de features/screens/LoadingScreen.tsx. */
 @source not "../features/screens/LoadingScreen.tsx";

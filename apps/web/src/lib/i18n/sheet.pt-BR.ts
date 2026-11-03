@@ -407,4 +407,11 @@ export const sheetPtBR = {
       level === 2 ? 'Especialização' : level === 0.5 ? 'Metade da proficiência' : 'Proficiência',
     total: 'Total',
   },
+  /** Botão flutuante de rolar dados digitando (FloatingDice). */
+  floatingDice: {
+    open: 'Rolar dados digitando',
+    close: 'Fechar a rolagem de dados',
+    title: 'Rolar dados',
+    hint: 'Ex.: 1d20+5, 2d6+3, 2d20kh1 (vantagem). Arraste o botão para mudar de lugar.',
+  },
 } as const;

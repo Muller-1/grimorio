@@ -1,0 +1,153 @@
+/**
+ * B19 — Botão flutuante de rolar dados na ficha. Abre um campo para digitar a rolagem; mora na
+ * borda esquerda ou direita (arrastando troca de lado e de altura, sem grudar em cima nem
+ * embaixo) e, com o painel aberto, sobe para dar lugar ao resultado da rolagem.
+ */
+import type { Page } from '@playwright/test';
+import { expect, openPage, rollBy, test } from '../support/bot';
+
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+const box = async (page: Page, testId: string): Promise<Box> =>
+  (await page.getByTestId(testId).boundingBox())!;
+
+/** Espera o botão parar (ele desliza até o lugar). */
+async function settled(page: Page): Promise<Box> {
+  let last = await box(page, 'floating-dice.button');
+  for (;;) {
+    await page.waitForTimeout(120);
+    const now = await box(page, 'floating-dice.button');
+    if (Math.abs(now.x - last.x) < 0.5 && Math.abs(now.y - last.y) < 0.5) return now;
+    last = now;
+  }
+}
+
+/** Arrasta o botão com o dedo (celular) ou com o mouse (computador). */
+async function drag(page: Page, isMobile: boolean, to: { x: number; y: number }) {
+  const from = await settled(page);
+  const start = { x: from.x + from.width / 2, y: from.y + from.height / 2 };
+  const steps = 12;
+  const at = (i: number) => ({
+    x: start.x + ((to.x - start.x) * i) / steps,
+    y: start.y + ((to.y - start.y) * i) / steps,
+  });
+  if (isMobile) {
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', p?: { x: number; y: number }) =>
+      cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [p] : [] });
+    await touch('touchStart', start);
+    for (let i = 1; i <= steps; i++) {
+      await touch('touchMove', at(i));
+      await page.waitForTimeout(16);
+    }
+    await page.waitForTimeout(150); // para antes de soltar: sem embalo
+    await touch('touchEnd');
+    await cdp.detach();
+  } else {
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    for (let i = 1; i <= steps; i++) {
+      await page.mouse.move(at(i).x, at(i).y);
+      await page.waitForTimeout(16);
+    }
+    await page.waitForTimeout(150);
+    await page.mouse.up();
+  }
+  return settled(page);
+}
+
+const below = (upper: Box, lower: Box) => upper.y + upper.height <= lower.y + 0.5;
+
+test.describe('B19 — botão flutuante de rolar dados', { tag: '@B19' }, () => {
+  test.beforeEach(async ({ page }) => {
+    await openPage(page, '/ficha');
+    await page.getByTestId('floating-dice.button').waitFor();
+  });
+
+  test('digita a rolagem, rola, e botão e painel sobem para o resultado aparecer', async ({
+    page,
+  }) => {
+    const before = await settled(page);
+    await page.getByTestId('floating-dice.button').click();
+    const input = page.getByTestId('floating-dice.input');
+    await expect(input).toBeFocused();
+    await expect(page.getByRole('dialog', { name: 'Rolar dados' })).toBeVisible();
+
+    await input.fill('2d6+3');
+    const result = await rollBy(page, () => input.press('Enter'));
+    expect(result.expression).toBe('2d6+3');
+    const tray = page.getByTestId('roll.tray');
+    await expect(tray).toBeVisible();
+
+    // Botão e painel acima do resultado, sem cobrir nada dele.
+    await expect(page.getByTestId('floating-dice')).toHaveAttribute('data-lifted', 'true');
+    const lifted = await settled(page);
+    const trayBox = await box(page, 'roll.tray');
+    const panel = (await page.getByRole('dialog', { name: 'Rolar dados' }).boundingBox())!;
+    expect(below(lifted, trayBox)).toBe(true);
+    expect(below(panel, trayBox)).toBe(true);
+    expect(below(panel, lifted)).toBe(true);
+    await expect(page.getByTestId('floating-dice.panel')).toBeVisible();
+
+    // O resultado some: o botão volta para onde estava.
+    await page.getByRole('button', { name: 'Esconder o resultado' }).click();
+    await expect(tray).toBeHidden();
+    await expect(page.getByTestId('floating-dice')).not.toHaveAttribute('data-lifted', 'true');
+    const back = await settled(page);
+    expect(back.y).toBeCloseTo(before.y, 0);
+  });
+
+  test('expressão errada avisa no painel; Esc fecha e devolve o foco ao botão', async ({
+    page,
+  }) => {
+    await page.getByTestId('floating-dice.button').click();
+    const input = page.getByTestId('floating-dice.input');
+    await input.fill('2d');
+    await input.press('Enter');
+    await expect(page.getByTestId('floating-dice.error')).toBeVisible();
+    await expect(page.getByTestId('roll.tray')).toBeHidden();
+
+    await input.press('Escape');
+    await expect(page.getByTestId('floating-dice.panel')).toBeHidden();
+    await expect(page.getByTestId('floating-dice.button')).toBeFocused();
+  });
+
+  test('arrastar troca de lado, não gruda em cima nem embaixo e o lugar fica salvo', async ({
+    page,
+    isMobile,
+  }) => {
+    const viewport = page.viewportSize()!;
+    const wrap = page.getByTestId('floating-dice');
+    await expect(wrap).toHaveAttribute('data-side', 'right');
+
+    // Para a esquerda, no meio da tela: encosta na borda esquerda.
+    const left = await drag(page, isMobile, { x: viewport.width * 0.3, y: viewport.height / 2 });
+    await expect(wrap).toHaveAttribute('data-side', 'left');
+    expect(left.x).toBeCloseTo(12, 0);
+    expect(Math.abs(left.y + left.height / 2 - viewport.height / 2)).toBeLessThan(30);
+    // Arrastar não abre o painel.
+    await expect(page.getByTestId('floating-dice.panel')).toBeHidden();
+
+    // Lá para cima: para abaixo do cabeçalho, sem grudar no topo.
+    const top = await drag(page, isMobile, { x: 30, y: 0 });
+    expect(top.y).toBeGreaterThanOrEqual(64);
+    // Lá para baixo (e para a direita): fica acima do pé da tela.
+    const bottom = await drag(page, isMobile, { x: viewport.width - 10, y: viewport.height });
+    await expect(wrap).toHaveAttribute('data-side', 'right');
+    expect(bottom.y + bottom.height).toBeLessThanOrEqual(viewport.height - 40);
+    expect(bottom.x + bottom.width).toBeCloseTo(viewport.width - 12, 0);
+
+    // Volta para a esquerda e recarrega: o lugar foi lembrado.
+    const saved = await drag(page, isMobile, { x: 20, y: viewport.height * 0.4 });
+    await page.reload();
+    await page.getByTestId('floating-dice.button').waitFor();
+    await expect(wrap).toHaveAttribute('data-side', 'left');
+    const reloaded = await settled(page);
+    expect(reloaded.y).toBeCloseTo(saved.y, 0);
+  });
+});

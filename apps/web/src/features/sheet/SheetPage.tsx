@@ -1,7 +1,7 @@
 import { needsArmorUpgrade } from '@grimorio/rules';
 import { createBlankSheet } from '@grimorio/shared';
 import { ArrowLeft, Wand2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -21,6 +21,9 @@ import { useSheetStore } from './store';
 import { useSwipeTabs } from './swipe';
 
 type Column = 'character' | 'combat' | 'actions';
+
+/** O botão flutuante de rolar dados chega logo depois da ficha (não atrasa a primeira pintura). */
+const FloatingDice = lazy(() => import('./components/FloatingDice'));
 
 /** Ordem das abas no celular (a mesma da barra de abas): o deslizar anda por ela. */
 const COLUMN_ORDER: Column[] = ['character', 'combat', 'actions'];
@@ -222,6 +225,9 @@ export default function SheetPage({
       </div>
 
       <RollTray />
+      <Suspense fallback={null}>
+        <FloatingDice />
+      </Suspense>
 
       <Dialog
         open={confirm !== null}

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { t } from '@/lib/i18n';
 import { useDiceStore } from '../store';
+import { usePublishTrayArea } from '../tray-area';
 import { RollHistory } from './RollHistory';
 import { RollResultView } from './RollResultView';
 
@@ -23,6 +24,8 @@ export function RollTray() {
   const [hiddenId, setHiddenId] = useState<string | null>(null);
   const [hold, setHold] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const area = useRef<HTMLDivElement>(null);
+  usePublishTrayArea(area);
   const last = history[0];
   const visible = last ? last.id !== hiddenId : false;
 
@@ -37,7 +40,12 @@ export function RollTray() {
 
   return (
     <>
-      <div aria-live="polite" className="fixed right-3 bottom-3 left-3 z-30 sm:left-auto sm:w-96">
+      <div
+        ref={area}
+        data-floating-keep
+        aria-live="polite"
+        className="fixed right-3 bottom-3 left-3 z-30 sm:left-auto sm:w-96"
+      >
         {visible && last ? (
           <div
             className="flex items-start gap-2 rounded-xl border border-border-strong bg-surface p-3 shadow-card"
@@ -81,6 +89,7 @@ export function RollTray() {
           aria-label={t.dice.showHistory}
           title={t.dice.showHistory}
           className="fixed right-3 bottom-3 z-30 rounded-full shadow-card"
+          data-floating-keep
           data-testid="roll.history-button"
         >
           <History className="size-4" />

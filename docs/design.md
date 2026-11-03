@@ -213,6 +213,14 @@ Regras de interação:
 - O d20 pequeno aparece ao passar o mouse (no toque, sempre) para dizer "isto rola".
 - Vantagem/desvantagem aparecem como selo ao lado do nome e trocam o d20 por 2d20.
 - O ataque já leva os dados extras (Bênção: +1d4). Crítico mostra "20" ou "19–20".
+- **Botão flutuante de dados** (`components/FloatingDice.tsx`, contas em `floating-dice.ts`):
+  um d20 redondo que abre um painel para digitar qualquer rolagem (`1d20+5`, `2d20kh1`…). Mora
+  na borda esquerda ou direita; arrastando, o jogador troca de lado e de altura (ao soltar, ele
+  desliza até a borda mais perto, e um peteleco rápido vale para o outro lado). Nunca gruda em
+  cima (fica abaixo da barra do site e das abas) nem embaixo (deixa livre o botão do
+  histórico). Quando o resultado da rolagem aparece na mesma faixa, botão e painel sobem para
+  não cobrir; quando ele some, voltam. O lugar fica salvo no navegador. No teclado: setas
+  esquerda/direita trocam de lado, cima/baixo mudam a altura; Esc fecha o painel.
 
 No celular as três colunas viram abas (Personagem, Combate, Ações) presas abaixo da barra do
 site, com troca por gesto de deslizar. A faixa de identidade vira: retrato e nome com o "…" no
@@ -290,6 +298,7 @@ segundo, sem recalcular a página a cada quadro.
 | Círculo do 500 | sempre | treme em rajadas | 4 s | ease-in-out |
 | Pergaminho do 403 | sempre | balança 1,2° | 6 s | ease-in-out |
 | Resultado de dado | ao rolar | "pula" e assenta | 0,45 s | cubic-bezier(.2,.8,.2,1) |
+| Botão flutuante de dados | ao soltar, ao abrir o painel, ao resultado aparecer | desliza até o lugar com um leve balanço | 0,42 s | cubic-bezier(.22,1.2,.36,1) |
 
 ---
 
