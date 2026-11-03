@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useId, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Panel } from '@/components/ui/panel';
 import { DiceExpressionInput } from '@/features/dice/components/DiceExpressionInput';
 import { QuickRollFields } from '@/features/dice/components/QuickRollFields';
@@ -14,12 +14,11 @@ import { t } from '@/lib/i18n';
 export default function DicePage() {
   const history = useDiceStore((s) => s.history);
   const clear = useDiceStore((s) => s.clear);
+  // A preferência continua na store; a opção de ligar/desligar vai para as configurações.
   const animate = useDiceStore((s) => s.animate);
-  const setAnimate = useDiceStore((s) => s.setAnimate);
   const recovered = useDiceStore((s) => s.shortcutsRecovered);
   const toast = useToastStore((s) => s.push);
   const [draft, setDraft] = useState<{ label: string; expression: string } | null>(null);
-  const animId = useId();
   const [last, ...older] = history;
 
   useEffect(() => {
@@ -46,25 +45,7 @@ export default function DicePage() {
             <QuickRollFields />
           </Panel>
 
-          <Panel
-            title={t.dice.resultTitle}
-            actions={
-              <label
-                htmlFor={animId}
-                className="flex items-center gap-1.5 text-xs text-muted"
-                title={t.dice.animationHint}
-              >
-                <input
-                  id={animId}
-                  type="checkbox"
-                  checked={animate}
-                  onChange={(e) => setAnimate(e.target.checked)}
-                  className="size-4 accent-[var(--accent)]"
-                />
-                {t.dice.animation}
-              </label>
-            }
-          >
+          <Panel title={t.dice.resultTitle}>
             <div aria-live="polite" className="min-h-16">
               {last ? (
                 <RollResultView key={last.id} entry={last} isLast animate={animate} />
