@@ -47,9 +47,11 @@ O menu da conta também repetia "Meus personagens", que a aba Fichas já abre.
 
 7. **Exportar e apagar olham só para as chaves `grimorio.`.** Exportar baixa um `.json`
    (`site`, `formato: 1`, `exportadoEm`, `dados`, com o JSON de cada chave aberto para dar para
-   ler) sem passar pelo servidor. Apagar abre uma janela que lista o que some, diz se as fichas
-   da conta ficam e avisa que não dá para desfazer; depois recarrega a página, para nada que
-   estava na memória voltar a ser salvo. Importar fica para depois; o `formato` existe para isso.
+   ler; o que não é objeto nem lista fica como texto) sem passar pelo servidor. Apagar abre uma
+   janela que lista o que some e avisa que não dá para desfazer; depois recarrega a página, para
+   nada que estava na memória voltar a ser salvo. **A cópia das fichas da conta (`grimorio.conta.`)
+   não é apagada:** ela pode ter uma edição ainda não enviada, e já sai quando a pessoa clica em
+   Sair. Importar fica para depois; o `formato` existe para isso.
 
 8. **Menu da conta:** sai "Meus personagens"; entram Primeiros passos, Configurações e as opções
    de tema, no computador também. Com a conta, a barra fica só com o avatar.

@@ -133,12 +133,17 @@ test.describe('B20 — configurações', { tag: '@B20' }, () => {
 
     await page.getByTestId('settings.clear').click();
     await page.getByTestId('settings.clear.confirm').click();
-    await page.waitForURL(/\/configuracoes\?apagado=1$/);
+    await page.waitForURL(/\/configuracoes/);
     await page.waitForFunction(() => window.__APP_TEST__ !== undefined);
     await expect(page.getByTestId('settings.cleared')).toBeVisible();
+    // O aviso aparece uma vez: o endereço fica limpo e recarregar não repete.
+    await expect(page).toHaveURL(/\/configuracoes$/);
     await expect(page.locator('html')).not.toHaveAttribute('data-motion', /./);
     const left = await page.evaluate(() => Object.keys(localStorage).sort());
     expect(left).toEqual(['outro-site.preferencia']);
+    await page.reload();
+    await expect(page.getByTestId('settings.floating-dice')).toBeVisible();
+    await expect(page.getByTestId('settings.cleared')).toHaveCount(0);
   });
 
   test('as Configurações estão a um toque na barra', async ({ page, isMobile }) => {

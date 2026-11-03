@@ -80,12 +80,16 @@ export function setFont(font: FontChoice): void {
 // Botão flutuante de dados da ficha
 // ---------------------------------------------------------------------------
 
+/** A escolha desta visita: vale mesmo se o navegador não deixar guardar (aba anônima restrita). */
+let floatingDiceChoice: boolean | null = null;
+
 /** Ligado, a não ser que a pessoa tenha desligado. */
 export function floatingDiceEnabled(): boolean {
-  return safeStorage.get(FLOATING_DICE_STORAGE_KEY) !== '0';
+  return floatingDiceChoice ?? safeStorage.get(FLOATING_DICE_STORAGE_KEY) !== '0';
 }
 
 export function setFloatingDice(enabled: boolean): void {
+  floatingDiceChoice = enabled;
   if (enabled) safeStorage.remove(FLOATING_DICE_STORAGE_KEY);
   else safeStorage.set(FLOATING_DICE_STORAGE_KEY, '0');
   notify();
@@ -107,6 +111,8 @@ function applyStored(): void {
 export function subscribePreferences(onChange: () => void): () => void {
   const onStorage = (event: StorageEvent) => {
     if (event.key !== null && !KEYS.includes(event.key)) return;
+    // Outra aba mudou: vale o que ficou guardado.
+    floatingDiceChoice = null;
     applyStored();
     onChange();
   };

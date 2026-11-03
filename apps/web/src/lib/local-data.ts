@@ -8,12 +8,17 @@ import { nowIso } from '@/ports/clock';
 import { safeStorage } from '@/ports/storage';
 
 export const STORAGE_PREFIX = 'grimorio.';
+/**
+ * A cópia das fichas da conta (e a marca de quem entrou). Apagar não mexe nela: pode ter edição
+ * ainda não enviada, e ela já sai sozinha quando a pessoa clica em Sair (features/auth/store.ts).
+ */
+export const ACCOUNT_PREFIX = 'grimorio.conta.';
 
 export interface LocalDataExport {
   site: 'grimorio';
   formato: 1;
   exportadoEm: string;
-  /** Cada chave como estava guardada; o que é JSON vai aberto, para dar para ler o arquivo. */
+  /** Cada chave como estava guardada; objetos e listas vão abertos, para dar para ler o arquivo. */
   dados: Record<string, unknown>;
 }
 
@@ -27,6 +32,11 @@ export function buildExport(): LocalDataExport {
   for (const key of localKeys()) {
     const raw = safeStorage.get(key);
     if (raw === null) continue;
+    // Só abre objeto e lista: '0', '1' e 'dark' continuam texto, como estavam guardados.
+    if (!/^\s*[[{]/.test(raw)) {
+      dados[key] = raw;
+      continue;
+    }
     try {
       dados[key] = JSON.parse(raw);
     } catch {
@@ -54,12 +64,17 @@ export function downloadExport(): void {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/** O que "Apagar" leva: tudo do site, menos a cópia das fichas da conta. */
+export function clearableKeys(): string[] {
+  return localKeys().filter((key) => !key.startsWith(ACCOUNT_PREFIX));
+}
+
 /**
- * Apaga tudo o que o site guardou neste navegador e diz quantas chaves saíram. Não mexe na
- * conta: as fichas salvas nela continuam no servidor e voltam ao entrar de novo.
+ * Apaga o que o site guardou neste navegador e diz quantas chaves saíram. Não mexe na conta nem
+ * na cópia dela aqui (ver ACCOUNT_PREFIX).
  */
 export function clearLocalData(): number {
-  const keys = localKeys();
+  const keys = clearableKeys();
   for (const key of keys) safeStorage.remove(key);
   return keys.length;
 }

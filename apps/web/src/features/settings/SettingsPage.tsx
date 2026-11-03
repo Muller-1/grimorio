@@ -1,5 +1,5 @@
 import { Download, Trash2 } from 'lucide-react';
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -101,18 +101,25 @@ function FontOptions() {
 function FloatingDiceSwitch() {
   const on = useFloatingDice();
   const d = tst.dice.floating;
+  const id = useId();
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
+      aria-labelledby={`${id}-title`}
+      aria-describedby={`${id}-text`}
       onClick={() => setFloatingDice(!on)}
       className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-field px-3 py-2.5 text-left hover:bg-surface-2"
       data-testid="settings.floating-dice"
     >
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold">{d.title}</span>
-        <span className="block text-xs text-muted">{d.text}</span>
+        <span id={`${id}-title`} className="block text-sm font-bold">
+          {d.title}
+        </span>
+        <span id={`${id}-text`} className="block text-xs text-muted">
+          {d.text}
+        </span>
       </span>
       <SwitchTrack on={on} check />
     </button>
@@ -126,8 +133,16 @@ function LocalData() {
   const d = tst.data;
   const c = d.confirm;
 
-  // Uma preferência trocada aqui ou em outra aba muda a contagem.
-  useEffect(() => subscribePreferences(() => setCount(localKeys().length)), []);
+  // Uma preferência trocada aqui, ou qualquer coisa do site mudada em outra aba, muda a contagem.
+  useEffect(() => {
+    const recount = () => setCount(localKeys().length);
+    const stop = subscribePreferences(recount);
+    window.addEventListener('storage', recount);
+    return () => {
+      stop();
+      window.removeEventListener('storage', recount);
+    };
+  }, []);
 
   const clear = () => {
     clearLocalData();
@@ -148,7 +163,10 @@ function LocalData() {
         </Button>
         <Button
           variant="danger"
-          onClick={() => setConfirm(true)}
+          onClick={() => {
+            setCount(localKeys().length);
+            setConfirm(true);
+          }}
           disabled={count === 0}
           data-testid="settings.clear"
         >
@@ -195,27 +213,34 @@ function LocalData() {
 
 /** Configurações deste aparelho: conforto (tema, animações, fonte), dados e o que fica guardado. */
 export default function SettingsPage() {
-  const [params] = useSearchParams();
-  const cleared = params.get('apagado') === '1';
+  const [params, setParams] = useSearchParams();
+  // Depois de apagar, a página volta com ?apagado=1: o aviso aparece uma vez e o endereço fica
+  // limpo (recarregar não repete o aviso).
+  const [cleared] = useState(() => params.get('apagado') === '1');
 
   useEffect(() => {
     document.title = `${tst.title} · ${t.brand.name}`;
   }, []);
+
+  useEffect(() => {
+    if (params.has('apagado')) setParams({}, { replace: true });
+  }, [params, setParams]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="font-display text-3xl font-bold">{tst.title}</h1>
       <p className="mt-2 text-muted">{tst.lead}</p>
 
-      {cleared ? (
-        <p
-          role="status"
-          className="mt-4 rounded-lg border border-success bg-success-soft px-3 py-2 text-sm font-bold text-success"
-          data-testid="settings.cleared"
-        >
-          {tst.data.cleared}
-        </p>
-      ) : null}
+      <div role="status">
+        {cleared ? (
+          <p
+            className="mt-4 rounded-lg border border-success bg-success-soft px-3 py-2 text-sm font-bold text-success"
+            data-testid="settings.cleared"
+          >
+            {tst.data.cleared}
+          </p>
+        ) : null}
+      </div>
 
       <div className="mt-6 space-y-4">
         <Panel title={tst.comfort.title} bodyClassName="grid gap-5 md:grid-cols-2">

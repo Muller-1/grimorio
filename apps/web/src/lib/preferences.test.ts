@@ -178,6 +178,24 @@ describe('preferências: fonte e botão flutuante', () => {
     expect(browser.storage.has(FONT_STORAGE_KEY)).toBe(false);
   });
 
+  it('o botão flutuante: sem armazenamento disponível, a escolha vale nesta visita', () => {
+    Object.assign(globalThis, {
+      localStorage: {
+        getItem: () => null,
+        setItem: () => {
+          throw new Error('bloqueado');
+        },
+        removeItem: () => {
+          throw new Error('bloqueado');
+        },
+      },
+    });
+    setFloatingDice(false);
+    expect(floatingDiceEnabled()).toBe(false);
+    setFloatingDice(true);
+    expect(floatingDiceEnabled()).toBe(true);
+  });
+
   it('o botão flutuante começa ligado; desligar guarda, religar apaga', () => {
     expect(floatingDiceEnabled()).toBe(true);
     setFloatingDice(false);

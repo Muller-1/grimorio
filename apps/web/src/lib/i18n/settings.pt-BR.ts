@@ -7,7 +7,8 @@ export const settingsPtBR = {
     motion: {
       title: 'Animações',
       hint: 'Dados girando, telas de carregamento e de erro, destaques que piscam.',
-      device: 'Seu aparelho pede menos movimento, então o site começa sem animações.',
+      device:
+        'Seu aparelho pede menos movimento. Sem escolha aqui, o site segue o aparelho; "Ligadas" vale mesmo assim, só neste navegador.',
       options: {
         on: { name: 'Ligadas', text: 'O padrão: os dados giram e as telas têm movimento.' },
         off: { name: 'Desligadas', text: 'Nada se mexe na tela. Os resultados aparecem direto.' },
@@ -35,7 +36,7 @@ export const settingsPtBR = {
   },
   data: {
     title: 'Seus dados',
-    lead: 'O site guarda neste navegador a ficha avulsa, os atalhos de dados, o rascunho da criação de personagem, estas preferências e uma cópia das fichas da conta.',
+    lead: 'O site guarda neste navegador a ficha avulsa, os atalhos de dados, o rascunho da criação de personagem, estas preferências e, se você entrou, uma cópia das fichas da conta.',
     count: (n: number) =>
       n === 0
         ? 'Nada guardado agora.'
@@ -51,10 +52,10 @@ export const settingsPtBR = {
         'a ficha avulsa (a que não está numa conta);',
         'os atalhos de dados;',
         'o rascunho da criação de personagem;',
-        'o tema, as animações, a fonte e o botão flutuante (voltam ao padrão);',
-        'a cópia das fichas da conta guardada aqui.',
+        'o tema, as animações, a fonte e o botão flutuante (voltam ao padrão).',
       ],
-      account: 'As fichas salvas na sua conta não são apagadas: elas continuam no servidor.',
+      account:
+        'As fichas da sua conta não são apagadas, nem a cópia delas aqui (ela pode ter uma edição ainda não enviada). Essa cópia sai quando você clica em Sair.',
       noAccount:
         'Sem conta, a ficha avulsa só existe neste navegador. Se apagar sem exportar, ela some para sempre.',
       undo: 'Não dá para desfazer.',

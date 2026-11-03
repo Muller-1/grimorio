@@ -1,14 +1,23 @@
 import { CircleHelp, Menu, Settings, X } from 'lucide-react';
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { BrandMark } from '@/components/ui/d20-icon';
 import { AccountMenu } from '@/features/auth/AccountMenu';
-import { useAuthStore } from '@/features/auth/store';
+import { SIGNED_IN_HINT_KEY, useAuthStore } from '@/features/auth/store';
 import { ThemeOptions, ThemePicker } from '@/features/theme/ThemePicker';
 import { Toaster } from '@/features/toast/Toaster';
 import { t } from '@/lib/i18n';
 import { useDismiss } from '@/lib/use-dismiss';
 import { cn } from '@/lib/utils';
+import { safeStorage } from '@/ports/storage';
 import { reportLink, siteConfig } from './config';
 import { pageMeta } from './meta';
 
@@ -156,8 +165,24 @@ function MobileMenu() {
  * entrou acha ajuda, configurações e tema no menu da conta; quem não entrou vê os três como
  * botões (no celular, no menu ☰) e "Entrar".
  */
+const noSubscribe = () => () => {};
+
+/**
+ * Quem entrou neste aparelho da última vez já vê a barra de quem entrou enquanto o servidor
+ * responde (sem os botões de ajuda, configurações e tema aparecerem e sumirem em seguida).
+ */
+function useSignedIn(): boolean {
+  const status = useAuthStore((s) => s.status);
+  const remembered = useSyncExternalStore(
+    noSubscribe,
+    () => safeStorage.get(SIGNED_IN_HINT_KEY) === '1',
+    () => false,
+  );
+  return status === 'signed-in' || (status === 'loading' && remembered);
+}
+
 function Header() {
-  const signedIn = useAuthStore((s) => s.status === 'signed-in');
+  const signedIn = useSignedIn();
   return (
     <header className="sticky top-0 z-30 border-b border-rule bg-surface">
       <div className="flex min-h-16 items-center justify-between gap-2 px-3 py-2.5 md:gap-4 md:px-6">
