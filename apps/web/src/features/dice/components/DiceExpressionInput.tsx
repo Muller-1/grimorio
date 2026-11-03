@@ -18,7 +18,7 @@ interface DiceExpressionInputProps {
   onRolled?: () => void;
   /** A cada letra digitada (ex.: a bandeja do botão flutuante mostra os dados da expressão). */
   onTextChange?: (text: string) => void;
-  /** O jogador tocou no campo ou entrou nele para digitar. */
+  /** O jogador tocou no campo (para digitar de novo). */
   onEdit?: () => void;
   /** Prefixo dos `data-testid` (há mais de um campo destes na mesma tela). */
   testIdPrefix?: string;
@@ -68,7 +68,6 @@ export function DiceExpressionInput({
             onTextChange?.(e.target.value);
           }}
           onPointerDown={onEdit}
-          onFocus={onEdit}
           className="h-11 min-w-0 font-mono text-base"
           autoComplete="off"
           autoCapitalize="off"

@@ -210,8 +210,10 @@
 .gr-rolling .gr-die-shade {
   animation: gr-die-faces var(--land) steps(1, end) both;
 }
-/* O número aparece quando o dado para; o total, quando o último para. */
+/* O número e o contorno aparecem quando o dado para (o contorno antes entregaria quem ganhou);
+   o total, quando o último para. */
 .gr-rolling .gr-die-num,
+.gr-rolling .gr-die-mark,
 .gr-rolling .gr-tray-total {
   animation: gr-die-show 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) var(--land) both;
 }

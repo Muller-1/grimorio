@@ -237,10 +237,11 @@ Regras de interação:
     e os que não contam ficam apagados. Uma legenda embaixo explica ("maiores ficam").
   - Com o painel aberto, toda rolagem (do campo ou de qualquer dado da ficha) gira na bandeja
     sem apagar o que foi digitado; tocar no campo ou digitar volta para os dados do campo. Tocar
-    num dado da ficha não fecha o painel; qualquer outro toque fora fecha. Com o painel fechado,
-    só aparece a notificação.
+    num dado da ficha não fecha o painel, nem arrastar a página (no celular é assim que se chega
+    ao dado); qualquer outro toque fora fecha. Com o painel fechado, só aparece a notificação.
   - A notificação do resultado espera os dados pararem. Sem espaço (teclado do celular aberto,
-    tela baixa), o desenho some e fica só a linha com o nome e o total.
+    tela baixa), o desenho some e fica só a linha com o nome e o total; aí a notificação não
+    espera.
 
 No celular as três colunas viram abas (Personagem, Combate, Ações) presas abaixo da barra do
 site, com troca por gesto de deslizar. A faixa de identidade vira: retrato e nome com o "…" no

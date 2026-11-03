@@ -236,11 +236,9 @@ export function DiceTray({ height, expression, entry, motion }: DiceTrayProps) {
         {entry ? (
           <>
             <span className="gr-tray-label">{entry.label}</span>
-            {view.kind === 'dice' ? (
-              <span className="gr-tray-total" style={rolling ? done : undefined}>
-                {f.total} <strong className="font-display">{entry.result.total}</strong>
-              </span>
-            ) : null}
+            <span className="gr-tray-total" style={rolling ? done : undefined}>
+              {f.total} <strong className="font-display">{entry.result.total}</strong>
+            </span>
           </>
         ) : view.kind === 'many' ? (
           <span>{f.manyHint}</span>

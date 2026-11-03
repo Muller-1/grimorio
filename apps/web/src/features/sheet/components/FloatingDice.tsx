@@ -217,11 +217,17 @@ export default function FloatingDice() {
   const motion = animate && !prefersReducedMotion();
 
   // A notificação do resultado espera os dados pararem de girar na bandeja. Antes de pintar a
-  // tela: senão ela aparece por um quadro e some.
+  // tela: senão ela aparece por um quadro e some. Só se o desenho estiver na tela na hora da
+  // rolagem (com o teclado do celular aberto não há dado girando para esperar); se ele aparecer
+  // depois, a notificação já mostrada não some de novo.
+  const drawingNow = useRef(drawing);
+  useLayoutEffect(() => {
+    drawingNow.current = drawing;
+  });
   const heldId = entry && motion ? entry.id : null;
   const holdFor = entry && motion ? rollDuration(resultTray(entry.result)) : 0;
   useLayoutEffect(() => {
-    if (!heldId || holdFor === 0) return;
+    if (!heldId || holdFor === 0 || drawingNow.current === 0) return;
     const area = useTrayArea.getState();
     area.hold(heldId);
     const timer = setTimeout(() => area.release(heldId), holdFor);
@@ -270,23 +276,42 @@ export default function FloatingDice() {
         target instanceof Element && target.closest('[data-floating-keep], [role="dialog"]')
       );
     };
-    // Última rolagem quando o toque fora começou (`undefined` = o toque foi dentro).
+    // Última rolagem quando o toque fora começou (`undefined` = nenhum toque fora pendente).
+    // Arrastar a página (o toque vira rolagem da tela) não fecha: no celular é assim que se chega
+    // ao dado da ficha com o painel aberto.
     let before: string | null | undefined;
-    const onDown = (e: globalThis.PointerEvent) => {
-      before = outside(e.target) ? lastRollId() : undefined;
-    };
-    // O clique chega aqui depois do botão da ficha ter rolado.
-    const onClick = (e: MouseEvent) => {
-      if (before === undefined || !outside(e.target)) return;
+    let fallback: ReturnType<typeof setTimeout> | undefined;
+    const decide = () => {
+      clearTimeout(fallback);
+      if (before === undefined) return;
       const rolled = lastRollId() !== before;
       before = undefined;
       if (!rolled) setOpen(false);
     };
+    const onDown = (e: globalThis.PointerEvent) => {
+      clearTimeout(fallback);
+      before = outside(e.target) ? lastRollId() : undefined;
+    };
+    // Alguns celulares (iPhone) não mandam clique quando o toque cai fora de um botão.
+    const onUp = () => {
+      if (before !== undefined) fallback = setTimeout(decide, 350);
+    };
+    const onCancel = () => {
+      clearTimeout(fallback);
+      before = undefined;
+    };
+    // O clique chega aqui depois do botão da ficha ter rolado. Clique pelo teclado (sem toque
+    // antes) não tem nada pendente e não fecha.
     document.addEventListener('pointerdown', onDown);
-    document.addEventListener('click', onClick);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onCancel);
+    document.addEventListener('click', decide);
     return () => {
+      clearTimeout(fallback);
       document.removeEventListener('pointerdown', onDown);
-      document.removeEventListener('click', onClick);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onCancel);
+      document.removeEventListener('click', decide);
     };
   }, [open]);
 
