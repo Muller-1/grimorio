@@ -51,7 +51,18 @@
     transform: translateX(calc(100% - 10px));
   }
 }
+/* Flutua por igual em volta da posição original: 4 px acima e 4 px abaixo. */
 @keyframes gr-float {
+  0%,
+  100% {
+    transform: translateY(-4px);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+/* Sobe 8 px e volta (pedaço do mapa no 404). */
+@keyframes gr-bob {
   0%,
   100% {
     transform: translateY(0);
@@ -77,15 +88,16 @@
 
 /* ---------- página inicial: círculo lento, d20 flutuando, brilhos ---------- */
 
+/* A sombra acompanha o d20: menor e mais clara com ele no alto, maior com ele embaixo. */
 @keyframes gr-float-shadow {
   0%,
   100% {
-    transform: scale(1);
-    opacity: var(--hi, 0.16);
+    transform: scale(0.93);
+    opacity: var(--lo, 0.1);
   }
   50% {
-    transform: scale(0.86);
-    opacity: var(--lo, 0.1);
+    transform: scale(1.07);
+    opacity: var(--hi, 0.16);
   }
 }
 .gr-hero-layer {
@@ -204,7 +216,7 @@
   animation: gr-march 1.4s linear infinite;
 }
 .gr-bob {
-  animation: gr-float 3s ease-in-out infinite;
+  animation: gr-bob 3s ease-in-out infinite;
 }
 .gr-drift {
   animation: gr-drift 5s ease-in-out infinite;

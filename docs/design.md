@@ -280,7 +280,7 @@ segundo, sem recalcular a página a cada quadro.
 | Glifos e estrelas | sempre | cintilam entre `--lo` e `--hi` | 2,4–4 s | ease-in-out |
 | Frase e resultados | ao trocar | sobem 6 px e aparecem | 0,5 s | ease-out |
 | Losango do filete | sempre | vai e volta | 2,4 s | ease-in-out |
-| Arte da página inicial | sempre | círculo 90 s e 60 s inverso; d20 flutua | 4,8 s | ease-in-out |
+| Arte da página inicial | sempre | círculo 90 s e 60 s inverso; d20 flutua 4 px acima e 4 px abaixo da posição (a sombra acompanha) | 4,8 s | ease-in-out |
 | d20 da página inicial | a cada 7 s (começa em 2 s) | pula, dá uma volta inteira, quica e cai no 20 | 7 s | cubic-bezier(.45,.05,.35,1) |
 | Faísca do anel (página inicial) | sempre | dá a volta no anel de runas | 12 s | linear |
 | Estrela do grimório (página inicial) | sempre | acende e apaga | 4 s | ease-in-out |
