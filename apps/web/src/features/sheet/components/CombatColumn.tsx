@@ -199,7 +199,7 @@ function CombatStats() {
         <span className="min-w-0 flex-1 text-sm leading-tight font-bold">
           {ts.identity.inspiration}
         </span>
-        <SwitchTrack on={inspired} check />
+        <SwitchTrack on={inspired} />
       </button>
     </div>
   );
