@@ -71,13 +71,14 @@ function EquipmentChoice({ cls }: { cls: ClassDef }) {
           selected={value === pack.option}
           onSelect={() => update((d) => void (d.classEquipment = pack.option))}
           title={w.equipmentOption(pack.option)}
+          compact
           testId={`wizard.class-equipment.${pack.option}`}
         >
-          <span className="mt-1 flex-1 text-sm text-muted">
+          <span className="mt-0.5 flex-1 text-xs text-muted">
             {pack.items.length ? pack.items.join(', ') : w.goldOnly(pack.gold)}
           </span>
           {pack.items.length ? (
-            <span className="mt-2 flex items-center gap-1 text-sm font-semibold text-gold">
+            <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-gold">
               <Coins className="size-4" aria-hidden="true" />
               {w.gold(pack.gold)}
             </span>
@@ -212,7 +213,8 @@ function ClassDetails({ cls }: { cls: ClassDef }) {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2" data-testid="wizard.class-details">
+    // Um terço para o resumo da classe, dois terços para as escolhas (que são a parte longa).
+    <div className="grid gap-4 lg:grid-cols-3 lg:items-start" data-testid="wizard.class-details">
       <Panel title={cls.name}>
         <p className="mb-3 text-sm">{cls.tagline}</p>
         <Facts items={facts} />
@@ -236,7 +238,7 @@ function ClassDetails({ cls }: { cls: ClassDef }) {
         </div>
       </Panel>
 
-      <div className="space-y-4">
+      <div className="space-y-4 lg:col-span-2">
         <Panel
           id="wizard-class-skills"
           title={
@@ -265,6 +267,7 @@ function ClassDetails({ cls }: { cls: ClassDef }) {
                   onSelect={() => update((d) => void (d.classOptionId = choice.id))}
                   title={choice.name}
                   subtitle={choice.text}
+                  compact
                   testId={`wizard.class-option.${choice.id}`}
                 />
               ))}
@@ -274,7 +277,7 @@ function ClassDetails({ cls }: { cls: ClassDef }) {
 
         {cls.fightingStyle ? (
           <Panel id="wizard-fighting-style" title={w.fightingStyle}>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {(Object.keys(FIGHTING_STYLES) as FightingStyleId[]).map((id) => (
                 <ChoiceCard
                   key={id}
@@ -282,6 +285,7 @@ function ClassDetails({ cls }: { cls: ClassDef }) {
                   onSelect={() => update((d) => void (d.fightingStyleId = id))}
                   title={FIGHTING_STYLES[id].name}
                   subtitle={FIGHTING_STYLES[id].text}
+                  compact
                   badges={
                     FIGHTING_STYLES[id].source === 'book' ? (
                       <Badge tone="gold">{tw.bookTag}</Badge>

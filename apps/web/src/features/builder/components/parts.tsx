@@ -87,6 +87,7 @@ export function ChoiceCard({
   children,
   testId,
   className,
+  compact = false,
 }: {
   selected: boolean;
   onSelect: () => void;
@@ -98,6 +99,8 @@ export function ChoiceCard({
   children?: ReactNode;
   testId?: string;
   className?: string;
+  /** Listas longas de opções com texto (estilo de luta, talentos): cartão menor e texto miúdo. */
+  compact?: boolean;
 }) {
   return (
     <button
@@ -106,7 +109,8 @@ export function ChoiceCard({
       aria-pressed={selected}
       data-testid={testId}
       className={cn(
-        'group relative flex h-full w-full flex-col rounded-xl border bg-surface p-3 text-left shadow-card transition-colors',
+        'group relative flex h-full w-full flex-col rounded-xl border bg-surface text-left shadow-card transition-colors',
+        compact ? 'p-2.5' : 'p-3',
         selected
           ? 'border-accent ring-2 ring-accent/40'
           : 'border-border hover:border-border-strong hover:bg-surface-2/50',
@@ -114,7 +118,12 @@ export function ChoiceCard({
       )}
     >
       <span className="flex items-start justify-between gap-2">
-        <span className="flex items-center gap-2 font-display text-base font-bold">
+        <span
+          className={cn(
+            'flex items-center gap-2 font-display font-bold',
+            compact ? 'text-sm' : 'text-base',
+          )}
+        >
           {icon}
           {title}
         </span>
@@ -124,8 +133,14 @@ export function ChoiceCard({
           </span>
         ) : null}
       </span>
-      {subtitle ? <span className="mt-1 text-sm text-muted">{subtitle}</span> : null}
-      {badges ? <span className="mt-2 flex flex-wrap gap-1">{badges}</span> : null}
+      {subtitle ? (
+        <span className={cn('text-muted', compact ? 'mt-0.5 text-xs' : 'mt-1 text-sm')}>
+          {subtitle}
+        </span>
+      ) : null}
+      {badges ? (
+        <span className={cn('flex flex-wrap gap-1', compact ? 'mt-1' : 'mt-2')}>{badges}</span>
+      ) : null}
       {children}
     </button>
   );

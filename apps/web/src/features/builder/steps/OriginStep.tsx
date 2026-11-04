@@ -306,6 +306,7 @@ function SpeciesDetails() {
                 onSelect={() => update((d) => void (d.speciesOptionId = choice.id))}
                 title={choice.name}
                 subtitle={choice.text}
+                compact
                 testId={`wizard.species-option.${choice.id}`}
               />
             ))}
@@ -332,7 +333,7 @@ function SpeciesDetails() {
       {species.extraOriginFeat ? (
         <div className="mt-4">
           <BlockTitle>{o.speciesFeat}</BlockTitle>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {FEAT_IDS.map((id) => (
               <ChoiceCard
                 key={id}
@@ -345,6 +346,7 @@ function SpeciesDetails() {
                 }
                 title={ORIGIN_FEATS[id].name}
                 subtitle={ORIGIN_FEATS[id].text}
+                compact
                 badges={
                   ORIGIN_FEATS[id].source === 'book' ? (
                     <Badge tone="gold">{tw.bookTag}</Badge>
