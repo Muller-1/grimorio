@@ -236,6 +236,8 @@ export const wizardPtBR = {
   result: {
     created: (name: string) => `${name} foi criado!`,
     savedLocal: 'Personagem salvo neste navegador.',
+    buildFailed:
+      'Não conseguimos montar a ficha com essas escolhas. É um erro do site: suas escolhas continuam aqui; tente mudar a última e avise a gente.',
     replaceTitle: 'Substituir a ficha deste navegador?',
     replaceText:
       'Sem conta, o site guarda uma ficha por navegador. A ficha atual será substituída pela nova. Entre com o Google para guardar várias.',

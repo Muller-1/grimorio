@@ -104,8 +104,16 @@ export default function CreatePage() {
     else go(steps[index + 1]!);
   };
 
-  const finishLocal = () => {
+  // A montagem só falha por defeito nosso (as etapas já conferiram tudo); mesmo assim, o
+  // botão nunca fica mudo.
+  const buildSheet = () => {
     const sheet = buildCharacterSheet(draft, { newId });
+    if (!sheet) toast(w.result.buildFailed, 'danger');
+    return sheet;
+  };
+
+  const finishLocal = () => {
+    const sheet = buildSheet();
     if (!sheet) return;
     loadLocal(sheet);
     reset();
@@ -114,7 +122,7 @@ export default function CreatePage() {
   };
 
   const create = async () => {
-    const sheet = buildCharacterSheet(draft, { newId });
+    const sheet = buildSheet();
     if (!sheet) return;
     if (saveTo === 'local') {
       if (hasLocalSheet()) setConfirmReplace(true);

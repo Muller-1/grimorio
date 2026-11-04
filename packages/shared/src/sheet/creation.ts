@@ -51,8 +51,12 @@ export const CreationRecordSchema = z.object({
   backgroundBonus: z.partialRecord(ability, z.number().int().min(1).max(2)),
   /** Perícias escolhidas na classe (as do antecedente são fixas). */
   classSkills: z.array(skill).max(6),
-  /** Perícias extras de espécie/talento (ex.: Humano Habilidoso, talento Habilidoso). */
-  extraSkills: z.array(skill).max(6),
+  /**
+   * Perícias extras de espécie/talento (ex.: Humano Hábil, talento Habilidoso). Humano com
+   * antecedente de Habilidoso e Habilidoso de novo pelo Versátil chega a 7; o teto é o total de
+   * perícias para não barrar combinação válida (antes era 6 e a ficha não era criada).
+   */
+  extraSkills: z.array(skill).max(SKILL_KEYS.length),
   originFeatId: contentId,
   /** Escolhas do equipamento inicial: pacote A (itens) ou B (só ouro). */
   classEquipment: z.enum(['A', 'B', 'C']),

@@ -199,6 +199,30 @@ describe('validação das etapas', () => {
     expect(d.languages).toHaveLength(3);
   });
 
+  it('Humano + antecedente com Habilidoso + Habilidoso pelo Versátil cria a ficha (7 perícias extras)', () => {
+    // Antes o registro da criação aceitava só 6 perícias extras: as etapas ficavam todas
+    // certas, mas a ficha montada era descartada e "Criar" não fazia nada (Ladino Charlatão).
+    for (const classId of CLASS_ORDER) {
+      let d = completeDraft(classId, (x) => {
+        x.speciesId = 'human';
+        x.speciesSkills = ['medicine'];
+        x.speciesFeatId = 'skilled';
+      });
+      d = withBackground(d, 'charlatan');
+      d.backgroundBonus = suggestBackgroundBonus(
+        BACKGROUNDS.charlatan!.abilities,
+        CLASSES[classId].primary,
+      );
+      d.featSkills = ['arcana', 'history', 'nature', 'religion', 'animal-handling', 'survival'];
+      if (CLASSES[classId].expertise) d.expertise = d.classSkills.slice(0, 2);
+      const steps = creationSteps(d).flatMap((s) => stepIssues(d, s));
+      expect(steps, classId).toEqual([]);
+      const sheet = buildCharacterSheet(d, ctx);
+      expect(sheet, classId).not.toBeNull();
+      expect(sheet!.creation!.extraSkills).toHaveLength(7);
+    }
+  });
+
   it('perícia repetida entre classe e antecedente é apontada', () => {
     const d = completeDraft('fighter', (x) => (x.classSkills = ['athletics', 'perception']));
     expect(overlappingSkills(d)).toEqual(['athletics']);
