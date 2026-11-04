@@ -12,6 +12,9 @@ export const levelUpPtBR = {
     'Depois de confirmar, cada nível novo vem em telas curtas: primeiro o que você ganhou, depois uma escolha por vez.',
   levels: (n: number) => `+${n} ${n === 1 ? 'nível' : 'níveis'}`,
   fromTo: (from: number, to: number) => `Nível ${from} → ${to}`,
+  newLevel: 'Novo nível',
+  fewer: 'Um nível a menos',
+  more: 'Um nível a mais',
   chooseClass: 'Classe do personagem',
   chooseClassHint:
     'Esta ficha foi feita à mão. Escolha a classe para o site saber o que você ganha a cada nível.',

@@ -9,11 +9,12 @@ import {
 } from '@grimorio/rules';
 import { spellById } from '@grimorio/rules/spells-data';
 import { ABILITY_KEYS, type AbilityKey, type LevelChoice, type LocalSheet } from '@grimorio/shared';
-import { ArrowLeft, ArrowRight, Check, Dices } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Dices, Minus, Plus } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Label, Select } from '@/components/ui/input';
+import { NumberField } from '@/components/ui/number-field';
 import { useDiceStore } from '@/features/dice/store';
 import { derivedOf } from '@/features/sheet/derived';
 import { useSheetStore } from '@/features/sheet/store';
@@ -228,6 +229,7 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: 'count' });
   const [drafts, setDrafts] = useState<Record<number, LevelDraft>>({});
   const classSelect = useId();
+  const countTitle = useId();
   const target = Math.min(20, from + count);
 
   // A subclasse e as opções escolhidas agora mudam o que os níveis seguintes ganham.
@@ -336,49 +338,75 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
               <p className="mt-1 text-xs text-muted">{tl.chooseClassHint}</p>
             </div>
           ) : null}
-          <fieldset>
-            <legend className="mb-2 text-sm font-semibold">{tl.howMany}</legend>
-            <div className="flex flex-wrap gap-1.5">
-              {Array.from({ length: Math.min(maxCount, 10) }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  aria-pressed={count === n}
-                  onClick={() => setCount(n)}
-                  className={cn(
-                    'h-9 min-w-14 rounded-md border px-3 text-sm font-semibold',
-                    count === n
-                      ? 'border-accent bg-accent text-accent-contrast'
-                      : 'border-border hover:bg-surface-2',
-                  )}
-                  data-testid={`levelup.count.${n}`}
-                >
-                  {tl.levels(n)}
-                </button>
-              ))}
-              {maxCount > 10 ? (
-                <Select
-                  value={count > 10 ? count : ''}
-                  onChange={(e) => e.target.value && setCount(Number(e.target.value))}
-                  className="h-9 w-28"
-                  aria-label={tl.howMany}
-                >
-                  <option value="">…</option>
-                  {Array.from({ length: maxCount - 10 }, (_, i) => i + 11).map((n) => (
-                    <option key={n} value={n}>
-                      {tl.levels(n)}
-                    </option>
-                  ))}
-                </Select>
-              ) : null}
-            </div>
-          </fieldset>
-          <p
-            className="rounded-md bg-surface-2 px-3 py-2 text-center font-display text-lg font-bold"
-            data-testid="levelup.from-to"
+          {/* Um número só, com − e +: o novo nível. Dá para digitar (pular do 1 para o 11 sem
+              tocar dez vezes). A trilha embaixo mostra onde o personagem está entre 1 e 20. */}
+          <section
+            aria-labelledby={countTitle}
+            className="rounded-[10px] border border-border-soft bg-field px-4 pt-3 pb-4 text-center"
           >
-            {tl.fromTo(from, target)}
-          </p>
+            <h3 id={countTitle} className="text-sm font-bold">
+              {tl.howMany}
+            </h3>
+            <div className="mt-3 flex items-center justify-center gap-4">
+              <Button
+                size="icon"
+                className="size-11 rounded-full"
+                disabled={count <= 1}
+                onClick={() => setCount(count - 1)}
+                aria-label={tl.fewer}
+                data-testid="levelup.fewer"
+              >
+                <Minus className="size-5" />
+              </Button>
+              <div className="w-24">
+                <span className="label-caps block" aria-hidden="true">
+                  {tl.newLevel}
+                </span>
+                <NumberField
+                  value={target}
+                  min={from + 1}
+                  max={20}
+                  onCommit={(n) => setCount(n - from)}
+                  label={tl.newLevel}
+                  className="h-14 font-display text-[2.5rem] leading-none font-bold text-accent"
+                  data-testid="levelup.target"
+                />
+              </div>
+              <Button
+                size="icon"
+                className="size-11 rounded-full"
+                disabled={count >= maxCount}
+                onClick={() => setCount(count + 1)}
+                aria-label={tl.more}
+                data-testid="levelup.more"
+              >
+                <Plus className="size-5" />
+              </Button>
+            </div>
+            <p className="mt-1 text-sm text-muted" aria-live="polite">
+              <span data-testid="levelup.from-to">{tl.fromTo(from, target)}</span>
+              {' · '}
+              {tl.levels(count)}
+            </p>
+            <ol aria-hidden="true" className="mt-4 flex gap-0.5">
+              {Array.from({ length: 20 }, (_, i) => i + 1).map((level) => (
+                <li
+                  key={level}
+                  className={cn(
+                    'h-1.5 flex-1 rounded-full',
+                    level <= from ? 'bg-accent/35' : level <= target ? 'bg-accent' : 'bg-sunken',
+                  )}
+                />
+              ))}
+            </ol>
+            <div
+              aria-hidden="true"
+              className="tabular mt-1 flex justify-between text-xs text-muted"
+            >
+              <span>1</span>
+              <span>20</span>
+            </div>
+          </section>
         </div>
       </Dialog>
     );

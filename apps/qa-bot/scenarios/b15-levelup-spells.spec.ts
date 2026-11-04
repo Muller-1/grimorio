@@ -75,7 +75,7 @@ test.describe('B15 — subida de nível, magias e habilidades', { tag: '@B15' },
   test('Bárbaro 2 → 4: escolhas por nível, resumo, aplicar e desfazer', async ({ page }) => {
     await withSheet(page, sheetOf('barbarian', 2, { str: 16, con: 14 }));
     await page.getByTestId('levelup.open').click();
-    await page.getByTestId('levelup.count.2').click();
+    await page.getByTestId('levelup.more').click();
     await expect(page.getByTestId('levelup.from-to')).toHaveText('Nível 2 → 4');
     await page.getByTestId('levelup.confirm').click();
 
