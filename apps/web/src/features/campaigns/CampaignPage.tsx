@@ -529,8 +529,10 @@ export default function CampaignPage() {
         </div>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <section aria-labelledby="party-title" className="space-y-3">
+      {/* grid-cols-1 = minmax(0, 1fr): sem ele, a coluna cresce até caber um nome comprido
+          inteiro (o "…" não corta nada) e a página fica mais larga que o celular. */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <section aria-labelledby="party-title" className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="party-title" className="font-display text-lg font-bold">
               {tcp.partyTitle}
@@ -542,7 +544,7 @@ export default function CampaignPage() {
               {tcp.partyEmpty}
             </p>
           ) : (
-            <ul className="grid gap-3 md:grid-cols-2" data-testid="party.list">
+            <ul className="grid grid-cols-1 gap-3 md:grid-cols-2" data-testid="party.list">
               {party.map((m) => (
                 <PartyCard
                   key={m.characterId}
@@ -556,7 +558,7 @@ export default function CampaignPage() {
           )}
         </section>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <InviteBox campaign={campaign} onRenewed={() => void loadCampaign()} />
           <AddSheet campaignId={campaign.id} party={party} onAdded={() => void loadParty()} />
           <section className="rounded-xl border border-border bg-surface p-4">
