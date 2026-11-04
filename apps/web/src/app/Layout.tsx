@@ -185,10 +185,12 @@ function Header() {
   const signedIn = useSignedIn();
   return (
     <header className="sticky top-0 z-30 border-b border-rule bg-surface">
-      <div className="flex min-h-16 items-center justify-between gap-2 px-3 py-2.5 md:gap-4 md:px-6">
+      {/* No computador, três colunas (as laterais com a mesma largura): as abas ficam no meio da
+          tela, não no meio do que sobra entre a marca e os botões. */}
+      <div className="flex min-h-16 items-center justify-between gap-2 px-3 py-2.5 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
         <Link
           to="/"
-          className="inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-md text-text"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2.5 justify-self-start rounded-md text-text"
           aria-label={t.nav.homeLabel}
         >
           <BrandMark className="size-[26px]" />
@@ -204,7 +206,7 @@ function Header() {
 
         <MainNav className={cn(!signedIn && 'max-md:hidden')} />
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 justify-self-end">
           {signedIn ? null : (
             <>
               <Link
