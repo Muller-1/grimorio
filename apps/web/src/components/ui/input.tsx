@@ -1,9 +1,12 @@
 import type { ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
 
-/** Campo (docs/design.md): fundo de papel claro, borda dourada (prateada) e sombra por dentro. */
+/**
+ * Campo (docs/design.md): fundo de papel claro, borda dourada (prateada) e sombra por dentro.
+ * Com `aria-invalid`, borda e contorno de foco ficam na cor de erro, colados (um anel só).
+ */
 export const fieldClass =
-  'w-full rounded-md border border-border-strong bg-field px-3 py-1.5 text-base text-text shadow-[inset_0_1px_2px_rgb(42_30_24/0.08)] focus-visible:border-focus disabled:opacity-50 dark:shadow-[inset_0_1px_2px_rgb(0_0_0/0.4)]';
+  'w-full rounded-md border border-border-strong bg-field px-3 py-1.5 text-base text-text shadow-[inset_0_1px_2px_rgb(42_30_24/0.08)] focus-visible:border-focus disabled:opacity-50 aria-[invalid=true]:border-danger aria-[invalid=true]:outline-danger aria-[invalid=true]:outline-offset-0 dark:shadow-[inset_0_1px_2px_rgb(0_0_0/0.4)]';
 
 export function Input({ className, ...props }: ComponentProps<'input'>) {
   return <input className={cn(fieldClass, 'h-10', className)} {...props} />;

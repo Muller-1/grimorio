@@ -123,8 +123,12 @@ function SheetPreview() {
 export function DetailsStep({ saveTo }: { saveTo: 'account' | 'local' }) {
   const draft = useBuilderStore((s) => s.draft);
   const update = useBuilderStore((s) => s.update);
+  const flagged = useBuilderStore((s) => s.flagged);
   const cls = draftClass(draft);
+  // Só depois de tentar criar sem nome: antes disso o campo vazio não é erro.
+  const nameMissing = flagged === 'name-missing' && !draft.name.trim();
   const nameId = useId();
+  const nameErrorId = useId();
   const playerId = useId();
   const appearanceId = useId();
   const backstoryId = useId();
@@ -149,8 +153,19 @@ export function DetailsStep({ saveTo }: { saveTo: 'account' | 'local' }) {
               maxLength={100}
               placeholder={dt.namePlaceholder}
               onChange={(e) => update((d) => void (d.name = e.target.value))}
+              aria-invalid={nameMissing || undefined}
+              aria-describedby={nameMissing ? nameErrorId : undefined}
               data-testid="wizard.name"
             />
+            {nameMissing ? (
+              <p
+                id={nameErrorId}
+                className="mt-1 text-sm text-danger"
+                data-testid="wizard.name.error"
+              >
+                {tw.issues['name-missing']}
+              </p>
+            ) : null}
           </div>
           <div>
             <Label htmlFor={playerId}>{dt.player}</Label>

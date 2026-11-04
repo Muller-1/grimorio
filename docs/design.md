@@ -138,7 +138,7 @@ Títulos de tela usam Cinzel entre 1,5 e 3,3 rem (o título das cenas é fluido:
 | --- | --- | --- | --- |
 | Botão | `components/ui/button.tsx` | `primary`, `outline` (padrão), `ghost`, `subtle`, `danger`, `success`, `link`; tamanhos `sm` 36 px, `md` 40 px, `lg` 48 px, `icon`, `icon-sm` | desabilitado: 50% de opacidade; o principal desabilitado vira cinza em vez de transparente |
 | Painel | `components/ui/panel.tsx` | `title`, `actions`, `className`, `bodyClassName` | faixa de título em `surface-2` com losango e `label-caps`; corpo em `surface` |
-| Campo | `components/ui/input.tsx` | `fieldClass`, `Label` | 40 px de altura, fundo `field`, borda `border-strong`, sombra interna leve; rótulo em `text-xs` negrito `muted` |
+| Campo | `components/ui/input.tsx` | `fieldClass`, `Label` | 40 px de altura, fundo `field`, borda `border-strong`, sombra interna leve; rótulo em `text-xs` negrito `muted`. Com erro (`aria-invalid`): borda e contorno de foco em `danger`, colados num anel só, e o aviso embaixo em `text-sm text-danger` ligado por `aria-describedby` |
 | Marca e dados | `components/ui/d20-icon.tsx` | `BrandMark`, `D20Icon`, `D20Die`, `Diamond`, `D20Facets` | o d20 desenhado à mão do guia de estilo; `D20Die` é o dado ilustrado com faces `die-*` e arestas `metal-*` |
 | Ícones de traço | `components/ui/stroke-icon.tsx` | `StrokeIcon name="…"` | os ícones do quadro que não existem no Lucide (escudo, raio, pegadas, pergaminho…) |
 | Ornamento | `components/ui/ornament.tsx` | — | filete com losango no meio |

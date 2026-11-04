@@ -4,6 +4,7 @@ import {
   sanitizeDraft,
   type AbilityRoll,
   type CreationDraft,
+  type CreationIssue,
   type CreationStep,
 } from '@grimorio/rules';
 import { create } from 'zustand';
@@ -21,6 +22,12 @@ interface BuilderState {
   /** Altera o rascunho: a receita devolve um novo rascunho ou edita a cópia recebida. */
   update(recipe: (draft: CreationDraft) => CreationDraft | void): void;
   setRolls(rolls: AbilityRoll[] | null): void;
+  /**
+   * Pendência que o jogador tentou passar e que é de um campo só (o nome): o campo mostra o
+   * aviso. Fica só na memória, não vai para o rascunho salvo.
+   */
+  flagged: CreationIssue | null;
+  flag(issue: CreationIssue | null): void;
   reset(): void;
 }
 
@@ -66,6 +73,7 @@ function load(): Pick<BuilderState, 'step' | 'draft' | 'rolls'> {
 
 export const useBuilderStore = create<BuilderState>((set, get) => ({
   ...load(),
+  flagged: null,
   setStep(step) {
     set({ step });
   },
@@ -77,9 +85,12 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   setRolls(rolls) {
     set({ rolls });
   },
+  flag(issue) {
+    set({ flagged: issue });
+  },
   reset() {
     safeStorage.remove(BUILDER_STORAGE_KEY);
-    set({ step: 'class', draft: emptyDraft(), rolls: null });
+    set({ step: 'class', draft: emptyDraft(), rolls: null, flagged: null });
   },
 }));
 
