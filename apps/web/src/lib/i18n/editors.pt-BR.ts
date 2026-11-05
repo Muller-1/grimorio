@@ -118,6 +118,7 @@ export const editorsPtBR = {
     less: (name: string) => `Menos um: ${name}`,
     editItem: (name: string) => `Editar ${name}`,
     add: 'Adicionar item',
+    fromBook: 'Do livro',
     empty: 'Nenhum item ainda. Use “Adicionar item”.',
     emptyWeapons: 'Nenhuma arma. Adicione na aba Armas.',
     editor: {

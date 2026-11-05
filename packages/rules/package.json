@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./spells-data": "./src/spells/data/index.ts",
+    "./inventory-catalog": "./src/inventory/catalog.ts",
     "./campaign": "./src/campaign/index.ts"
   },
   "dependencies": {

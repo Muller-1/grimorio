@@ -154,6 +154,32 @@ test.describe('B16 — inventário, características e efeitos', { tag: '@B16' }
     expect(sheet.features.every((f) => f.source)).toBe(true);
   });
 
+  test('Do livro: arma vai para as armas e armadura entra guardada, com a CA ao vestir', async ({
+    page,
+  }) => {
+    await withSheet(page, oldSheet());
+    await openColumn(page, 'Ações');
+    await page.getByRole('tab', { name: 'Inventário' }).click();
+    await page.getByTestId('inventory.from-book').click();
+    await page.getByTestId('book-items.search').fill('espada longa');
+    await page.getByTestId('book-items.add.weapon:longsword').click();
+    await page.getByTestId('book-items.search').fill('');
+    await page.getByTestId('book-items.kind').selectOption('armor');
+    await page.getByTestId('book-items.add.armor:chain-mail').click();
+    await page.getByTestId('book-items.done').click();
+
+    const sheet = await sheetNow(page);
+    expect(sheet.weapons.find((w) => w.name === 'Espada Longa')).toMatchObject({
+      proficient: true,
+      damageDice: '1d8',
+      weightKg: 1.5,
+    });
+    expect(sheet.inventory.items.find((i) => i.name === 'Cota de Malha')).toMatchObject({
+      equipped: false,
+      armor: { kind: 'heavy', base: 16 },
+    });
+  });
+
   test('condição em você: Envenenado dá Desvantagem nos ataques e sai pelo X', async ({ page }) => {
     const s = oldSheet();
     s.features = s.features.map((f) => ({ ...f, source: 'class' as const }));

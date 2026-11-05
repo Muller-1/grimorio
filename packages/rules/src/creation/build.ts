@@ -108,7 +108,7 @@ function weaponProperties(weapon: WeaponDef): Partial<Weapon> {
   };
 }
 
-function toSheetWeapon(
+export function toSheetWeapon(
   cls: ClassDef,
   weapon: WeaponDef,
   quantity: number,

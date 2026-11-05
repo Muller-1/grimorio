@@ -117,6 +117,9 @@ export function itemKey(name: string): string {
 
 const TABLE = new Map(KG.map(([name, kg]) => [itemKey(name), kg]));
 
+/** A tabela [nome, kg de uma unidade], para o catálogo "Adicionar do livro". */
+export { KG as KNOWN_ITEM_WEIGHTS };
+
 /**
  * Quantidade escrita junto do nome: "4 Machadinhas" (lista de equipamento) ou "Machadinha (×4)"
  * (arma na ficha). Sem número, 1.

@@ -6,8 +6,8 @@ import {
   weaponWeightKg,
 } from '@grimorio/rules';
 import { COIN_KEYS, type Item, type ItemArmor } from '@grimorio/shared';
-import { Coins, Minus, Pencil, Plus, Scale, TriangleAlert } from 'lucide-react';
-import { useId, useState } from 'react';
+import { BookOpen, Coins, Minus, Pencil, Plus, Scale, TriangleAlert } from 'lucide-react';
+import { lazy, Suspense, useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input, Label, Select, Textarea } from '@/components/ui/input';
@@ -21,6 +21,9 @@ import { cn } from '@/lib/utils';
 import { newId } from '@/ports/ids';
 
 const inv = te.inventory;
+
+// O catálogo do livro só baixa quando o jogador abre o diálogo.
+const BookItemsDialog = lazy(() => import('./BookItemsDialog'));
 
 /** Normaliza para busca (sem acentos e sem maiúsculas). */
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -358,6 +361,7 @@ export default function InventoryTab({
   const { sheet, derived } = useSheet();
   const edit = useSheetStore((s) => s.edit);
   const [editing, setEditing] = useState<{ item: Item | null } | null>(null);
+  const [fromBook, setFromBook] = useState(false);
   const load = derived.load;
   const q = fold(query.trim());
   const weapons = sheet.weapons.filter((w) => q === '' || fold(w.name).includes(q));
@@ -518,15 +522,26 @@ export default function InventoryTab({
       <section className="space-y-1.5">
         <header className="flex items-center justify-between gap-2">
           <h3 className="font-display text-sm font-bold">{inv.items}</h3>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setEditing({ item: null })}
-            data-testid="inventory.add"
-          >
-            <Plus className="size-4" />
-            {inv.add}
-          </Button>
+          <div className="flex flex-wrap justify-end gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setFromBook(true)}
+              data-testid="inventory.from-book"
+            >
+              <BookOpen className="size-4" />
+              {inv.fromBook}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setEditing({ item: null })}
+              data-testid="inventory.add"
+            >
+              <Plus className="size-4" />
+              {inv.add}
+            </Button>
+          </div>
         </header>
         {sheet.inventory.items.length === 0 ? (
           <p className="py-2 text-sm text-muted">{inv.empty}</p>
@@ -621,6 +636,11 @@ export default function InventoryTab({
         )}
       </section>
 
+      {fromBook ? (
+        <Suspense fallback={null}>
+          <BookItemsDialog onClose={() => setFromBook(false)} />
+        </Suspense>
+      ) : null}
       {editing || adding ? (
         <ItemEditor
           initial={editing?.item ?? null}
