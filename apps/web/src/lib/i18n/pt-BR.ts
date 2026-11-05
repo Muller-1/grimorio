@@ -679,6 +679,9 @@ export const ptBR = {
         ['Zustand', 'MIT'],
         ['Zod', 'MIT'],
         ['Better Auth (login)', 'MIT'],
+        ['Fastify (servidor da conta)', 'MIT'],
+        ['Drizzle ORM (banco de dados)', 'Apache-2.0'],
+        ['node-postgres (pg)', 'MIT'],
         ['clsx e tailwind-merge', 'MIT'],
         ['class-variance-authority', 'Apache-2.0'],
         ['Ícones Lucide', 'ISC'],
@@ -735,13 +738,21 @@ export const ptBR = {
           title: 'Contas',
           body: [
             'Entrar com o Google é opcional e serve para guardar as fichas no servidor. Você é responsável pelo que salva na sua conta. Contas usadas para abusar do serviço podem ser suspensas.',
+            'Ficha excluída vai para a lixeira e é apagada de vez depois de 30 dias.',
+          ],
+          accountsOnly: true,
+        },
+        {
+          title: 'Campanhas',
+          body: [
+            'Numa campanha, quem a conduz (a mestre) vê a ficha inteira dos personagens que você puser na mesa e pode mudar o estado de jogo deles, como dano, cura e condições; os outros jogadores veem só um resumo. Combine com o seu grupo antes de pôr uma ficha na mesa. Você pode tirá-la ou sair da campanha quando quiser. O que está em cada nível de visão está na Política de privacidade.',
           ],
           accountsOnly: true,
         },
         {
           title: 'Mudanças nestes termos',
           body: [
-            'Quando o site ganhar contas, estes termos mudam. A data no topo da página mostra a versão em vigor.',
+            'Estes termos podem mudar quando o site mudar, por exemplo ao abrir as contas para todo mundo. A data no topo da página mostra a versão em vigor.',
           ],
         },
       ],
@@ -824,7 +835,14 @@ export const ptBR = {
         {
           title: 'Onde ficam os dados',
           body: [
-            'Os dados da conta ficam no servidor e no banco de dados do site, que podem estar fora do Brasil. O login é feito pelo Google, que segue a própria política de privacidade.',
+            'Os dados da conta ficam na API do site, hospedada no Render, e no banco de dados, hospedado na Neon. Esses servidores podem estar fora do Brasil. Os pedidos da conta passam pela Cloudflare até chegar à API. O login é feito pelo Google, que segue a própria política de privacidade.',
+          ],
+        },
+        {
+          title: 'Registros técnicos e proteção contra abuso',
+          body: [
+            'A API guarda registros técnicos para achar defeitos e medir o desempenho: o endereço acessado, o código de resposta, o tempo que levou e o identificador técnico do pedido. Eles podem incluir o endereço IP da conexão e ficam nos registros do serviço de hospedagem. Não incluem o conteúdo das fichas, senhas nem cookies.',
+            'Para frear abusos, a API conta quantos pedidos de gravação cada endereço IP faz por minuto. Essa contagem fica só na memória do servidor e some logo depois.',
           ],
         },
         {
