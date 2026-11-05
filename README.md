@@ -8,33 +8,34 @@ O site faz as contas: modificadores, proficiência, perícias, salvaguardas, PV,
 
 ## O que já existe
 
-| Parte                                                                                           | Onde                                                                      | Estado                                          |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------- |
-| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                                   | raiz                                                                      | Etapa 1 ✔                                       |
-| CI (GitHub Actions) + modelo de PR                                                              | `.github/`                                                                | Etapa 2 ✔ (falta ativar a proteção da `main`)   |
-| Gerador aleatório (criptográfico + semente para testes)                                         | `packages/rules/src/dice/rng.ts`                                          | Etapa 3 ✔                                       |
-| Parser e avaliação de expressões de dados                                                       | `packages/rules/src/dice/`                                                | Etapa 4 ✔                                       |
-| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`                     | `apps/web`                                                                | Etapa 5 ✔                                       |
-| Tela inicial                                                                                    | `apps/web/src/pages/HomePage.tsx`                                         | ✔                                               |
-| Ficha editável com cálculo automático (antecipada, ver ADR-002)                                 | `apps/web/src/features/sheet` + `packages/rules/src/sheet`                | ✔                                               |
-| Ganchos de teste + bot (Playwright) com os cenários B1, B11 e B12                               | `apps/web/src/testing` + `apps/qa-bot`                                    | Etapa 6 ✔                                       |
-| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação        | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice`          | Etapa 7 ✔                                       |
-| Publicação: páginas institucionais, Cloudflare Pages, CSP, orçamentos, Lighthouse, B14          | `docs/publicacao.md` + `apps/web/public/_headers`                         | Etapa 8 ✔ (falta criar o projeto na Cloudflare) |
-| API (Fastify + Postgres/Drizzle): portas, `/health` `/ready` `/version`, API de teste           | `apps/api` + `docker-compose.yml`                                         | Etapa 9 ✔ (falta staging e decisões do R2)      |
-| Login com Google (Better Auth) e fichas salvas na conta, com salvamento por seção               | `apps/api/src/modules` + `apps/web/src/features/{auth,characters}`        | ✔ (ADR-008; contas em fase de testes)           |
-| Assistente de criação: Classe → Origem → Atributos → Toques Finais (regras de 2024)             | `apps/web/src/features/builder` + `packages/rules/src/creation`           | ✔ (ADR-008)                                     |
-| Primeiros passos (`/comecar`), glossário e pendências clicáveis no assistente                   | `apps/web/src/pages/StartPage.tsx` + `features/builder/guide.ts`          | ✔ (feedback dos testadores)                     |
-| Maestria em Arma e Invocação Mística no nível 1                                                 | `packages/rules/src/creation/mastery.ts` + `content.ts`                   | ✔                                               |
-| Temas Pergaminho (claro) e Obsidiana (escuro), ou Automático; guia visual em `docs/design.md`   | `apps/web/src/lib/theme.ts` + `public/theme.js` + `index.css`             | ✔ (contraste AA testado)                        |
-| Subida de nível (quantos níveis → telas curtas por nível → resumo), classes do 1 ao 20          | `features/levelup` + `packages/rules/src/{classes,levelup}`               | ✔ (ADR-010)                                     |
-| Magias: 339 do SRD, aba Magias (CD, espaços, conjurar, Concentração, Outra magia)               | `features/spells` + `packages/rules/src/spells`                           | ✔ (ADR-010)                                     |
-| Habilidades que o site calcula (Fúria, Frenesi, Ataque Furtivo, Bênção…)                        | `sheet/components/PowersPanel.tsx` + `packages/rules/src/engine`          | ✔ (ADR-010)                                     |
-| Inventário (moedas, peso, arma equipada), características por origem, efeitos em você           | `features/inventory` + `packages/rules/src/{inventory,engine}`            | ✔ (ADR-011)                                     |
-| Etapa Magias no assistente (recomendadas do livro, Iniciado em Magia); visual mais limpo        | `features/builder/steps/SpellsStep.tsx` + `components/ui/ornament.tsx`    | ✔ (ADR-012)                                     |
-| Uso real: aviso de servidor acordando com novas tentativas; busca do Google (sitemap, canônico) | `features/auth/ServerStatus.tsx` + `app/seo.ts` + `scripts/prerender.mjs` | ✔ (ADR-013)                                     |
-| Campanha, parte 1: mesa com mestre e jogadores, ações sem conflito, resumo, curas propostas     | `features/campaigns` + `apps/api/src/modules/campaigns`                   | ✔ (ADR-014)                                     |
-| Revisão do motor: armadura no Inventário, propriedades da arma, condições, rodadas de combate   | `packages/rules/src/{inventory,engine,sheet}` + `features/sheet`          | ✔ (ADR-015)                                     |
-| Configurações (`/configuracoes`): animações, fonte legível, botão de dados, exportar e apagar   | `features/settings` + `lib/preferences.ts` + `lib/local-data.ts`          | ✔ (ADR-017)                                     |
+| Parte                                                                                           | Onde                                                                      | Estado                                        |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------- |
+| Monorepo (pnpm, TypeScript estrito, ESLint, Prettier, Vitest)                                   | raiz                                                                      | Etapa 1 ✔                                     |
+| CI (GitHub Actions) + modelo de PR                                                              | `.github/`                                                                | Etapa 2 ✔ (falta ativar a proteção da `main`) |
+| Gerador aleatório (criptográfico + semente para testes)                                         | `packages/rules/src/dice/rng.ts`                                          | Etapa 3 ✔                                     |
+| Parser e avaliação de expressões de dados                                                       | `packages/rules/src/dice/`                                                | Etapa 4 ✔                                     |
+| Site: rotas, layout, textos pt-BR, portas, `Panel`, pré-renderização de `/`                     | `apps/web`                                                                | Etapa 5 ✔                                     |
+| Tela inicial                                                                                    | `apps/web/src/pages/HomePage.tsx`                                         | ✔                                             |
+| Ficha editável com cálculo automático (antecipada, ver ADR-002)                                 | `apps/web/src/features/sheet` + `packages/rules/src/sheet`                | ✔                                             |
+| Ganchos de teste + bot (Playwright), hoje com os cenários B1 a B20                              | `apps/web/src/testing` + `apps/qa-bot`                                    | Etapa 6 ✔                                     |
+| Rolador `/dados`: expressão livre, rolagem rápida, atalhos com nome, histórico, animação        | `apps/web/src/pages/DicePage.tsx` + `apps/web/src/features/dice`          | Etapa 7 ✔                                     |
+| Publicação: páginas institucionais, Cloudflare (Worker), CSP, orçamentos, Lighthouse, B14       | `docs/publicacao.md` + `apps/web/public/_headers`                         | Etapa 8 ✔ (no ar desde 13/10, ADR-009)        |
+| API (Fastify + Postgres/Drizzle): portas, `/health` `/ready` `/version`, API de teste           | `apps/api` + `docker-compose.yml`                                         | Etapa 9 ✔ (falta staging e decisões do R2)    |
+| Login com Google (Better Auth) e fichas salvas na conta, com salvamento por seção               | `apps/api/src/modules` + `apps/web/src/features/{auth,characters}`        | ✔ (ADR-008; contas em fase de testes)         |
+| Assistente de criação: Classe → Origem → Atributos → Toques Finais (regras de 2024)             | `apps/web/src/features/builder` + `packages/rules/src/creation`           | ✔ (ADR-008)                                   |
+| Primeiros passos (`/comecar`), glossário e pendências clicáveis no assistente                   | `apps/web/src/pages/StartPage.tsx` + `features/builder/guide.ts`          | ✔ (feedback dos testadores)                   |
+| Maestria em Arma e Invocação Mística no nível 1                                                 | `packages/rules/src/creation/mastery.ts` + `content.ts`                   | ✔                                             |
+| Temas Pergaminho (claro) e Obsidiana (escuro), ou Automático; guia visual em `docs/design.md`   | `apps/web/src/lib/theme.ts` + `public/theme.js` + `index.css`             | ✔ (contraste AA testado)                      |
+| Subida de nível (quantos níveis → telas curtas por nível → resumo), classes do 1 ao 20          | `features/levelup` + `packages/rules/src/{classes,levelup}`               | ✔ (ADR-010)                                   |
+| Magias: 339 do SRD, aba Magias (CD, espaços, conjurar, Concentração, Outra magia)               | `features/spells` + `packages/rules/src/spells`                           | ✔ (ADR-010)                                   |
+| Habilidades que o site calcula (Fúria, Frenesi, Ataque Furtivo, Bênção…)                        | `sheet/components/PowersPanel.tsx` + `packages/rules/src/engine`          | ✔ (ADR-010)                                   |
+| Inventário (moedas, peso, arma equipada), características por origem, efeitos em você           | `features/inventory` + `packages/rules/src/{inventory,engine}`            | ✔ (ADR-011)                                   |
+| Etapa Magias no assistente (recomendadas do livro, Iniciado em Magia); visual mais limpo        | `features/builder/steps/SpellsStep.tsx` + `components/ui/ornament.tsx`    | ✔ (ADR-012)                                   |
+| Uso real: aviso de servidor acordando com novas tentativas; busca do Google (sitemap, canônico) | `features/auth/ServerStatus.tsx` + `app/seo.ts` + `scripts/prerender.mjs` | ✔ (ADR-013)                                   |
+| Campanha, parte 1: mesa com mestre e jogadores, ações sem conflito, resumo, curas propostas     | `features/campaigns` + `apps/api/src/modules/campaigns`                   | ✔ (ADR-014)                                   |
+| Revisão do motor: armadura no Inventário, propriedades da arma, condições, rodadas de combate   | `packages/rules/src/{inventory,engine,sheet}` + `features/sheet`          | ✔ (ADR-015)                                   |
+| Monitoramento (medidor na API, `/api/v1/status`, `pnpm monitor`) e teste de carga (`pnpm load`) | `apps/api/src/plugins/metrics.ts` + `apps/load-test`                      | ✔ (ADR-016)                                   |
+| Configurações (`/configuracoes`): animações, fonte legível, botão de dados, exportar e apagar   | `features/settings` + `lib/preferences.ts` + `lib/local-data.ts`          | ✔ (ADR-017)                                   |
 
 Contas estão em **fase de testes**: ligadas no `pnpm dev`; publicadas para quem tiver o link
 (qualquer conta Google entra, ver ADR-009, decisão 5), com a API no Render, o banco no Neon e o
@@ -108,20 +109,37 @@ pnpm bot --headed                                # mostra o navegador
 pnpm --filter @grimorio/qa-bot exec playwright show-report   # relatório da última execução
 ```
 
-| Cenário              | O que confere                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------ |
-| B1 — fumaça          | todas as páginas abrem sem erro no console; com semente fixa, `1d20` dá o valor do oráculo |
-| B11 — dados          | a mesma sequência de rolagens na tela e no `seededRng` dá os mesmos dados, um a um         |
-| B12 — acessibilidade | axe sem violações sérias ou críticas nas páginas e nos diálogos                            |
-| B2 — assistente      | percorre a criação com escolhas aleatórias (pela semente) e confere a ficha com o motor    |
-| B14 — monitor        | abre `/dados` na produção, rola `1d20` e confere o total (sem ganchos; roda a cada 30 min) |
-| B20 — configurações  | animações, fonte, botão flutuante, exportar e apagar os dados deste navegador              |
+| Cenário                | O que confere                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| B1 — fumaça            | todas as páginas abrem sem erro no console; com semente fixa, `1d20` dá o valor do oráculo |
+| B11 — dados            | a mesma sequência de rolagens na tela e no `seededRng` dá os mesmos dados, um a um         |
+| B12 — acessibilidade   | axe sem violações sérias ou críticas nas páginas e nos diálogos                            |
+| B2 — assistente        | percorre a criação com escolhas aleatórias (pela semente) e confere a ficha com o motor    |
+| B14 — monitor          | abre `/dados` na produção, rola `1d20` e confere o total (sem ganchos; roda a cada 30 min) |
+| B15 — subida de nível  | sobe de nível pelas telas curtas, magias, Concentração e habilidades que a ficha calcula   |
+| B16 — inventário       | ouro, peso, arma equipada, características por origem, condições e foto do computador      |
+| B17 — deslizar         | deslizar o dedo troca de aba na ficha (só no celular)                                      |
+| B18 — revisão do motor | armas, armadura e CA, condições e rodadas de combate batem com o motor de regras           |
+| B19 — botão de dados   | botão flutuante: onde mora, arrastar, bandeja e histórico                                  |
+| B20 — configurações    | animações, fonte, botão flutuante, exportar e apagar os dados deste navegador              |
 
 Toda execução imprime a semente. Os ganchos (`window.__APP_TEST__`) só existem no build de teste;
 o CI falha se eles aparecerem no build de produção. Em todos os cenários, qualquer erro no
 console ou bloqueio da política de segurança (CSP) faz o teste falhar.
 
 Contra um site publicado: `pnpm bot --scenario=B14 --env=https://grimorio.SUA-CONTA.workers.dev`.
+
+### Monitoramento e teste de carga (ADR-016)
+
+```bash
+pnpm monitor          # confere o site publicado peça por peça: páginas, API, repasse, banco, commit
+pnpm load:up          # API do teste de carga: a imagem do Render com 0,1 CPU e 512 MB (Docker)
+pnpm load             # 10 → 25 → 50 → 100 → 150 jogadores; relatório em apps/load-test/relatorios/
+pnpm load:down
+```
+
+Detalhes, opções e o monitor externo com aviso por e-mail em
+[docs/monitoramento.md](docs/monitoramento.md).
 
 ## Estrutura
 
@@ -134,25 +152,31 @@ grimorio/
 │  │     ├─ config/env.ts  # variáveis de ambiente validadas com Zod
 │  │     ├─ ports/         # rng, clock, mailer, events, ids
 │  │     ├─ db/            # schema, conexão, migrações, trava de banco descartável
-│  │     ├─ modules/       # rotas: system, auth (login Google), characters (fichas na conta)
-│  │     ├─ plugins/       # test-api (/__test__/*, nunca em produção)
+│  │     ├─ modules/       # rotas: system, auth (login Google), characters, campaigns
+│  │     ├─ plugins/       # test-api (/__test__/*, nunca em produção), metrics, rate-limit
 │  │     ├─ app.ts         # buildApp: monta a API (usado também nos testes)
 │  │     └─ server.ts
-│  ├─ qa-bot/              # bot de testes (Playwright): cenários B1, B2, B11, B12, B14, B15
+│  ├─ load-test/           # teste de carga (pnpm load) e pnpm monitor (ADR-016)
+│  ├─ qa-bot/              # bot de testes (Playwright): cenários B1, B2, B11, B12, B14 a B20
 │  └─ web/                 # site (React + Vite + Tailwind)
 │     ├─ build/            # ajudantes do build: cabeçalhos, preview igual à Cloudflare, marca
 │     ├─ public/_headers   # cabeçalhos HTTP de produção (CSP, cache)
 │     └─ src/
 │        ├─ app/           # entrada, rotas, layout, pré-renderização
-│        ├─ pages/         # Início, Dados, Apoie, Créditos, Termos, Privacidade
+│        ├─ pages/         # Início, Dados, Primeiros passos, Apoie, Créditos, Termos, Privacidade
 │        ├─ features/
 │        │  ├─ auth/       # entrar/sair, menu da conta, página /entrar
 │        │  ├─ builder/    # assistente de criação (/criar)
+│        │  ├─ campaigns/  # mesa: mestre, jogadores, resumo, propostas de cura
 │        │  ├─ characters/ # lista, ficha da conta e salvamento automático
 │        │  ├─ sheet/      # a ficha (com o painel Habilidades)
+│        │  ├─ inventory/  # inventário, armaduras, armas e moedas
 │        │  ├─ spells/     # aba Magias (carregada sob demanda)
 │        │  ├─ levelup/    # subir de nível (carregado sob demanda)
-│        │  ├─ dice/       # rolagem, histórico, resultado
+│        │  ├─ dice/       # rolagem, bandeja de dados, histórico, resultado
+│        │  ├─ settings/   # página /configuracoes (preferências deste navegador)
+│        │  ├─ screens/    # telas de carregamento e de erro (404, 500, 403)
+│        │  ├─ theme/      # Pergaminho, Obsidiana e Automático
 │        │  └─ toast/      # avisos curtos
 │        ├─ components/ui/ # botões, diálogos, painéis (estilo shadcn/ui)
 │        ├─ ports/         # rng, clock, ids, storage — única porta para o não determinismo
@@ -163,7 +187,7 @@ grimorio/
 │  │  └─ scripts/spells/   # gerador das 339 magias (SRD 5.2 + textos do site), ver README
 │  └─ testkit/             # utilidades só para testes
 ├─ docker/                 # script que cria o app_test no Postgres do Docker
-├─ docker-compose.yml      # Postgres local
+├─ docker-compose.yml      # Postgres local (e, no perfil "carga", a API do teste de carga)
 └─ docs/                   # ADRs, publicação e referências aos planos
 ```
 
@@ -185,12 +209,39 @@ grimorio/
   009: publicação com contas para um grupo de teste; 010: magias, subida de nível e
   habilidades que o site calcula; 011: inventário e ficha v3; 012: visual mais limpo e
   magias no assistente; 013: correções para uso real, servidor acordando e busca do Google; 014: campanha, parte 1;
-  015: revisão do motor; 017: configurações deste navegador).
+  015: revisão do motor de regras; 016: monitoramento e teste de carga; 017: configurações
+  deste navegador).
+- `docs/monitoramento.md` — o que cada serviço já mostra, `/api/v1/status`, `/metrics`,
+  `pnpm monitor`, monitor externo com aviso por e-mail e o teste de carga (`pnpm load`).
 - `docs/publicacao.md` — passo a passo para colocar o site no ar, ligar o monitor B14, aparecer
   no Google e manter a API acordada.
 - `docs/plano-escala-e-campanha.md` — planejamento (sem código): concorrência na campanha
   (várias pessoas na mesma ficha), escala e o que falta para um site profissional.
 - `docs/publicar-com-contas.md` — site + API (Render) + banco (Neon) com login, para testar com
   amigos.
+- `docs/design.md` — guia visual: temas Pergaminho e Obsidiana, fontes, animações e telas.
 - Os planos (`plano-tecnico-site-dnd-v2.md` e `plano-de-inicio-site-dnd.md`) ainda estão fora
   do repositório; a Etapa 0 é copiá-los para `docs/`.
+
+## Créditos e licenças
+
+Os créditos que aparecem no site (página `/creditos`) vêm de `apps/web/src/lib/i18n/pt-BR.ts`;
+a política de privacidade e os termos (`/privacidade` e `/termos`) ficam no mesmo arquivo, e a
+data da versão em vigor está em `legalUpdatedAt`, em `apps/web/src/app/config.ts`. Mudou o que o
+site guarda, quem recebe os dados ou uma biblioteca usada? Atualize os três.
+
+- **Regras do jogo:** o assistente de criação, as classes do nível 1 ao 20 e 339 das magias usam o
+  _System Reference Document 5.2_, da Wizards of the Coast LLC, disponível em
+  <https://www.dndbeyond.com/srd> e licenciado sob a
+  [Creative Commons Atribuição 4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
+  Os textos foram adaptados (resumidos, traduzidos, com as medidas em metros). O que vem do Livro
+  do Jogador é escrito com palavras próprias, sem reproduzir texto dos livros.
+- **Fontes:** Cinzel, Alegreya Sans e Atkinson Hyperlegible, sob a SIL Open Font License 1.1
+  (textos em `apps/web/src/assets/fonts/`).
+- **Bibliotecas:** React, React Router, Vite, Tailwind CSS, Radix UI, Zustand, Zod, Better Auth,
+  Fastify, Drizzle ORM, node-postgres, Lucide e outras, todas de código aberto (MIT, ISC ou
+  Apache-2.0). A lista com as licenças está na página de créditos do site.
+- **Marca:** projeto independente, sem vínculo com a Wizards of the Coast nem com as editoras dos
+  livros no Brasil.
+- **Código do projeto:** ainda sem licença de uso definida (o repositório não tem arquivo
+  `LICENSE`); por enquanto, todos os direitos são reservados ao autor.
