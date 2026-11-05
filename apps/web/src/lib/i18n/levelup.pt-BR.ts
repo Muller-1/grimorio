@@ -21,6 +21,9 @@ export const levelUpPtBR = {
   chooseClassNone: 'Escolha a classe',
   confirm: 'Confirmar',
   cancel: 'Cancelar',
+  subclassLoading: 'Carregando a subclasse…',
+  subclassUnavailable:
+    'Não foi possível baixar a subclasse desta ficha (sem internet ou o site acabou de ser atualizado). Recarregue a página e tente de novo.',
   // ---------- um nível ----------
   levelTitle: (n: number) => `Nível ${n}`,
   stepOf: (i: number, total: number) => `Passo ${i} de ${total}`,

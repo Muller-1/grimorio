@@ -202,7 +202,19 @@ describe('subida de vários níveis escolhendo a subclasse no caminho', () => {
     const [two, three] = levelUpSteps(s, 3, { subclassId: 'arcane-trickster' });
     expect(two!.choices.map((c) => c.key)).not.toContain('replace-cantrip');
     expect(two!.choices.map((c) => c.key)).not.toContain('replace-spell');
-    expect(three!.choices.find((c) => c.key === 'cantrips')?.def).toMatchObject({ count: 3 });
+    expect(three!.choices.find((c) => c.key === 'cantrips')?.def).toMatchObject({ count: 2 });
+    expect(three!.gains.grantedSpells.map((g) => g.id)).toContain('mage-hand');
     expect(three!.gains.slots).toEqual([{ circle: 1, from: 0, to: 2 }]);
+  });
+
+  it('ficha feita à mão no 5 que escolhe Cavaleiro Místico ao ir para o 6 começa do zero', () => {
+    const s = createBlankSheet();
+    s.build.level = 5;
+    s.build.abilities = { ...s.build.abilities, int: 14 };
+    s.progression = { classId: 'fighter', levels: [] };
+    const [six] = levelUpSteps(s, 6, { subclassId: 'eldritch-knight' });
+    expect(six!.choices.find((c) => c.key === 'cantrips')?.def).toMatchObject({ count: 2 });
+    expect(six!.choices.find((c) => c.key === 'prepared')?.def).toMatchObject({ count: 4 });
+    expect(six!.gains.slots).toEqual([{ circle: 1, from: 0, to: 3 }]);
   });
 });

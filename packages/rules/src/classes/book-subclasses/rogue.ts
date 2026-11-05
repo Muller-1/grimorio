@@ -147,10 +147,11 @@ export const BOOK_SUBCLASSES: SubclassDef[] = [
       ability: 'int',
       kind: 'third',
       list: 'wizard',
+      // Mãos Mágicas vem de graça (abaixo); escolhem-se os outros 2 (3 no nível 10).
       cantrips: byLevel([
         [1, 0],
-        [3, 3],
-        [10, 4],
+        [3, 2],
+        [10, 3],
       ]),
       prepared: [0, 0, 3, 4, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 10, 11, 11, 11, 12, 13],
       swap: 'level-up',
@@ -161,6 +162,7 @@ export const BOOK_SUBCLASSES: SubclassDef[] = [
         level: 3,
         name: 'Conjuração',
         text: 'Conjura magias de Mago com Inteligência (pode usar Foco Arcano). Conhece Mãos Mágicas e mais dois truques de Mago (um quarto no nível 10). Prepara magias de 1º círculo ou superior conforme a tabela e troca um truque (menos Mãos Mágicas) e uma magia a cada nível de Ladino. Recupera espaços num Descanso Longo.',
+        grantedSpells: { ids: ['mage-hand'] },
       },
       {
         id: 'mage-hand-legerdemain',

@@ -6,6 +6,7 @@ import {
   levelUpSteps,
   progressionFor,
   type LevelStep,
+  sheetNeedsBookSubclasses,
 } from '@grimorio/rules';
 import { spellById } from '@grimorio/rules/spells-data';
 import { ABILITY_KEYS, type AbilityKey, type LevelChoice, type LocalSheet } from '@grimorio/shared';
@@ -308,6 +309,26 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
   };
 
   // ---------- 1) quantos níveis ----------
+  // Ficha com subclasse do livro que não chegou (sem internet, site atualizado no meio): subir
+  // de nível assim gravaria os níveis sem as características dela. Espera ou avisa.
+  if (hasClass && sheetNeedsBookSubclasses(sheet.progression)) {
+    return (
+      <Dialog
+        open
+        onOpenChange={(o) => !o && onClose()}
+        title={tl.title}
+        {...(subclassesLoaded ? { description: tl.subclassUnavailable } : {})}
+        footer={
+          <Button variant="ghost" onClick={onClose}>
+            {tl.cancel}
+          </Button>
+        }
+      >
+        {subclassesLoaded ? null : <p className="text-sm text-muted">{tl.subclassLoading}</p>}
+      </Dialog>
+    );
+  }
+
   if (phase.kind === 'count') {
     const maxCount = 20 - from;
     return (

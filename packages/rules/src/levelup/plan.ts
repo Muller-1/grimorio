@@ -204,6 +204,9 @@ export function levelUpSteps(
     const profTo = proficiencyBonusForLevel(level);
     if (profFrom !== profTo) gains.proficiency = { from: profFrom, to: profTo };
 
+    // Ficha feita à mão que escolhe agora, acima do 3, uma subclasse que conjura: começa do zero
+    // (truques, preparadas e espaços), não da diferença para o nível anterior.
+    const castingStartsHere = !p.spellcasting && subChosenHere;
     if (sc) {
       const lists = [p.spellcasting ? (p.classId as string) : sub!.spellcasting!.list];
       if (p.classId === 'bard' && level >= 10) lists.push('cleric', 'druid', 'wizard');
@@ -214,14 +217,14 @@ export function levelUpSteps(
         if (a.count !== b.count || a.circle !== b.circle) gains.pact = { from: a, to: b };
         maxCircle = b.circle;
       } else {
-        const a = slotTable(sc.kind, level - 1);
+        const a = castingStartsHere ? slotTable(sc.kind, 0) : slotTable(sc.kind, level - 1);
         const b = slotTable(sc.kind, level);
         b.forEach((n, i) => {
           if (n !== a[i]) gains.slots.push({ circle: i + 1, from: a[i] ?? 0, to: n });
           if (n > 0) maxCircle = i + 1;
         });
       }
-      const c0 = sc.cantrips?.[level - 2] ?? 0;
+      const c0 = castingStartsHere ? 0 : (sc.cantrips?.[level - 2] ?? 0);
       const c1 = sc.cantrips?.[level - 1] ?? 0;
       if (c1 !== c0) {
         gains.cantrips = { from: c0, to: c1 };
@@ -240,7 +243,7 @@ export function levelUpSteps(
           required: false,
         });
       }
-      const p0 = sc.prepared[level - 2] ?? 0;
+      const p0 = castingStartsHere ? 0 : (sc.prepared[level - 2] ?? 0);
       const p1 = sc.prepared[level - 1] ?? 0;
       if (p1 !== p0) {
         gains.prepared = { from: p0, to: p1 };

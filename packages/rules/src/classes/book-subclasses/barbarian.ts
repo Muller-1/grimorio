@@ -3,17 +3,6 @@ import type { SubclassDef } from '../types';
 /** Subclasses do Livro do Jogador 2024 que o SRD não traz (texto nosso). */
 
 // Tudo, menos estes tipos, entra na Resistência do Urso (a Fúria já cobre os físicos).
-const URSO_RESISTENCIAS = [
-  'acid',
-  'bludgeoning',
-  'cold',
-  'fire',
-  'lightning',
-  'piercing',
-  'poison',
-  'slashing',
-  'thunder',
-] as const;
 
 // Dados do Campeão dos Deuses: 4 no 3, 5 no 6, 6 no 12, 7 no 17.
 const DADOS_CAMPEAO = [0, 0, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7, 7, 7, 7] as const;
@@ -117,7 +106,14 @@ export const BOOK_SUBCLASSES: SubclassDef[] = [
               situational: true,
             },
           ],
-          bear: [{ type: 'resistance', damage: [...URSO_RESISTENCIAS] }],
+          // Só vale em Fúria, e o motor não junta "opção escolhida" com "Fúria ligada": lembrete.
+          bear: [
+            {
+              type: 'note',
+              text: 'Em Fúria: Resistência a todos os tipos de dano, exceto Energético, Necrótico, Psíquico e Radiante.',
+              situational: true,
+            },
+          ],
         },
       },
       {
