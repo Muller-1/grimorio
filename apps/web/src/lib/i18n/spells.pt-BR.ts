@@ -150,7 +150,10 @@ export const spellsPtBR = {
   added: 'Na ficha',
   addButton: (name: string) => `Adicionar ${name}`,
   noResults: 'Nenhuma magia encontrada.',
-  more: (n: number) => `Mostrando as primeiras ${n}. Busque pelo nome para achar outras.`,
+  showMore: (n: number) => `Mostrar mais (${n})`,
+  details: 'Ver descrição',
+  hideDetails: 'Esconder descrição',
+  detailsOf: (name: string) => `Descrição de ${name}`,
 
   // ---------- outra magia ----------
   customTitle: 'Outra magia (do livro)',

@@ -65,6 +65,7 @@ export function filterSpells(filter: SpellFilter): SpellDef[] {
       (filter.maxLevel === undefined || s.level <= filter.maxLevel) &&
       (filter.ritual === undefined || s.ritual === filter.ritual) &&
       (!filter.school || s.school === filter.school) &&
-      (!q || normalizeSearch(s.name).includes(q)),
+      // Nome em português ou o id, que vem do nome em inglês ("feather fall" acha Queda Suave).
+      (!q || normalizeSearch(s.name).includes(q) || s.id.replace(/-/g, ' ').includes(q)),
   );
 }

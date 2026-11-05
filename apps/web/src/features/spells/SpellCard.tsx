@@ -14,6 +14,7 @@ import { Select } from '@/components/ui/input';
 import { useDiceStore } from '@/features/dice/store';
 import { AdvantageBadge, d20 } from '@/features/sheet/components/AdvantageBadge';
 import { RollButton } from '@/features/sheet/components/RollButton';
+import { SpellDetails } from './SpellDetails';
 import { useSheet } from '@/features/sheet/hooks';
 import { useSheetStore } from '@/features/sheet/store';
 import { useToastStore } from '@/features/toast/store';
@@ -68,18 +69,6 @@ export function SpellCard({
     : null;
   const canCast = spell.level === 0 || Boolean(selected?.available);
   const rollDice = useDiceStore((s) => s.roll);
-  const components = [
-    spell.components.v ? 'V' : null,
-    spell.components.s ? 'S' : null,
-    spell.components.m
-      ? typeof spell.components.m === 'string'
-        ? tsp.material(spell.components.m)
-        : 'M'
-      : null,
-  ]
-    .filter(Boolean)
-    .join(', ');
-
   /** Rola e devolve o total (ou `null`, com o aviso do erro). */
   const rollNow = (label: string, expression: string, critRange?: number) => {
     const outcome = rollDice({ label, expression, ...(critRange ? { critRange } : {}) });
@@ -185,26 +174,7 @@ export function SpellCard({
 
       {open ? (
         <div id={detailsId} className="space-y-3 border-t border-border p-3 text-sm">
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
-            <dt className="text-muted">{tsp.castingTime}</dt>
-            <dd>
-              {spell.castingTime}
-              {spell.ritual ? ` (${tsp.ritualTag})` : ''}
-            </dd>
-            <dt className="text-muted">{tsp.range}</dt>
-            <dd>{spell.range}</dd>
-            <dt className="text-muted">{tsp.components}</dt>
-            <dd>{components}</dd>
-            <dt className="text-muted">{tsp.duration}</dt>
-            <dd>{spell.duration}</dd>
-          </dl>
-          <p className="whitespace-pre-line">{spell.text}</p>
-          {spell.higher ? (
-            <p className="whitespace-pre-line">
-              <strong>{spell.level === 0 ? tsp.cantripUpgrade : tsp.higher}. </strong>
-              {spell.higher}
-            </p>
-          ) : null}
+          <SpellDetails spell={spell} />
           {spell.save && sc ? (
             <p className="font-semibold" data-testid={`spell.${spell.id}.save`}>
               {tsp.save(t.abilities[spell.save], sc.dc)}

@@ -179,6 +179,70 @@ test.describe('B15 — subida de nível, magias e habilidades', { tag: '@B15' },
     expect(await seriousA11yViolations(page)).toEqual([]);
   });
 
+  test('Mago 2 → 4: as listas de magia aparecem em todas as telas, com a descrição', async ({
+    page,
+  }) => {
+    // Filtra o círculo numa tela e confere que as listas das telas seguintes não abrem vazias
+    // (relato de magias que só apareciam voltando e avançando de novo).
+    await withSheet(page, sheetOf('wizard', 2, { int: 16 }));
+    await page.getByTestId('levelup.open').click();
+    await page.getByTestId('levelup.more').click();
+    await expect(page.getByTestId('levelup.from-to')).toHaveText('Nível 2 → 4');
+    await page.getByTestId('levelup.confirm').click();
+    let filtered = false;
+    let checkedAfter = 0;
+    for (let i = 0; i < 20 && !(await page.getByTestId('levelup.apply').isVisible()); i++) {
+      const dialog = page.getByRole('dialog');
+      const picks = dialog.locator('[data-testid^="pick."][type="checkbox"]');
+      const hasList = (await dialog.getByLabel('Buscar pelo nome').count()) > 0;
+      if (hasList) {
+        if (filtered) {
+          await expect(picks.first(), `tela ${i}: lista vazia depois do filtro`).toBeVisible();
+          checkedAfter += 1;
+        }
+        const circle = dialog.getByLabel('Círculo', { exact: true });
+        if (!filtered && (await circle.count())) {
+          const options = await circle.locator('option').allTextContents();
+          await circle.selectOption({ label: options.at(-1)! });
+          filtered = true;
+          // Descrição completa sem sair da lista.
+          const first = picks.first();
+          const id = (await first.getAttribute('data-testid'))!.slice('pick.'.length);
+          await dialog.getByTestId(`pick.${id}.details`).click();
+          await expect(dialog.getByTestId(`pick.${id}.text`)).toContainText('Duração');
+          // Duas magias novas no grimório (2º círculo): a tela das preparadas vai mostrá-las.
+          await picks.nth(0).check();
+          await picks.nth(1).check();
+        }
+      }
+      // Preenche o que for obrigatório para poder avançar (magias ou o atributo do aumento).
+      for (let tries = 0; tries < 10 && (await page.getByTestId('levelup.next').isDisabled());) {
+        tries += 1;
+        const free = dialog.locator('[data-testid^="pick."][type="checkbox"]:not(:checked)');
+        if (await free.count()) {
+          await free.first().check();
+          continue;
+        }
+        const radio = dialog.getByRole('radio').first();
+        if (
+          (await radio.count()) &&
+          !(await dialog.getByRole('radio', { checked: true }).count())
+        ) {
+          await radio.check();
+          continue;
+        }
+        const select = dialog.getByRole('combobox').first();
+        if (!(await select.count())) break;
+        await select.selectOption({ index: 1 });
+      }
+      if (await page.getByTestId('levelup.next').isVisible()) {
+        await page.getByTestId('levelup.next').click();
+      }
+    }
+    expect(filtered, 'nenhuma tela com filtro de círculo').toBe(true);
+    expect(checkedAfter, 'nenhuma tela de magia depois do filtro').toBeGreaterThan(0);
+  });
+
   test('Clérigo: Conjurar gasta o espaço e já rola o ataque; "Em mim" só na cura', async ({
     page,
   }) => {

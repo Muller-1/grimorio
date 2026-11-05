@@ -189,3 +189,11 @@ describe('em quem a magia cai e o que o Conjurar rola', () => {
     expect(rolls('shield')).toBeNull();
   });
 });
+
+describe('busca de magias', () => {
+  it('acha pelo nome em português (sem acento) e pelo nome em inglês', () => {
+    expect(filterSpells({ query: 'queda suave' }).map((s) => s.id)).toEqual(['feather-fall']);
+    expect(filterSpells({ query: 'Feather Fall' }).map((s) => s.id)).toEqual(['feather-fall']);
+    expect(filterSpells({ query: 'misseis' }).map((s) => s.id)).toContain('magic-missile');
+  });
+});

@@ -1,13 +1,16 @@
 import type { SpellClass, SpellDef, SpellLevel } from '@grimorio/rules';
 import { filterSpells } from '@grimorio/rules/spells-data';
-import { Plus } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input, Label, Select } from '@/components/ui/input';
 import { tsp } from '@/lib/i18n/spells';
+import { cn } from '@/lib/utils';
+import { SpellDetails } from './SpellDetails';
 
-const LIMIT = 60;
+/** Quantas aparecem de cada vez; "Mostrar mais" traz o próximo bloco (nada fica escondido). */
+const PAGE = 60;
 
 export type AddAs = 'cantrip' | 'prepared' | 'spellbook';
 
@@ -53,8 +56,10 @@ export function SpellList({
   testId?: string;
 }) {
   const [query, setQuery] = useState('');
-  const [circle, setCircle] = useState<string>('');
-  const [all, setAll] = useState(lists.length === 0);
+  const [picked, setCircle] = useState<string>('');
+  const [all, setAll] = useState(false);
+  const [visible, setVisible] = useState(PAGE);
+  const [openId, setOpenId] = useState<string | null>(null);
   const searchId = useId();
   const circleId = useId();
   const allId = useId();
@@ -62,6 +67,9 @@ export function SpellList({
     () => levels ?? (Array.from({ length: maxCircle + 1 }, (_, i) => i) as SpellLevel[]),
     [levels, maxCircle],
   );
+  // Um círculo escolhido numa tela anterior que não existe nesta não pode esvaziar a lista
+  // (era o "vai e volta" da subida de nível: só voltando a lista aparecia).
+  const circle = picked !== '' && accepted.includes(Number(picked) as SpellLevel) ? picked : '';
 
   const results = useMemo(() => {
     const only = onlyIds ? new Set(onlyIds) : null;
@@ -72,6 +80,14 @@ export function SpellList({
       query,
     }).filter((s) => !only || only.has(s.id));
   }, [all, lists, circle, accepted, school, query, onlyIds]);
+
+  // Mudou o filtro: volta ao primeiro bloco.
+  const filterKey = `${all}|${lists.join()}|${circle}|${accepted.join()}|${school ?? ''}|${query}`;
+  const [shownFor, setShownFor] = useState(filterKey);
+  if (shownFor !== filterKey) {
+    setShownFor(filterKey);
+    setVisible(PAGE);
+  }
   const highlighted = new Set(highlightIds ?? []);
   const ordered = highlighted.size
     ? [
@@ -123,51 +139,96 @@ export function SpellList({
         <p className="py-3 text-center text-sm text-muted">{tsp.noResults}</p>
       ) : (
         <ul className="max-h-[45dvh] space-y-1 overflow-y-auto pr-1">
-          {ordered.slice(0, LIMIT).map((s) => {
+          {ordered.slice(0, visible).map((s) => {
             const inSheet = disabledIds?.has(s.id) ?? false;
             const on = selected.includes(s.id);
+            const open = openId === s.id;
+            const detailsId = `${searchId}-${s.id}`;
             return (
-              <li key={s.id}>
-                <label
-                  className={`flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 text-sm ${
-                    on ? 'border-accent bg-accent-soft' : 'border-border'
-                  } ${inSheet ? 'opacity-60' : ''}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={on || inSheet}
-                    disabled={inSheet}
-                    onChange={() => onToggle(s)}
-                    className="mt-0.5 size-4 accent-[var(--accent)]"
-                    data-testid={`pick.${s.id}`}
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="font-semibold">{s.name}</span>
-                    {highlightLabel && highlighted.has(s.id) ? (
-                      <span className="ml-1.5 text-xs font-semibold text-gold">
-                        {highlightLabel}
+              <li
+                key={s.id}
+                className={cn(
+                  'rounded-md border text-sm',
+                  on ? 'border-accent bg-accent-soft' : 'border-border',
+                )}
+              >
+                <div className="flex items-start gap-1">
+                  <label
+                    className={cn(
+                      'flex min-w-0 flex-1 cursor-pointer items-start gap-2 px-2 py-1.5',
+                      inSheet && 'opacity-60',
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={on || inSheet}
+                      disabled={inSheet}
+                      onChange={() => onToggle(s)}
+                      className="mt-0.5 size-4 accent-[var(--accent)]"
+                      data-testid={`pick.${s.id}`}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="font-semibold">{s.name}</span>
+                      {highlightLabel && highlighted.has(s.id) ? (
+                        <span className="ml-1.5 text-xs font-semibold text-gold">
+                          {highlightLabel}
+                        </span>
+                      ) : null}
+                      <span className="block text-xs text-muted">
+                        {tsp.meta(s.level, tsp.schools[s.school])}
+                        {s.concentration ? ` · ${tsp.concentrationTag}` : ''}
+                        {s.ritual ? ` · ${tsp.ritualTag}` : ''}
+                        {s.source === 'book' ? ` · ${tsp.bookTag}` : ''}
+                        {inSheet ? ` · ${disabledLabel}` : ''}
                       </span>
-                    ) : null}
-                    <span className="block text-xs text-muted">
-                      {tsp.meta(s.level, tsp.schools[s.school])}
-                      {s.concentration ? ` · ${tsp.concentrationTag}` : ''}
-                      {s.ritual ? ` · ${tsp.ritualTag}` : ''}
-                      {s.source === 'book' ? ` · ${tsp.bookTag}` : ''}
-                      {inSheet ? ` · ${disabledLabel}` : ''}
+                      {describe && !open ? (
+                        <span className="mt-0.5 line-clamp-2 block text-xs text-text/80">
+                          {s.text}
+                        </span>
+                      ) : null}
                     </span>
-                    {describe ? (
-                      <span className="mt-0.5 line-clamp-2 block text-xs text-text/80">
-                        {s.text}
-                      </span>
-                    ) : null}
-                  </span>
-                </label>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(open ? null : s.id)}
+                    aria-expanded={open}
+                    aria-controls={detailsId}
+                    aria-label={open ? tsp.hideDetails : tsp.detailsOf(s.name)}
+                    title={open ? tsp.hideDetails : tsp.details}
+                    className="m-1 grid size-8 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-text focus-visible:text-text"
+                    data-testid={`pick.${s.id}.details`}
+                  >
+                    <ChevronDown
+                      className={cn('size-4 transition-transform', open && 'rotate-180')}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+                {open ? (
+                  <div
+                    id={detailsId}
+                    className="space-y-2 border-t border-border px-2 py-2 text-xs"
+                    data-testid={`pick.${s.id}.text`}
+                  >
+                    <SpellDetails spell={s} />
+                  </div>
+                ) : null}
               </li>
             );
           })}
         </ul>
       )}
-      {results.length > LIMIT ? <p className="text-xs text-muted">{tsp.more(LIMIT)}</p> : null}
+      {results.length > visible ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full"
+          onClick={() => setVisible((v) => v + PAGE)}
+          data-testid={testId ? `${testId}.more` : undefined}
+        >
+          {tsp.showMore(results.length - visible)}
+        </Button>
+      ) : null}
     </div>
   );
 }
