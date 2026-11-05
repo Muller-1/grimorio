@@ -26,5 +26,44 @@ services:
       timeout: 3s
       retries: 20
 
+  # Teste de carga (ADR-016): a API do jeito que roda no Render grátis — a mesma imagem
+  # (apps/api/Dockerfile), 0,1 CPU e 512 MB — num banco descartável. Só sobe com o perfil "carga":
+  #   pnpm load:up     (cria o banco app_carga_staging se faltar e espera a API)
+  #   pnpm load        (o teste)        pnpm load:down   (desliga só esta API)
+  # Os segredos daqui só valem no computador; são os padrões do apps/load-test/src/config.ts.
+  api-carga:
+    profiles: [carga]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: grimorio-api-carga
+    container_name: grimorio-api-carga
+    depends_on:
+      postgres:
+        condition: service_healthy
+    cpus: 0.1
+    mem_limit: 512m
+    environment:
+      # staging: igual à produção, mas permite a API de teste (que cria as contas do teste).
+      APP_ENV: staging
+      PORT: 10000
+      # Igual ao render.yaml: em produção cada pedido vai para o log, e isso também gasta CPU.
+      LOG_LEVEL: ${CARGA_LOG_LEVEL:-info}
+      DATABASE_URL: postgres://app:app@postgres:5432/app_carga_staging
+      DATABASE_POOL_MAX: ${CARGA_POOL_MAX:-10}
+      SITE_URL: http://localhost:5173
+      AUTH_SECRET: segredo-do-teste-de-carga-com-mais-de-32-caracteres
+      PROXY_SECRET: segredo-do-repasse-do-teste-de-carga-32c
+      ENABLE_TEST_API: 'true'
+      TEST_API_TOKEN: token-da-api-de-teste-da-carga-com-32-caracteres
+      METRICS_TOKEN: token-das-metricas-da-carga-com-32-caracteres
+    ports:
+      - '127.0.0.1:${CARGA_PORT:-10000}:10000'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:10000/health >/dev/null || exit 1']
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
 volumes:
   grimorio-postgres:

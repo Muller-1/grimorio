@@ -24,6 +24,19 @@ describe('rotas de sistema com Postgres', () => {
     expect((await app.inject('/ready')).statusCode).toBe(503);
   });
 
+  it('/api/v1/status confere o banco de verdade; /metrics mostra o pool de conexões', async () => {
+    const token = 'token-das-metricas-com-mais-de-32-caracteres';
+    app = await startApp({ METRICS_TOKEN: token, DATABASE_POOL_MAX: 4 });
+    const status = await app.inject('/api/v1/status');
+    expect(status.statusCode).toBe(200);
+    expect(status.json().database.status).toBe('ok');
+    const snap = (
+      await app.inject({ url: '/metrics', headers: { authorization: `Bearer ${token}` } })
+    ).json();
+    expect(snap.db).toMatchObject({ poolMax: 4, poolWaiting: 0 });
+    expect(snap.db.poolTotal).toBeGreaterThanOrEqual(1);
+  });
+
   it('/health e /version não dependem do banco', async () => {
     app = await startApp({ DATABASE_URL: 'postgres://app:app@127.0.0.1:1/nada_test' });
     expect((await app.inject('/health')).statusCode).toBe(200);

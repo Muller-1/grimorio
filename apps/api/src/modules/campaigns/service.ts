@@ -17,7 +17,7 @@ import {
   type PartyMember,
 } from '@grimorio/shared/campaign';
 import { and, asc, count, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
-import type { Orm } from '../../db/client';
+import { isUniqueViolation, type Orm } from '../../db/client';
 import {
   actionProposals,
   campaignCharacters,
@@ -27,7 +27,7 @@ import {
   users,
 } from '../../db/schema';
 import type { Ports } from '../../ports';
-import { sheetOf } from '../characters/service';
+import { dataWithoutPortrait, sheetOf } from '../characters/service';
 
 export type Tx = Parameters<Parameters<Orm['transaction']>[0]>[0];
 export type Db = Orm | Tx;
@@ -117,32 +117,42 @@ export function campaignService(orm: Orm, ports: Ports) {
     };
   }
 
+  const createLocked = (userId: string, id: string, name: string) =>
+    orm.transaction(async (tx): Promise<CreateCampaignResult> => {
+      // Trava as campanhas da pessoa ANTES de olhar se o id existe: o mesmo pedido repetido
+      // (clique duplo) espera o primeiro e encontra a campanha pronta, e o limite não "fura".
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`campaigns:${userId}`}))`);
+      const [existing] = await tx.select().from(campaigns).where(eq(campaigns.id, id));
+      if (existing) {
+        if (existing.ownerId !== userId || existing.archivedAt) return { kind: 'id-taken' };
+        return { kind: 'existing', campaign: (await detail(tx, userId, id))! };
+      }
+      const owned = await tx.$count(
+        campaigns,
+        and(eq(campaigns.ownerId, userId), isNull(campaigns.archivedAt)),
+      );
+      if (owned >= MAX_CAMPAIGNS_PER_USER) return { kind: 'limit' };
+      const now = ports.clock.now();
+      await tx
+        .insert(campaigns)
+        .values({ id, ownerId: userId, name, createdAt: now, updatedAt: now, ...newInvite() });
+      await tx
+        .insert(campaignMembers)
+        .values({ campaignId: id, userId, role: 'dm', joinedAt: now });
+      return { kind: 'created', campaign: (await detail(tx, userId, id))! };
+    });
+
   return {
     detail: (userId: string, id: string) => detail(orm, userId, id),
 
     async create(userId: string, id: string, name: string): Promise<CreateCampaignResult> {
-      return orm.transaction(async (tx) => {
-        const [existing] = await tx.select().from(campaigns).where(eq(campaigns.id, id));
-        if (existing) {
-          if (existing.ownerId !== userId || existing.archivedAt) return { kind: 'id-taken' };
-          return { kind: 'existing', campaign: (await detail(tx, userId, id))! };
-        }
-        // Trava as campanhas da pessoa para o limite não "furar" com pedidos simultâneos.
-        await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`campaigns:${userId}`}))`);
-        const owned = await tx.$count(
-          campaigns,
-          and(eq(campaigns.ownerId, userId), isNull(campaigns.archivedAt)),
-        );
-        if (owned >= MAX_CAMPAIGNS_PER_USER) return { kind: 'limit' };
-        const now = ports.clock.now();
-        await tx
-          .insert(campaigns)
-          .values({ id, ownerId: userId, name, createdAt: now, updatedAt: now, ...newInvite() });
-        await tx
-          .insert(campaignMembers)
-          .values({ campaignId: id, userId, role: 'dm', joinedAt: now });
-        return { kind: 'created', campaign: (await detail(tx, userId, id))! };
-      });
+      try {
+        return await createLocked(userId, id, name);
+      } catch (error) {
+        // O mesmo id criado ao mesmo tempo por OUTRA pessoa: a campanha é dela.
+        if (isUniqueViolation(error)) return { kind: 'id-taken' };
+        throw error;
+      }
     },
 
     async list(userId: string): Promise<CampaignSummary[]> {
@@ -321,19 +331,26 @@ export function campaignService(orm: Orm, ports: Ports) {
     /** O resumo da mesa: todos os membros veem o mesmo, só os seis campos de cada ficha. */
     async party(userId: string, id: string): Promise<PartyMember[] | null> {
       if (!(await roleIn(orm, id, userId))) return null;
+      // A mesa pergunta isto a cada 10 s: vem só o necessário, sem o retrato das fichas.
       const rows = await orm
-        .select({ character: characters, player: users.displayName })
+        .select({
+          id: characters.id,
+          ownerId: characters.ownerId,
+          version: characters.version,
+          data: dataWithoutPortrait,
+          player: users.displayName,
+        })
         .from(campaignCharacters)
         .innerJoin(characters, eq(characters.id, campaignCharacters.characterId))
         .innerJoin(users, eq(users.id, characters.ownerId))
         .where(and(eq(campaignCharacters.campaignId, id), isNull(characters.deletedAt)))
         .orderBy(asc(campaignCharacters.addedAt), asc(characters.createdAt), asc(characters.id));
-      return rows.map(({ character, player }) => ({
-        characterId: character.id,
-        player,
-        mine: character.ownerId === userId,
-        version: character.version,
-        summary: partySummary(sheetOf(character)),
+      return rows.map((row) => ({
+        characterId: row.id,
+        player: row.player,
+        mine: row.ownerId === userId,
+        version: row.version,
+        summary: partySummary(sheetOf(row)),
       }));
     },
   };

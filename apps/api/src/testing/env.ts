@@ -10,6 +10,7 @@ export function testEnv(overrides: Partial<Env> = {}): Env {
     PORT: 0,
     LOG_LEVEL: 'silent',
     DATABASE_URL: 'postgres://app:app@localhost:5432/app_test',
+    DATABASE_POOL_MAX: 10,
     SITE_URL: 'http://localhost:5173',
     TRUSTED_ORIGINS: [],
     AUTH_SECRET: 'segredo-de-teste-com-mais-de-32-caracteres',

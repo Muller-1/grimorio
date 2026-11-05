@@ -5,6 +5,8 @@ export interface FakeDatabase extends DatabasePort {
   truncated: number;
   closed: boolean;
   healthy: boolean;
+  /** Quantas vezes alguém perguntou se o banco está no ar. */
+  pings: number;
 }
 
 export function fakeDatabase(name = 'app_test'): FakeDatabase {
@@ -12,7 +14,9 @@ export function fakeDatabase(name = 'app_test'): FakeDatabase {
     truncated: 0,
     closed: false,
     healthy: true,
+    pings: 0,
     async ping() {
+      db.pings++;
       if (!db.healthy) throw new Error('banco fora do ar');
     },
     async name() {

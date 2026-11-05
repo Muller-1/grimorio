@@ -26,7 +26,11 @@
     "db:migrate": "pnpm --filter @grimorio/api db:migrate",
     "dev:api": "pnpm --filter @grimorio/api dev",
     "build:api": "pnpm --filter @grimorio/api build",
-    "test:api": "pnpm --filter @grimorio/api test:int"
+    "test:api": "pnpm --filter @grimorio/api test:int",
+    "load": "pnpm --filter @grimorio/load-test load",
+    "load:up": "pnpm --filter @grimorio/load-test env:up",
+    "load:down": "pnpm --filter @grimorio/load-test env:down",
+    "monitor": "pnpm --filter @grimorio/load-test monitor"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

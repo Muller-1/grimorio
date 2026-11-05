@@ -1,0 +1,20 @@
+{
+  "name": "@grimorio/load-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Teste de carga (ADR-016): muitos jogadores ao mesmo tempo contra a API limitada como no Render grátis.",
+  "scripts": {
+    "load": "tsx src/cli.ts",
+    "env:up": "tsx src/env.ts up",
+    "env:down": "tsx src/env.ts down",
+    "monitor": "tsx src/monitor.ts"
+  },
+  "dependencies": {
+    "@grimorio/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsx": "^4.23.15"
+  }
+}

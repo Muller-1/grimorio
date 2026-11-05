@@ -232,3 +232,138 @@ describe('repasse do site — PROXY_SECRET (ADR-009)', () => {
     expect((await app.inject('/health?x=1')).statusCode).toBe(200);
   });
 });
+
+describe('medidor e /metrics (ADR-016)', () => {
+  const token = 'token-das-metricas-com-mais-de-32-caracteres';
+  const bearer = { authorization: `Bearer ${token}` };
+
+  it('sem METRICS_TOKEN, /metrics não existe', async () => {
+    const { app } = await start();
+    expect((await app.inject('/metrics')).statusCode).toBe(404);
+  });
+
+  it('com o token configurado, só responde a quem manda o token certo', async () => {
+    const { app } = await start({ METRICS_TOKEN: token });
+    for (const authorization of [undefined, 'Bearer errado', token, `Bearer ${token}x`]) {
+      const res = await app.inject({
+        url: '/metrics',
+        headers: authorization ? { authorization } : {},
+      });
+      expect(res.statusCode, String(authorization)).toBe(404);
+    }
+    const ok = await app.inject({ url: '/metrics', headers: bearer });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.headers['cache-control']).toBe('no-store');
+  });
+
+  it('conta por padrão de rota: pedidos, códigos, faixas de tempo e bytes', async () => {
+    const { app } = await start({ METRICS_TOKEN: token });
+    await app.inject('/health');
+    await app.inject('/health');
+    await app.inject('/nao-existe');
+    await app.inject('/nao-existe/outra');
+    const snap = (await app.inject({ url: '/metrics', headers: bearer })).json();
+    expect(snap.routes['GET /health']).toMatchObject({ count: 2, codes: { '200': 2 } });
+    expect(snap.routes['GET /health'].bytes).toBeGreaterThan(0);
+    expect(snap.routes['GET /health'].buckets.reduce((a: number, b: number) => a + b, 0)).toBe(2);
+    // Endereço desconhecido não cria uma linha por URL (não dá para encher a memória).
+    expect(snap.routes['GET (sem rota)']).toMatchObject({ count: 2, codes: { '404': 2 } });
+    // O próprio /metrics não entra na conta.
+    expect(Object.keys(snap.routes).some((r) => r.includes('/metrics'))).toBe(false);
+    expect(snap.requests).toMatchObject({ total: 4, inFlight: 0 });
+    expect(snap.process.rssBytes).toBeGreaterThan(0);
+    // Banco falso: sem pool para medir.
+    expect(snap.db.poolMax).toBeNull();
+  });
+
+  it('publicado (com PROXY_SECRET), /metrics vale com o token mesmo sem o segredo do site', async () => {
+    const { app } = await start({
+      METRICS_TOKEN: token,
+      PROXY_SECRET: 'segredo-do-repasse-com-mais-de-32-caracteres',
+    });
+    expect((await app.inject({ url: '/metrics', headers: bearer })).statusCode).toBe(200);
+    // Sem token configurado, /metrics é um endereço desconhecido: exige o segredo (403).
+    const { app: other } = await start({
+      PROXY_SECRET: 'segredo-do-repasse-com-mais-de-32-caracteres',
+    });
+    expect((await other.inject('/metrics')).statusCode).toBe(403);
+    await other.close();
+  });
+
+  it('o 403 do repasse e o 429 do limite também entram na conta', async () => {
+    const secret = 'segredo-do-repasse-com-mais-de-32-caracteres';
+    const { app } = await start({ METRICS_TOKEN: token, PROXY_SECRET: secret });
+    await app.inject('/api/v1/session');
+    const snap = (await app.inject({ url: '/metrics', headers: bearer })).json();
+    const forbidden = Object.values(snap.routes as Record<string, { codes: object }>).find(
+      (r) => '403' in r.codes,
+    );
+    expect(forbidden).toBeDefined();
+  });
+
+  it('resumo do minuto vai para o log só quando houve pedido do site', async () => {
+    const lines: { msg: string; resumo?: Record<string, unknown> }[] = [];
+    const stream = { write: (line: string) => lines.push(JSON.parse(line)) };
+    const db = fakeDatabase();
+    app = await buildApp(testEnv({ LOG_LEVEL: 'info' }), {
+      db,
+      metrics: { summaryEveryMs: 50 },
+      logStream: stream,
+    });
+    await app.inject('/health');
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    expect(lines.filter((l) => l.msg === 'resumo do minuto')).toEqual([]);
+    await app.inject('/nao-existe');
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    const summary = lines.find((l) => l.msg === 'resumo do minuto');
+    expect(summary?.resumo).toMatchObject({ pedidos: 1 });
+  });
+});
+
+describe('/api/v1/status (ADR-016)', () => {
+  it('diz ok com o banco no ar e guarda a conferência por 1 minuto', async () => {
+    const clock = controllableClock();
+    clock.set('2026-11-03T12:00:00.000Z');
+    const db = fakeDatabase();
+    app = await buildApp(testEnv({ APP_COMMIT: 'abc1234' }), { db, ports: { clock } });
+    const first = await app.inject('/api/v1/status');
+    expect(first.statusCode).toBe(200);
+    expect(first.json()).toMatchObject({
+      status: 'ok',
+      commit: 'abc1234',
+      database: { status: 'ok', checkedAt: '2026-11-03T12:00:00.000Z' },
+    });
+    expect(first.headers['cache-control']).toBe('no-store');
+    await app.inject('/api/v1/status');
+    await app.inject('/api/v1/status');
+    expect(db.pings).toBe(1);
+    clock.advance(60_000);
+    await app.inject('/api/v1/status');
+    expect(db.pings).toBe(2);
+  });
+
+  it('banco fora do ar: 503 "degraded", e confere de novo em 10 s', async () => {
+    const clock = controllableClock();
+    clock.set('2026-11-03T12:00:00.000Z');
+    const db = fakeDatabase();
+    db.healthy = false;
+    app = await buildApp(testEnv(), { db, ports: { clock } });
+    const down = await app.inject('/api/v1/status');
+    expect(down.statusCode).toBe(503);
+    expect(down.json()).toMatchObject({ status: 'degraded', database: { status: 'down' } });
+    db.healthy = true;
+    clock.advance(10_000);
+    expect((await app.inject('/api/v1/status')).statusCode).toBe(200);
+  });
+
+  it('publicado, só responde pelo site (com o segredo do repasse): prova a cadeia inteira', async () => {
+    const secret = 'segredo-do-repasse-com-mais-de-32-caracteres';
+    const { app } = await start({ PROXY_SECRET: secret });
+    expect((await app.inject('/api/v1/status')).statusCode).toBe(403);
+    const viaSite = await app.inject({
+      url: '/api/v1/status',
+      headers: { [PROXY_SECRET_HEADER]: secret },
+    });
+    expect(viaSite.statusCode).toBe(200);
+  });
+});

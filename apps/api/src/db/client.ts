@@ -14,7 +14,19 @@ export interface DatabasePort {
   /** Apaga os dados de todas as tabelas da aplicação (a API de teste confere o banco antes). */
   truncateAll(): Promise<void>;
   close(): Promise<void>;
+  /** Conexões do pool agora: abertas, livres e pedidos na fila esperando uma (métricas). */
+  poolStats?(): PoolStats;
 }
+
+export interface PoolStats {
+  max: number;
+  total: number;
+  idle: number;
+  waiting: number;
+}
+
+/** Conexões por instância da API, se ninguém disser outro número (DATABASE_POOL_MAX). */
+export const DEFAULT_POOL_MAX = 10;
 
 export type Orm = NodePgDatabase<typeof schema>;
 
@@ -27,10 +39,20 @@ export function isPostgresDatabase(db: DatabasePort): db is PostgresDatabase {
   return 'orm' in db && 'pool' in db;
 }
 
+/** Erro de chave repetida do Postgres (23505), venha direto do `pg` ou embrulhado pelo Drizzle. */
+export function isUniqueViolation(error: unknown): boolean {
+  for (let e = error, depth = 0; e && depth < 4; depth++) {
+    if ((e as { code?: unknown }).code === '23505') return true;
+    e = (e as { cause?: unknown }).cause;
+  }
+  return false;
+}
+
 export function createDatabase(url: string, options: { max?: number } = {}): PostgresDatabase {
+  const max = options.max ?? DEFAULT_POOL_MAX;
   const pool = new pg.Pool({
     connectionString: url,
-    max: options.max ?? 10,
+    max,
     connectionTimeoutMillis: 5_000,
   });
   // Um erro numa conexão ociosa não pode derrubar o processo (ex.: banco reiniciou).
@@ -58,6 +80,14 @@ export function createDatabase(url: string, options: { max?: number } = {}): Pos
     },
     async close() {
       await pool.end();
+    },
+    poolStats() {
+      return {
+        max,
+        total: pool.totalCount,
+        idle: pool.idleCount,
+        waiting: pool.waitingCount,
+      };
     },
   };
 }

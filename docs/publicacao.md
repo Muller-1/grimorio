@@ -133,6 +133,9 @@ espera:
   por conta: dá para **um** serviço ligado o mês inteiro, não para dois.
 - **Pago:** plano Starter do Render (não dorme).
 
+O passo a passo do monitor externo (com aviso por e-mail e a conferência do caminho inteiro
+site → repasse → API → banco) está em [monitoramento.md](monitoramento.md), seção 3.
+
 ## Checklist de lançamento (plano de início, Etapa 8)
 
 - [ ] Site acessível no domínio escolhido, com HTTPS.

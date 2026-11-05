@@ -17,8 +17,11 @@ import { sendError } from './http';
 export const PROXY_SECRET_HEADER = 'x-grimorio-proxy';
 export const CLIENT_IP_HEADER = 'x-grimorio-client-ip';
 
-/** Rotas que respondem sem o segredo (conferidas pelo padrão da rota, não pelo texto da URL). */
-const OPEN_ROUTES = new Set(['/health', '/ready', '/version']);
+/**
+ * Rotas que respondem sem o segredo (conferidas pelo padrão da rota, não pelo texto da URL).
+ * `/metrics` tem o próprio token (ADR-016) e só existe quando ele está configurado.
+ */
+const OPEN_ROUTES = new Set(['/health', '/ready', '/version', '/metrics']);
 
 const digest = (value: string) => createHash('sha256').update(value).digest();
 

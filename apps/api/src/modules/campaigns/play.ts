@@ -56,7 +56,11 @@ interface Access {
 }
 
 /** Dona, mestre ou jogador da mesma mesa (ou `null`: a ficha "não existe" para ela). */
-async function accessTo(db: Db, row: CharacterRow, userId: string): Promise<Access | null> {
+async function accessTo(
+  db: Db,
+  row: Pick<CharacterRow, 'id' | 'ownerId'>,
+  userId: string,
+): Promise<Access | null> {
   const [link] = await db
     .select({ id: campaigns.id, name: campaigns.name })
     .from(campaignCharacters)
@@ -230,14 +234,25 @@ export function playService(orm: Orm, ports: Ports) {
      * está na tela), a ficha do servidor quando a versão andou, e as propostas pendentes (dona).
      */
     async updates(userId: string, id: string, after: number): Promise<UpdatesOutcome> {
-      const [row] = await orm.select().from(characters).where(activeCharacter(id));
-      if (!row) return { kind: 'not-found' };
-      const access = await accessTo(orm, row, userId);
+      // A ficha aberta pergunta isto a cada 10 s e quase sempre nada mudou: primeiro só a
+      // versão; a ficha inteira (que pode ter foto) só é lida quando a versão andou.
+      const [head] = await orm
+        .select({ id: characters.id, ownerId: characters.ownerId, version: characters.version })
+        .from(characters)
+        .where(activeCharacter(id));
+      if (!head) return { kind: 'not-found' };
+      const access = await accessTo(orm, head, userId);
       if (!access || access.role === 'player') return { kind: 'not-found' };
+      let row: CharacterRow | undefined;
+      if (head.version !== after) {
+        [row] = await orm.select().from(characters).where(activeCharacter(id));
+        if (!row) return { kind: 'not-found' };
+      }
+      const version = row?.version ?? head.version;
 
       let events: CharacterEvent[] = [];
       let truncated = false;
-      if (row.version > after) {
+      if (version > after) {
         const actor = aliasedTable(users, 'actor');
         const approver = aliasedTable(users, 'approver');
         const rows = await orm
@@ -270,11 +285,11 @@ export function playService(orm: Orm, ports: Ports) {
       }
       return {
         kind: 'ok',
-        version: row.version,
+        version,
         campaign: access.campaign,
         events,
         truncated,
-        ...(row.version !== after ? { document: toDocument(row) } : {}),
+        ...(row ? { document: toDocument(row) } : {}),
         proposals: access.role === 'owner' ? await pendingProposals(id) : [],
       };
     },

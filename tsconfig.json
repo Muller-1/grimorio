@@ -7,6 +7,7 @@
     { "path": "./apps/web" },
     { "path": "./apps/web/tsconfig.node.json" },
     { "path": "./apps/qa-bot" },
-    { "path": "./apps/api" }
+    { "path": "./apps/api" },
+    { "path": "./apps/load-test" }
   ]
 }

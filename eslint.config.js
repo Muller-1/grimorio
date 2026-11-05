@@ -196,6 +196,13 @@ export default defineConfig([
     },
   },
 
+  // ---- teste de carga e monitor (ADR-016): só Node ----
+  {
+    files: ['apps/load-test/**/*.ts'],
+    languageOptions: { globals: globals.node },
+    rules: { 'no-restricted-imports': ['error', { patterns: [forbidTestkit] }] },
+  },
+
   // ---- bot de testes (Playwright): Node + callbacks que rodam no navegador ----
   {
     files: ['apps/qa-bot/**/*.{ts,mjs}'],

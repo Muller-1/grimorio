@@ -50,6 +50,18 @@ const EnvSchema = z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
     DATABASE_URL: postgresUrl,
+    /**
+     * Conexões com o banco por instância (ADR-016). O teste de carga mostra se falta: na métrica
+     * "fila do banco". Cuidado com o limite de conexões do plano do banco.
+     */
+    DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
+    /**
+     * Token do `GET /metrics` (ADR-016), 32+ caracteres. Sem ele, a rota não existe. Quem tem o
+     * token vê os números da API (pedidos, tempos, CPU), nada de dados de jogadores.
+     */
+    METRICS_TOKEN: optionalText.pipe(
+      z.string().min(32, 'deve ter pelo menos 32 caracteres').optional(),
+    ),
     /** Commit publicado; as plataformas de hospedagem costumam fornecer. Sem valor, usa o do build. */
     APP_COMMIT: z.string().trim().min(1).optional(),
     /**
@@ -135,7 +147,10 @@ export class EnvError extends Error {
 
 /** Lê e valida o ambiente. Lança `EnvError` listando todos os problemas de uma vez. */
 export function parseEnv(source: Record<string, string | undefined> = process.env): Env {
-  const result = EnvSchema.safeParse(source);
+  // O Render informa o commit publicado em RENDER_GIT_COMMIT; a imagem Docker não leva o .git,
+  // então sem isto o /version diria "local" e o `pnpm monitor` não saberia o que está no ar.
+  const commit = source.APP_COMMIT || source.RENDER_GIT_COMMIT?.trim().slice(0, 7) || undefined;
+  const result = EnvSchema.safeParse({ ...source, APP_COMMIT: commit });
   if (result.success) return result.data;
   const lines = result.error.issues.map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`);
   throw new EnvError(`Variáveis de ambiente inválidas:\n${lines.join('\n')}`);

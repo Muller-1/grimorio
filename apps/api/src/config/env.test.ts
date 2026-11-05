@@ -35,6 +35,23 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ APP_ENV: 'local' })).toThrow(/DATABASE_URL/);
   });
 
+  it('commit publicado: APP_COMMIT, ou o RENDER_GIT_COMMIT do Render (7 caracteres)', () => {
+    const sha = '7d7ee1a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6';
+    expect(parseEnv({ ...base, RENDER_GIT_COMMIT: sha }).APP_COMMIT).toBe('7d7ee1a');
+    expect(parseEnv({ ...base, APP_COMMIT: 'abc1234', RENDER_GIT_COMMIT: sha }).APP_COMMIT).toBe(
+      'abc1234',
+    );
+    expect(parseEnv(base).APP_COMMIT).toBeUndefined();
+  });
+
+  it('pool do banco e token das métricas (ADR-016)', () => {
+    expect(parseEnv(base).DATABASE_POOL_MAX).toBe(10);
+    expect(parseEnv({ ...base, DATABASE_POOL_MAX: '20' }).DATABASE_POOL_MAX).toBe(20);
+    expect(() => parseEnv({ ...base, DATABASE_POOL_MAX: '0' })).toThrow(/DATABASE_POOL_MAX/);
+    expect(parseEnv({ ...base, METRICS_TOKEN: '' }).METRICS_TOKEN).toBeUndefined();
+    expect(() => parseEnv({ ...base, METRICS_TOKEN: 'curto' })).toThrow(/METRICS_TOKEN/);
+  });
+
   it('flag com texto estranho é erro, não "verdadeiro"', () => {
     expect(() => parseEnv({ ...base, ENABLE_TEST_API: 'sim' })).toThrow(/ENABLE_TEST_API/);
   });

@@ -8,7 +8,8 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./campaign": "./src/campaign/contracts.ts"
+    "./campaign": "./src/campaign/contracts.ts",
+    "./metrics": "./src/metrics.ts"
   },
   "dependencies": {
     "zod": "^4.3.0"

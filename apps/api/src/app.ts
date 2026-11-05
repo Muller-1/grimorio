@@ -10,6 +10,7 @@ import { campaignRoutes } from './modules/campaigns/routes';
 import { characterRoutes } from './modules/characters/routes';
 import { proxyGuard } from './modules/proxy-guard';
 import { systemRoutes } from './modules/system/routes';
+import { metrics, type MetricsOptions } from './plugins/metrics';
 import { rateLimit, type RateRule } from './plugins/rate-limit';
 import { testApi } from './plugins/test-api';
 import { defaultPorts, type Ports } from './ports';
@@ -24,17 +25,22 @@ export interface BuildOptions {
    * próprias (ex.: limite 2) para conferir o 429.
    */
   rateLimit?: boolean | RateRule[];
+  /** Intervalos do medidor (os testes encurtam o resumo do minuto). */
+  metrics?: MetricsOptions;
+  /** Para onde vão as linhas do log (os testes leem o que foi escrito). Padrão: a saída padrão. */
+  logStream?: { write(line: string): void };
 }
 
 export async function buildApp(env: Env, options: BuildOptions = {}): Promise<FastifyInstance> {
   const ports: Ports = { ...defaultPorts(env.APP_ENV), ...options.ports };
-  const db = options.db ?? createDatabase(env.DATABASE_URL);
+  const db = options.db ?? createDatabase(env.DATABASE_URL, { max: env.DATABASE_POOL_MAX });
 
   const app = Fastify({
     logger: {
       level: env.LOG_LEVEL,
       // Segredos nunca vão para o log.
       redact: ['req.headers["x-test-token"]', 'req.headers.authorization', 'req.headers.cookie'],
+      ...(options.logStream ? { stream: options.logStream } : {}),
     },
     bodyLimit: 256 * 1024,
     // Id de requisição vem da porta (plano v2, RNF-13); o cabeçalho de quem chama é ignorado.
@@ -52,6 +58,8 @@ export async function buildApp(env: Env, options: BuildOptions = {}): Promise<Fa
   });
   if (!options.db) app.addHook('onClose', async () => db.close());
 
+  // Primeiro o medidor (ADR-016), para contar também o que os outros recusam (403, 429).
+  await app.register(metrics, options.metrics ?? {});
   // Antes de todas as rotas: publicado, só atende /api/* que chegue pelo site (ADR-009).
   await app.register(proxyGuard);
   const limits = options.rateLimit ?? env.APP_ENV !== 'test';

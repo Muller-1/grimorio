@@ -82,6 +82,19 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
+  apps/load-test:
+    dependencies:
+      '@grimorio/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.0
+        version: 22.20.4
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+
   apps/qa-bot:
     dependencies:
       '@grimorio/rules':

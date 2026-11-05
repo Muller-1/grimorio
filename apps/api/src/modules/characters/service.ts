@@ -27,7 +27,7 @@ import {
   SheetInputSchema,
 } from '@grimorio/shared';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
-import type { Orm } from '../../db/client';
+import { isUniqueViolation, type Orm } from '../../db/client';
 import { characters, type CharacterRow } from '../../db/schema';
 import type { Ports } from '../../ports';
 
@@ -57,12 +57,18 @@ export function summaryColumns(sheet: LocalSheet) {
  * A ficha da linha no formato atual. Linhas antigas são migradas na leitura (ADR-010); só são
  * regravadas no formato novo quando o jogador salvar alguma mudança.
  */
-export function sheetOf(row: CharacterRow): LocalSheet {
+export function sheetOf(row: Pick<CharacterRow, 'id' | 'data'>): LocalSheet {
   const parsed = SheetInputSchema.safeParse(row.data);
   // Só entra no banco ficha validada; se um dia falhar, é bug de migração (aparece no log).
   if (!parsed.success) throw new Error(`ficha ${row.id} não pôde ser migrada`);
   return parsed.data;
 }
+
+/**
+ * A ficha sem o retrato, direto do banco: para quem só precisa de números (cartão da lista,
+ * resumo da mesa). A foto pode ter 100+ kB, e ler e validar isso a cada consulta custa CPU.
+ */
+export const dataWithoutPortrait = sql<unknown>`${characters.data} #- '{identity,portraitData}'`;
 
 /** Revisões com todas as seções (as que não existiam quando a linha foi salva contam 0). */
 export function revsOf(row: CharacterRow): SectionRevs {
@@ -126,6 +132,39 @@ const active = (ownerId: string, id?: string) =>
   );
 
 export function characterService(orm: Orm, ports: Ports) {
+  const createLocked = (ownerId: string, id: string, input: LocalSheet) =>
+    orm.transaction(async (tx): Promise<CreateResult> => {
+      // Trava as fichas do dono ANTES de olhar se o id existe: o mesmo pedido repetido (clique
+      // duplo, reenvio com internet ruim) espera o primeiro terminar e encontra a ficha pronta,
+      // e a contagem do limite não "fura" com pedidos simultâneos.
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${ownerId}))`);
+      const [existing] = await tx.select().from(characters).where(eq(characters.id, id));
+      if (existing) {
+        return existing.ownerId === ownerId && !existing.deletedAt
+          ? { kind: 'existing', document: toDocument(existing) }
+          : { kind: 'id-taken' };
+      }
+      const count = await tx.$count(characters, active(ownerId));
+      if (count >= MAX_CHARACTERS_PER_ACCOUNT) return { kind: 'limit' };
+
+      const sheet = normalizeSheet(input).sheet;
+      const now = ports.clock.now();
+      const [row] = await tx
+        .insert(characters)
+        .values({
+          id,
+          ownerId,
+          data: sheet,
+          sectionRevs: initialSectionRevs(),
+          version: 1,
+          createdAt: now,
+          updatedAt: now,
+          ...summaryColumns(sheet),
+        })
+        .returning();
+      return { kind: 'created', document: toDocument(row!) };
+    });
+
   return {
     async list(ownerId: string): Promise<CharacterSummary[]> {
       const rows = await orm
@@ -138,7 +177,7 @@ export function characterService(orm: Orm, ports: Ports) {
           version: characters.version,
           updatedAt: characters.updatedAt,
           // A ficha sem o retrato: só para calcular CA e PV do cartão.
-          card: sql<unknown>`${characters.data} #- '{identity,portraitData}'`,
+          card: dataWithoutPortrait,
         })
         .from(characters)
         .where(active(ownerId))
@@ -152,36 +191,13 @@ export function characterService(orm: Orm, ports: Ports) {
     },
 
     async create(ownerId: string, id: string, input: LocalSheet): Promise<CreateResult> {
-      return orm.transaction(async (tx) => {
-        // Mesmo id de novo (clique duplo, reenvio): devolve o que já existe, sem duplicar.
-        const [existing] = await tx.select().from(characters).where(eq(characters.id, id));
-        if (existing) {
-          return existing.ownerId === ownerId && !existing.deletedAt
-            ? { kind: 'existing', document: toDocument(existing) }
-            : { kind: 'id-taken' };
-        }
-        // Trava as fichas do dono para a contagem do limite não "furar" com pedidos simultâneos.
-        await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${ownerId}))`);
-        const count = await tx.$count(characters, active(ownerId));
-        if (count >= MAX_CHARACTERS_PER_ACCOUNT) return { kind: 'limit' };
-
-        const sheet = normalizeSheet(input).sheet;
-        const now = ports.clock.now();
-        const [row] = await tx
-          .insert(characters)
-          .values({
-            id,
-            ownerId,
-            data: sheet,
-            sectionRevs: initialSectionRevs(),
-            version: 1,
-            createdAt: now,
-            updatedAt: now,
-            ...summaryColumns(sheet),
-          })
-          .returning();
-        return { kind: 'created', document: toDocument(row!) };
-      });
+      try {
+        return await createLocked(ownerId, id, input);
+      } catch (error) {
+        // O mesmo id criado ao mesmo tempo por OUTRA conta: a ficha é dela, não desta.
+        if (isUniqueViolation(error)) return { kind: 'id-taken' };
+        throw error;
+      }
     },
 
     async patch(ownerId: string, id: string, body: PatchCharacterBody): Promise<PatchResult> {
