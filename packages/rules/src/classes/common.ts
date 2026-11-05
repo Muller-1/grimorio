@@ -77,6 +77,33 @@ export const FULL_CASTER_SLOTS: readonly (readonly number[])[] = [
 ];
 
 /** Meio-conjurador de 2024 (Paladino, Guardião): já conjura no nível 1. */
+/**
+ * Um terço de conjurador (Cavaleiro Místico, Trapaceiro Arcano), pelo nível de classe: nada
+ * antes do 3; 4º círculo só no 19.
+ */
+export const THIRD_CASTER_SLOTS: readonly (readonly number[])[] = [
+  [],
+  [],
+  [2],
+  [3],
+  [3],
+  [3],
+  [4, 2],
+  [4, 2],
+  [4, 2],
+  [4, 3],
+  [4, 3],
+  [4, 3],
+  [4, 3, 2],
+  [4, 3, 2],
+  [4, 3, 2],
+  [4, 3, 3],
+  [4, 3, 3],
+  [4, 3, 3],
+  [4, 3, 3, 1],
+  [4, 3, 3, 1],
+];
+
 export const HALF_CASTER_SLOTS: readonly (readonly number[])[] = [
   [2],
   [2],

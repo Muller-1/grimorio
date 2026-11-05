@@ -66,6 +66,7 @@ export const levelUpPtBR = {
   pickCount: (picked: number, count: number) => `${picked}/${count} escolhidas`,
   subclassOther: 'Outra subclasse (do livro)',
   subclassOtherName: 'Nome da subclasse',
+  bookTag: 'do livro',
   subclassOtherHint:
     'As características dela não estão nas regras abertas: anote-as na ficha, em Características.',
   asiModes: {

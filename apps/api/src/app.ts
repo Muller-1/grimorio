@@ -2,6 +2,7 @@
  * Ponto único onde a API é montada (plano v2, 6.5). Os testes de integração chamam `buildApp`
  * com portas e banco de teste; o servidor chama com os padrões do ambiente.
  */
+import { loadAllBookSubclasses } from '@grimorio/rules';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { Env } from './config/env';
 import { createDatabase, isPostgresDatabase, type DatabasePort } from './db/client';
@@ -27,6 +28,9 @@ export interface BuildOptions {
 }
 
 export async function buildApp(env: Env, options: BuildOptions = {}): Promise<FastifyInstance> {
+  // Subclasses do livro (ADR-018): no site chegam sob demanda; aqui entram todas de uma vez,
+  // para o resumo da mesa e a conferência das fichas calcularem com elas.
+  await loadAllBookSubclasses();
   const ports: Ports = { ...defaultPorts(env.APP_ENV), ...options.ports };
   const db = options.db ?? createDatabase(env.DATABASE_URL);
 

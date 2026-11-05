@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { RollTray } from '@/features/dice/components/RollTray';
+import { InlineLoader } from '@/features/screens/InlineLoader';
 import { useToastStore } from '@/features/toast/store';
 import { t } from '@/lib/i18n';
 import { ts } from '@/lib/i18n/sheet';
@@ -17,6 +18,7 @@ import { CombatPanel, DeathSavesPanel } from './components/CombatColumn';
 import { IdentityBar } from './components/Identity';
 import { PowersPanel } from './components/PowersPanel';
 import { safeStorage } from '@/ports/storage';
+import { useBookSubclassesReady } from './book-subclasses';
 import { exampleSheet } from './example';
 import { useSheetStore } from './store';
 import { useSwipeTabs } from './swipe';
@@ -91,6 +93,8 @@ export default function SheetPage({
   banner?: ReactNode;
 }) {
   const name = useSheetStore((s) => s.sheet.identity.name);
+  const progression = useSheetStore((s) => s.sheet.progression);
+  const subclassesReady = useBookSubclassesReady(progression);
   const openLocal = useSheetStore((s) => s.openLocal);
   const recovered = useSheetStore((s) => s.recoveredFromBadData);
   const replace = useSheetStore((s) => s.replace);
@@ -139,6 +143,9 @@ export default function SheetPage({
     { key: 'combat', label: ts.mobileTabs.combat },
     { key: 'actions', label: ts.mobileTabs.actions },
   ];
+  // Subclasse do livro ainda chegando: espera um instante em vez de calcular a ficha sem ela.
+  if (!subclassesReady) return <InlineLoader label={ts.loadingSubclass} className="py-16" />;
+
   const hidden = (key: Column) => column !== key && 'max-md:hidden';
   const wide = 'min-w-0 md:flex-[2_1_760px]';
   const narrow = 'min-w-0 md:flex-[1_1_360px]';

@@ -1,5 +1,10 @@
 import type { AbilityKey, DamageType, LocalSheet } from '@grimorio/shared';
-import { FULL_CASTER_SLOTS, HALF_CASTER_SLOTS, PACT_SLOTS } from '../classes/common';
+import {
+  FULL_CASTER_SLOTS,
+  HALF_CASTER_SLOTS,
+  PACT_SLOTS,
+  THIRD_CASTER_SLOTS,
+} from '../classes/common';
 import type { SpellcastingDef } from '../classes/types';
 import type { ClassInfo } from '../engine/character';
 import { cantripTier, type SpellDef } from './types';
@@ -7,8 +12,15 @@ import { cantripTier, type SpellDef } from './types';
 /** Espaços de magia por círculo (índice 0 = 1º círculo) para o tipo de conjurador e nível. */
 export function slotTable(kind: SpellcastingDef['kind'], level: number): number[] {
   const l = Math.min(20, Math.max(1, Math.floor(level)));
-  const row =
-    kind === 'full' ? FULL_CASTER_SLOTS[l - 1] : kind === 'half' ? HALF_CASTER_SLOTS[l - 1] : [];
+  const table =
+    kind === 'full'
+      ? FULL_CASTER_SLOTS
+      : kind === 'half'
+        ? HALF_CASTER_SLOTS
+        : kind === 'third'
+          ? THIRD_CASTER_SLOTS
+          : [];
+  const row = table[l - 1];
   return Array.from({ length: 9 }, (_, i) => row?.[i] ?? 0);
 }
 
@@ -51,7 +63,8 @@ export function spellcastingView(
   proficiency: number,
   dcBonus: number,
 ): SpellcastingView | null {
-  const def = info?.progression.spellcasting;
+  // A conjuração pode vir da subclasse (Cavaleiro Místico, Trapaceiro Arcano).
+  const def = info?.progression.spellcasting ?? info?.subclass?.spellcasting;
   const ability = def?.ability ?? sheet.spells.ability;
   if (!ability) return null;
   const level = sheet.build.level;
@@ -77,18 +90,10 @@ export function spellcastingView(
       });
     }
   }
-  // Arcano Místico (Bruxo 11+): magias de 6º a 9º sem espaço, uma vez por descanso longo.
-  if (def?.kind === 'pact') {
-    for (const [lvl, circle] of [
-      [11, 6],
-      [13, 7],
-      [15, 8],
-      [17, 9],
-    ] as const) {
-      if (level >= lvl) maxCircle = Math.max(maxCircle, circle);
-    }
-  }
-  const lists = info ? [info.classId] : [];
+  // O Arcano Místico (Bruxo 11+, 6º a 9º círculo) não entra aqui: é uma escolha à parte na
+  // subida de nível, não magia preparada. Antes entrava e a aba Magias oferecia essas magias.
+  const subList = info?.progression.spellcasting ? undefined : info?.subclass?.spellcasting?.list;
+  const lists = subList ? [subList] : info ? [info.classId] : [];
   if (info?.classId === 'bard' && level >= 10) lists.push('cleric', 'druid', 'wizard');
   const index = Math.min(20, Math.max(1, level)) - 1;
   // Clérigo Taumaturgo e Druida Mágico (Ordem Divina/Primal, nível 1) conhecem 1 truque a mais.

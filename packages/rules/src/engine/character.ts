@@ -84,7 +84,11 @@ export function scalingContext(
   return {
     column: (name) => {
       if (!info) return undefined;
-      const v = columnAt(info.progression, name, level);
+      // Colunas próprias da subclasse (Dados de Superioridade, Energia Psiônica) vêm primeiro.
+      const own = info.subclass?.columns?.[name];
+      const v = own
+        ? own[Math.min(20, Math.max(1, level)) - 1]
+        : columnAt(info.progression, name, level);
       return typeof v === 'number' ? v : undefined;
     },
     mods,

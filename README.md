@@ -185,7 +185,8 @@ grimorio/
   009: publicação com contas para um grupo de teste; 010: magias, subida de nível e
   habilidades que o site calcula; 011: inventário e ficha v3; 012: visual mais limpo e
   magias no assistente; 013: correções para uso real, servidor acordando e busca do Google; 014: campanha, parte 1;
-  015: revisão do motor; 017: configurações deste navegador).
+  015: revisão do motor; 017: configurações deste navegador; 018: subclasses do livro e listas
+  de magia).
 - `docs/publicacao.md` — passo a passo para colocar o site no ar, ligar o monitor B14, aparecer
   no Google e manter a API acordada.
 - `docs/plano-escala-e-campanha.md` — planejamento (sem código): concorrência na campanha

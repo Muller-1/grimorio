@@ -4,6 +4,7 @@ export * from './creation';
 export * from './classes';
 // Talentos: só a subida de nível usa (fora do pedaço das regras que a ficha baixa).
 export * from './classes/feats';
+export * from './classes/book-subclasses';
 export * from './engine';
 export * from './spells';
 export * from './levelup';

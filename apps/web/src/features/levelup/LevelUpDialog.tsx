@@ -24,6 +24,7 @@ import { t } from '@/lib/i18n';
 import { tl } from '@/lib/i18n/levelup';
 import { cn } from '@/lib/utils';
 import { newId } from '@/ports/ids';
+import { useClassBookSubclasses } from '@/features/sheet/book-subclasses';
 import { ChoiceEditor, type ChoiceContext } from './ChoiceEditor';
 import { emptyDraft, isComplete, toInputs, type LevelDraft } from './state';
 
@@ -238,7 +239,12 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
   const optionsKey = JSON.stringify(
     allPicks.filter((c) => c.kind === 'option' && c.id?.includes(':')).map((c) => c.id),
   );
+  // Subclasses do livro da classe (ADR-018): chegam sob demanda; o plano é refeito quando chegam.
+  const subclassesLoaded = useClassBookSubclasses(
+    hasClass ? sheet.progression?.classId : classId || undefined,
+  );
   const steps = useMemo(() => {
+    void subclassesLoaded; // o plano lê as subclasses registradas: refaz quando chegam
     const options = Object.fromEntries(
       (JSON.parse(optionsKey) as string[]).map((id) => id.split(':') as [string, string]),
     );
@@ -247,7 +253,7 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
       ...(subclassId ? { subclassId } : {}),
       options,
     });
-  }, [sheet, target, hasClass, classId, subclassId, optionsKey]);
+  }, [sheet, target, hasClass, classId, subclassId, optionsKey, subclassesLoaded]);
   const progression = progressionFor(sheet, hasClass ? undefined : classId || undefined);
 
   const preview = useMemo(() => {
@@ -631,7 +637,8 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
             <p className="text-sm font-semibold text-muted">
               {tl.choiceOf(choiceIndex + 1, choicePages.length)}
             </p>
-            <ChoiceEditor slot={slot} ctx={ctx} standalone />
+            {/* Um editor por escolha: o estado da lista (busca, círculo) não passa de uma tela para a outra. */}
+            <ChoiceEditor key={slot.key} slot={slot} ctx={ctx} standalone />
             {blocked ? (
               <p role="status" className="text-sm text-danger">
                 {tl.pending(1)}

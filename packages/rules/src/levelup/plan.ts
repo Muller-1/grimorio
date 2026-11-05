@@ -137,7 +137,8 @@ export function levelUpSteps(
   const savedSub = sheet.progression?.subclassId;
   const subId = savedSub ?? opts.subclassId;
   const sub = subclassOf(p, subId);
-  const sc = p.spellcasting;
+  // Conjuração da classe ou, no Cavaleiro Místico e no Trapaceiro Arcano, da subclasse.
+  const sc = p.spellcasting ?? sub?.spellcasting;
   const steps: LevelStep[] = [];
   const creation = sheet.creation;
 
@@ -201,7 +202,7 @@ export function levelUpSteps(
     if (profFrom !== profTo) gains.proficiency = { from: profFrom, to: profTo };
 
     if (sc) {
-      const lists = [p.classId as string];
+      const lists = [p.spellcasting ? (p.classId as string) : sub!.spellcasting!.list];
       if (p.classId === 'bard' && level >= 10) lists.push('cleric', 'druid', 'wizard');
       let maxCircle = 0;
       if (sc.kind === 'pact') {

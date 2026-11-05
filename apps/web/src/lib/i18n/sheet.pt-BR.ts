@@ -16,6 +16,7 @@ const DURATION_UNITS = {
 export const sheetPtBR = {
   pageTitle: 'Ficha de personagem',
   unnamed: 'Personagem sem nome',
+  loadingSubclass: 'Carregando a subclasse…',
   savedLocally: 'Salvo neste navegador',
   wizardHint: {
     title: 'Primeira vez? Deixe o assistente montar a ficha',

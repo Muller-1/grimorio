@@ -1,3 +1,4 @@
+import type { SpellClass } from '../spells/types';
 import type { AbilityKey, DamageType, SkillKey } from '@grimorio/shared';
 import type { ClassId } from '../creation/content';
 
@@ -203,6 +204,8 @@ export interface FeatureDef {
 
 export interface SubclassDef {
   id: string;
+  /** Ausente = SRD 5.2. `book` = só no Livro do Jogador 2024 (regras fiéis, texto nosso). */
+  source?: 'book';
   name: string;
   /** Uma frase sobre a subclasse. */
   tagline: string;
@@ -211,12 +214,25 @@ export interface SubclassDef {
   spells?: Record<number, string[]>;
   /** Magias que dependem de uma opção da subclasse (tipo de terreno do Círculo da Terra). */
   optionSpells?: Record<string, Record<number, string[]>>;
+  /**
+   * Conjuração que vem da subclasse (Cavaleiro Místico, Trapaceiro Arcano): tabelas de 20
+   * níveis de classe (0 antes do nível 3) e a lista de magias que usa.
+   */
+  spellcasting?: SpellcastingDef & { list: SpellClass };
+  /**
+   * Colunas próprias, como as da tabela da classe (20 valores, por nível de classe; 0 antes do
+   * nível 3): "Dados de Superioridade" 4/5/6, "Energia Psiônica" d6 → d12. Use `{ column: id }`.
+   */
+  columns?: Record<string, readonly number[]>;
 }
 
 export interface SpellcastingDef {
   ability: AbilityKey;
-  /** Tabela de espaços: conjurador pleno, meio-conjurador ou Magia de Pacto (Bruxo). */
-  kind: 'full' | 'half' | 'pact';
+  /**
+   * Tabela de espaços: conjurador pleno, meio-conjurador, um terço (Cavaleiro Místico,
+   * Trapaceiro Arcano) ou Magia de Pacto (Bruxo).
+   */
+  kind: 'full' | 'half' | 'third' | 'pact';
   /** Truques conhecidos por nível (índice 0 = nível 1); sem a coluna = não tem truques. */
   cantrips?: readonly number[];
   /** Magias preparadas por nível. */

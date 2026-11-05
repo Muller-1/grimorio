@@ -456,7 +456,7 @@ function SubclassPick({ slot, ctx }: { slot: LevelChoiceSlot; ctx: ChoiceContext
           name={name}
           checked={pick?.id === s.id}
           onChange={() => ctx.setPicks(slot.key, [{ kind: 'subclass', id: s.id }])}
-          title={s.name}
+          title={s.source === 'book' ? `${s.name} · ${tl.bookTag}` : s.name}
           text={s.tagline}
           testId={`choice.subclass.${s.id}`}
         />
