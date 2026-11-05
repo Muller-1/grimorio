@@ -243,6 +243,28 @@ test.describe('B15 — subida de nível, magias e habilidades', { tag: '@B15' },
     expect(checkedAfter, 'nenhuma tela de magia depois do filtro').toBeGreaterThan(0);
   });
 
+  test('Ladino 1 → 3: escolher o Trapaceiro Arcano não faz a tela sumir nem mexe no nível 2', async ({
+    page,
+  }) => {
+    // Antes, escolher a subclasse trocava a tela atual por "Trocar um truque" do nível 2: a
+    // conjuração da subclasse valia também nos níveis antes dela.
+    await withSheet(page, sheetOf('rogue', 1, { dex: 16, int: 14 }));
+    await page.getByTestId('levelup.open').click();
+    await page.getByTestId('levelup.more').click();
+    await expect(page.getByTestId('levelup.from-to')).toHaveText('Nível 1 → 3');
+    await page.getByTestId('levelup.confirm').click();
+    const choice = page.getByTestId('choice.subclass.arcane-trickster');
+    await nextUntil(page, 'choice.subclass.arcane-trickster');
+    await choice.check();
+    await expect(choice).toBeChecked();
+    await expect(page.getByRole('dialog')).toContainText('Nível 3');
+    // Voltando, o nível 2 continua sem nada de magia.
+    await page.getByRole('button', { name: 'Voltar' }).click();
+    await expect(page.getByRole('dialog')).toContainText('Nível 2');
+    await expect(page.getByRole('dialog')).not.toContainText('Trocar um truque');
+    await expect(page.getByRole('dialog')).not.toContainText('Trocar uma magia');
+  });
+
   test('Clérigo: Conjurar gasta o espaço e já rola o ataque; "Em mim" só na cura', async ({
     page,
   }) => {

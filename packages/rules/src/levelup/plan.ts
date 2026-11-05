@@ -137,12 +137,15 @@ export function levelUpSteps(
   const savedSub = sheet.progression?.subclassId;
   const subId = savedSub ?? opts.subclassId;
   const sub = subclassOf(p, subId);
-  // Conjuração da classe ou, no Cavaleiro Místico e no Trapaceiro Arcano, da subclasse.
-  const sc = p.spellcasting ?? sub?.spellcasting;
   const steps: LevelStep[] = [];
   const creation = sheet.creation;
 
   for (let level = from + 1; level <= to; level++) {
+    // Conjuração da classe ou, no Cavaleiro Místico e no Trapaceiro Arcano, da subclasse, que só
+    // vale a partir do nível da subclasse. (Valia em todos: subindo do 1 ao 3, o nível 2 pedia
+    // para trocar truque e magia, e escolher a subclasse mudava as telas que já tinham passado.)
+    const sc =
+      p.spellcasting ?? (sub && level >= (p.subclassLevels[0] ?? 3) ? sub.spellcasting : undefined);
     const choices: LevelChoiceSlot[] = [];
     const features: GainedFeature[] = [];
     const granted: LevelGains['grantedSpells'] = [];

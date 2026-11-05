@@ -178,3 +178,31 @@ describe('conjuração de um terço (Cavaleiro Místico, Trapaceiro Arcano)', ()
     expect(deriveSheet(sheet('warlock', 11)).spellcasting!.maxCircle).toBe(5);
   });
 });
+
+describe('subida de vários níveis escolhendo a subclasse no caminho', () => {
+  it.each(CLASS_ORDER)('%s: a subclasse não muda nada nos níveis antes dela', (classId) => {
+    const p = CLASS_PROGRESSIONS[classId];
+    const subLevel = p.subclassLevels[0]!;
+    const blank = createBlankSheet();
+    blank.build.abilities = { str: 14, dex: 14, con: 14, int: 14, wis: 14, cha: 14 };
+    blank.progression = { classId, levels: [] };
+    const before = levelUpSteps(blank, 20).filter((s) => s.level < subLevel);
+    for (const sub of p.subclasses) {
+      const withSub = levelUpSteps(blank, 20, { subclassId: sub.id }).filter(
+        (s) => s.level < subLevel,
+      );
+      expect(withSub, `${sub.id}`).toEqual(before);
+    }
+  });
+
+  it('Ladino 1 → 3 com Trapaceiro Arcano: nada de magia no 2; truques e magias no 3', () => {
+    const s = createBlankSheet();
+    s.build.abilities = { ...s.build.abilities, int: 14 };
+    s.progression = { classId: 'rogue', levels: [] };
+    const [two, three] = levelUpSteps(s, 3, { subclassId: 'arcane-trickster' });
+    expect(two!.choices.map((c) => c.key)).not.toContain('replace-cantrip');
+    expect(two!.choices.map((c) => c.key)).not.toContain('replace-spell');
+    expect(three!.choices.find((c) => c.key === 'cantrips')?.def).toMatchObject({ count: 3 });
+    expect(three!.gains.slots).toEqual([{ circle: 1, from: 0, to: 2 }]);
+  });
+});

@@ -28,13 +28,16 @@ import { useClassBookSubclasses } from '@/features/sheet/book-subclasses';
 import { ChoiceEditor, type ChoiceContext } from './ChoiceEditor';
 import { emptyDraft, isComplete, toInputs, type LevelDraft } from './state';
 
-type Phase = { kind: 'count' } | { kind: 'page'; index: number } | { kind: 'summary' };
+/** `id` guarda QUAL tela é (nível e escolha): se as telas mudam, ela continua na mesma. */
+type Phase = { kind: 'count' } | { kind: 'page'; index: number; id?: string } | { kind: 'summary' };
 
 /**
  * Tudo numa tela só ficava ruim de ler: cada nível vira várias telas curtas. A
  * subclasse vem antes (ela muda o que se ganha), depois o que ganhou, depois uma escolha por tela.
  */
 type Page = { level: number; kind: 'gains' } | { level: number; kind: 'choice'; key: string };
+
+const pageId = (p: Page) => `${p.level}:${p.kind === 'gains' ? 'gains' : p.key}`;
 
 function pagesOf(steps: LevelStep[]): Page[] {
   return steps.flatMap((step): Page[] => {
@@ -538,11 +541,16 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
 
   // ---------- 2) telas de cada nível ----------
   const pages = pagesOf(steps);
-  const page = pages[Math.min(phase.index, pages.length - 1)];
+  // Uma escolha (a subclasse, por exemplo) pode mudar as telas: acha de novo a tela atual pela
+  // identidade, para ela não "sumir" nem trocar por outra.
+  const found = phase.id ? pages.findIndex((x) => pageId(x) === phase.id) : -1;
+  const at = found >= 0 ? found : Math.min(phase.index, pages.length - 1);
+  const goTo = (i: number) => setPhase({ kind: 'page', index: i, id: pageId(pages[i]!) });
+  const page = pages[at];
   const step = page ? steps.find((x) => x.level === page.level) : undefined;
   if (!page || !step || !progression) return null;
   const draft = draftOf(step.level);
-  const last = phase.index >= pages.length - 1;
+  const last = at >= pages.length - 1;
   const slot = page.kind === 'choice' ? step.choices.find((c) => c.key === page.key) : undefined;
   const blocked = slot ? !isComplete(slot, draft) : false;
   const levelPages = pages.filter((x) => x.level === step.level);
@@ -572,15 +580,11 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
       footer={
         <>
           <span className="mr-auto self-center text-xs text-muted">
-            {tl.stepOf(phase.index + 1, pages.length)}
+            {tl.stepOf(at + 1, pages.length)}
           </span>
           <Button
             variant="ghost"
-            onClick={() =>
-              setPhase(
-                phase.index === 0 ? { kind: 'count' } : { kind: 'page', index: phase.index - 1 },
-              )
-            }
+            onClick={() => (at === 0 ? setPhase({ kind: 'count' }) : goTo(at - 1))}
           >
             <ArrowLeft className="size-4" />
             {tl.back}
@@ -588,9 +592,7 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
           <Button
             variant="primary"
             disabled={blocked}
-            onClick={() =>
-              setPhase(last ? { kind: 'summary' } : { kind: 'page', index: phase.index + 1 })
-            }
+            onClick={() => (last ? setPhase({ kind: 'summary' }) : goTo(at + 1))}
             data-testid="levelup.next"
           >
             {last ? tl.toSummary : tl.next}
@@ -606,7 +608,7 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
               key={i}
               className={cn(
                 'h-1.5 flex-1 rounded-full',
-                i < phase.index ? 'bg-accent/60' : i === phase.index ? 'bg-accent' : 'bg-surface-2',
+                i < at ? 'bg-accent/60' : i === at ? 'bg-accent' : 'bg-surface-2',
               )}
             />
           ))}
@@ -631,8 +633,8 @@ export default function LevelUpDialog({ onClose }: { onClose: () => void }) {
               className="rounded-md bg-surface-2 px-3 py-2 text-sm"
               data-testid="levelup.after-gains"
             >
-              {choicePages.some((x) => pages.indexOf(x) > phase.index)
-                ? tl.choicesNext(choicePages.filter((x) => pages.indexOf(x) > phase.index).length)
+              {choicePages.some((x) => pages.indexOf(x) > at)
+                ? tl.choicesNext(choicePages.filter((x) => pages.indexOf(x) > at).length)
                 : step.choices.length === 0
                   ? tl.nothingToChoose
                   : tl.allChosen}
