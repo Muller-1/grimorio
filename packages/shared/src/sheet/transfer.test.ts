@@ -33,6 +33,10 @@ describe('exportar e importar ficha', () => {
     const s = createBlankSheet();
     s.identity.name = 'Thalindra Folhaprateada!';
     expect(sheetFileName(s)).toBe('thalindra-folhaprateada.grimorio.json');
+    s.identity.name = 'Ærwyn Østergaard';
+    expect(sheetFileName(s)).toBe('aerwyn-ostergaard.grimorio.json');
+    s.identity.name = `${'a'.repeat(59)} b`;
+    expect(sheetFileName(s)).toBe(`${'a'.repeat(59)}.grimorio.json`);
     s.identity.name = '';
     expect(sheetFileName(s)).toBe('ficha.grimorio.json');
   });

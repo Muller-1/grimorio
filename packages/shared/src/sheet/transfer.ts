@@ -29,11 +29,15 @@ export function parseSheetFile(text: string): LocalSheet | null {
 /** "Thalindra Folhaprateada" → "thalindra-folhaprateada.grimorio.json" */
 export function sheetFileName(sheet: Pick<LocalSheet, 'identity'>): string {
   const slug = sheet.identity.name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
+    .replace(/æ/g, 'ae')
+    .replace(/œ/g, 'oe')
+    .replace(/ø/g, 'o')
+    .replace(/ß/g, 'ss')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60);
+    .slice(0, 60)
+    .replace(/^-+|-+$/g, '');
   return `${slug || 'ficha'}.grimorio.json`;
 }
