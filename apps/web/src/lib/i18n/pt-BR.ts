@@ -471,6 +471,11 @@ export const ptBR = {
     pageTitle: 'Meus personagens',
     lead: 'Fichas salvas na sua conta. Abra em qualquer aparelho.',
     create: 'Criar personagem',
+    importSheet: 'Importar ficha',
+    importing: 'Importando…',
+    imported: (name: string) => `${name} foi importada para a conta.`,
+    importFailed: 'Esse arquivo não é uma ficha do Grimório.',
+    importSaveFailed: 'Não foi possível salvar a ficha na conta agora. Tente de novo.',
     empty: 'Você ainda não tem personagens na conta.',
     emptyHint:
       'O assistente monta a ficha de nível 1 passo a passo, seguindo o Livro do Jogador (2024).',

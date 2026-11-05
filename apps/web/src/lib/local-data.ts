@@ -51,17 +51,22 @@ export function exportFileName(): string {
 }
 
 /** Baixa o arquivo .json com tudo (fica no aparelho; nada passa pelo servidor). */
-export function downloadExport(): void {
-  const blob = new Blob([JSON.stringify(buildExport(), null, 2)], { type: 'application/json' });
+/** Baixa `data` como um arquivo .json (Configurações → Exportar, exportar ficha). */
+export function downloadJson(fileName: string, data: unknown): void {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = exportFileName();
+  link.download = fileName;
   document.body.append(link);
   link.click();
   link.remove();
   // Alguns navegadores ainda leem o endereço logo depois do clique.
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function downloadExport(): void {
+  downloadJson(exportFileName(), buildExport());
 }
 
 /** O que "Apagar" leva: tudo do site, menos a cópia das fichas da conta. */

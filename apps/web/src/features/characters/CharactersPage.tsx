@@ -1,7 +1,7 @@
-import type { CharacterSummary } from '@grimorio/shared';
-import { CloudUpload, HardDrive, LogIn, Plus, ScrollText, Trash2 } from 'lucide-react';
+import { parseSheetFile, type CharacterSummary } from '@grimorio/shared';
+import { CloudUpload, HardDrive, LogIn, Plus, ScrollText, Trash2, Upload } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { ServerStatus } from '@/features/auth/ServerStatus';
@@ -10,7 +10,9 @@ import { InlineLoader } from '@/features/screens/InlineLoader';
 import { useToastStore } from '@/features/toast/store';
 import { formatDateTime } from '@/lib/format';
 import { t } from '@/lib/i18n';
-import { deleteCharacter, listCharacters } from './api';
+import { pickJsonFile } from '@/lib/pick-file';
+import { newId } from '@/ports/ids';
+import { createCharacter, deleteCharacter, listCharacters } from './api';
 import { forgetCachedCharacter, hasUnsyncedChanges } from './sync';
 
 type ListState =
@@ -97,6 +99,28 @@ export default function CharactersPage() {
   }, [c.pageTitle]);
 
   const [reloadKey, setReloadKey] = useState(0);
+  const [importing, setImporting] = useState(false);
+  const navigate = useNavigate();
+
+  // Ficha exportada (.json) vira uma ficha nova na conta, com id novo: nunca sobrescreve outra.
+  const importSheet = () =>
+    pickJsonFile((text) => {
+      const sheet = parseSheetFile(text);
+      if (!sheet) {
+        toast(c.importFailed, 'danger');
+        return;
+      }
+      setImporting(true);
+      const id = newId();
+      void createCharacter(id, sheet).then((result) => {
+        setImporting(false);
+        if (result.ok) {
+          toast(c.imported(sheet.identity.name || c.unnamed), 'success');
+          void navigate(`/personagem?id=${id}`);
+        } else if (result.error?.code === 'LIMIT_EXCEEDED') toast(c.limit, 'danger');
+        else toast(c.importSaveFailed, 'danger');
+      });
+    });
   useEffect(() => {
     if (status !== 'signed-in') return;
     let cancelled = false;
@@ -136,12 +160,25 @@ export default function CharactersPage() {
         <h1 className="font-display text-2xl font-bold">{c.pageTitle}</h1>
         {status === 'signed-in' ? <p className="text-sm text-muted">{c.lead}</p> : null}
       </div>
-      <Button asChild variant="primary" data-testid="characters.create">
-        <Link to="/criar">
-          <Plus className="size-4" aria-hidden="true" />
-          {c.create}
-        </Link>
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        {status === 'signed-in' ? (
+          <Button
+            variant="ghost"
+            disabled={importing}
+            onClick={importSheet}
+            data-testid="characters.import"
+          >
+            <Upload className="size-4" aria-hidden="true" />
+            {importing ? c.importing : c.importSheet}
+          </Button>
+        ) : null}
+        <Button asChild variant="primary" data-testid="characters.create">
+          <Link to="/criar">
+            <Plus className="size-4" aria-hidden="true" />
+            {c.create}
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 

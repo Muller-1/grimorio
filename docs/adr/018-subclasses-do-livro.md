@@ -24,7 +24,7 @@ uma tela para a outra na subida de nível.
    e junta as subclasses em `CLASS_PROGRESSIONS[classe].subclasses`, depois da do SRD; daí em diante
    o motor trata todas igual. O Vite deixa esses arquivos fora do pedaço `rules` (2,7 a 3,6 kB cada).
 2. **A ficha só espera quando precisa.** `sheetNeedsBookSubclasses` diz se a subclasse gravada é do
-   livro e ainda não chegou; só nesse caso a ficha mostra "Carregando a subclasse…". SRD e "Outra
+   livro e ainda não chegou; só nesse caso a ficha mostra "Carregando…". SRD e "Outra
    (do livro)" abrem como antes. A ficha baixa a classe em segundo plano para a subida de nível, e
    o diálogo refaz o plano quando ela chega. Sem internet, segue com as do SRD.
 3. **Cache da ficha com revisão.** `derivedOf` guarda junto a `bookSubclassRevision()`; quando chega

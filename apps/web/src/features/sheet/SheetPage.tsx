@@ -1,5 +1,5 @@
 import { needsArmorUpgrade } from '@grimorio/rules';
-import { createBlankSheet } from '@grimorio/shared';
+import { createBlankSheet, type LocalSheet } from '@grimorio/shared';
 import { ArrowLeft, Wand2 } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
@@ -10,6 +10,7 @@ import { InlineLoader } from '@/features/screens/InlineLoader';
 import { useToastStore } from '@/features/toast/store';
 import { t } from '@/lib/i18n';
 import { ts } from '@/lib/i18n/sheet';
+import { pickJsonFile } from '@/lib/pick-file';
 import { useFloatingDice } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
 import { AbilitiesPanel } from './components/AbilitiesPanel';
@@ -70,7 +71,8 @@ function WizardHint() {
     </aside>
   );
 }
-type Confirm = 'blank' | 'example' | null;
+/** Trocar a ficha deste navegador: pelo exemplo, por uma em branco ou por uma importada. */
+type Confirm = { sheet: () => LocalSheet; title: string; text: string; done?: string } | null;
 
 /**
  * A ficha (docs/design.md): a faixa de identidade em cima; atributos (com salvaguardas e
@@ -144,7 +146,7 @@ export default function SheetPage({
     { key: 'actions', label: ts.mobileTabs.actions },
   ];
   // Subclasse do livro ainda chegando: espera um instante em vez de calcular a ficha sem ela.
-  if (!subclassesReady) return <InlineLoader label={ts.loadingSubclass} className="py-16" />;
+  if (!subclassesReady) return <InlineLoader label={t.common.loading} className="py-16" />;
 
   const hidden = (key: Column) => column !== key && 'max-md:hidden';
   const wide = 'min-w-0 md:flex-[2_1_760px]';
@@ -164,7 +166,28 @@ export default function SheetPage({
       <IdentityBar
         {...(mode === 'account' ? { status } : {})}
         {...(mode === 'local'
-          ? { onExample: () => setConfirm('example'), onBlank: () => setConfirm('blank') }
+          ? {
+              onExample: () =>
+                setConfirm({
+                  sheet: exampleSheet,
+                  title: ts.exampleConfirmTitle,
+                  text: ts.exampleConfirmText,
+                }),
+              onBlank: () =>
+                setConfirm({
+                  sheet: createBlankSheet,
+                  title: ts.newSheetConfirmTitle,
+                  text: ts.newSheetConfirmText,
+                }),
+              onImport: () =>
+                pickJsonFile((text) => {
+                  void import('./transfer').then((m) => {
+                    const read = m.readImport(text, ts.unnamed);
+                    if ('error' in read) toast(read.error, 'danger');
+                    else setConfirm({ ...read, sheet: () => read.sheet });
+                  });
+                }),
+            }
           : {})}
       />
 
@@ -244,8 +267,8 @@ export default function SheetPage({
       <Dialog
         open={confirm !== null}
         onOpenChange={(o) => !o && setConfirm(null)}
-        title={confirm === 'example' ? ts.exampleConfirmTitle : ts.newSheetConfirmTitle}
-        description={confirm === 'example' ? ts.exampleConfirmText : ts.newSheetConfirmText}
+        title={confirm?.title ?? ''}
+        description={confirm?.text ?? ''}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirm(null)}>
@@ -254,7 +277,9 @@ export default function SheetPage({
             <Button
               variant="primary"
               onClick={() => {
-                replace(confirm === 'example' ? exampleSheet() : createBlankSheet());
+                if (!confirm) return;
+                replace(confirm.sheet());
+                if (confirm.done) toast(confirm.done, 'success');
                 setConfirm(null);
                 setColumn('character');
               }}

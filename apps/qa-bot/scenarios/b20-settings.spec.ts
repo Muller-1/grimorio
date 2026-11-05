@@ -4,7 +4,7 @@
  */
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
-import { expect, openPage, rollBy, test } from '../support/bot';
+import { expect, loadExampleSheet, openPage, rollBy, test } from '../support/bot';
 
 const radio = (page: Page, testId: string) => page.getByTestId(testId).getByRole('radio');
 
@@ -156,5 +156,36 @@ test.describe('B20 — configurações', { tag: '@B20' }, () => {
     }
     await page.waitForURL(/\/configuracoes$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Configurações');
+  });
+
+  test('ficha avulsa: exporta em .json e importa de volta, com confirmação', async ({ page }) => {
+    await openPage(page, '/ficha');
+    await loadExampleSheet(page);
+    const name = await page.locator('h1').first().textContent();
+
+    await page.getByTestId('sheet.menu').click();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByTestId('sheet.export').click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/\.grimorio\.json$/);
+    const path = (await download.path())!;
+    expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({ kind: 'local-sheet' });
+
+    // Ficha nova em branco, depois importa o arquivo: o nome volta.
+    await page.keyboard.press('Escape');
+    await page.getByTestId('sheet.menu').click();
+    await page.getByRole('button', { name: 'Nova ficha' }).click();
+    await page.getByRole('button', { name: 'Sim, continuar' }).click();
+    await expect(page.locator('h1').first()).not.toHaveText(name!);
+
+    await page.getByTestId('sheet.menu').click();
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByTestId('sheet.import').click(),
+    ]);
+    await chooser.setFiles(path);
+    await page.getByRole('button', { name: 'Sim, continuar' }).click();
+    await expect(page.locator('h1').first()).toHaveText(name!);
   });
 });

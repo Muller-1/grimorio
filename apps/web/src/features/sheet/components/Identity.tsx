@@ -1,4 +1,4 @@
-import { FilePlus2, ImageUp, Pencil, Sparkles } from 'lucide-react';
+import { Download, FilePlus2, ImageUp, Pencil, Sparkles, Upload } from 'lucide-react';
 import { lazy, Suspense, useId, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -241,10 +241,12 @@ function SheetMenu({
   onEdit,
   onExample,
   onBlank,
+  onImport,
 }: {
   onEdit: () => void;
   onExample?: (() => void) | undefined;
   onBlank?: (() => void) | undefined;
+  onImport?: (() => void) | undefined;
 }) {
   const item = 'w-full justify-start';
   return (
@@ -284,6 +286,28 @@ function SheetMenu({
             {ts.newSheet}
           </Button>
         ) : null}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={item}
+          onClick={() => void import('../transfer').then((m) => m.exportOpenSheet())}
+          data-testid="sheet.export"
+        >
+          <Download className="size-4" />
+          {ts.exportSheet}
+        </Button>
+        {onImport ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={item}
+            onClick={onImport}
+            data-testid="sheet.import"
+          >
+            <Upload className="size-4" />
+            {ts.importSheet}
+          </Button>
+        ) : null}
       </div>
     </Popover>
   );
@@ -297,11 +321,14 @@ export function IdentityBar({
   status,
   onExample,
   onBlank,
+  onImport,
 }: {
   /** Ficha da conta: a situação do salvamento; sem ela, "Salvo neste navegador". */
   status?: ReactNode;
   onExample?: () => void;
   onBlank?: () => void;
+  /** Ficha deste navegador: trocar por uma ficha exportada (.json). */
+  onImport?: () => void;
 }) {
   const { sheet, derived } = useSheet();
   const [editing, setEditing] = useState(false);
@@ -395,7 +422,12 @@ export function IdentityBar({
             {`+${derived.proficiencyBonus.value}`}
           </span>
         </ExplainButton>
-        <SheetMenu onEdit={() => setEditing(true)} onExample={onExample} onBlank={onBlank} />
+        <SheetMenu
+          onEdit={() => setEditing(true)}
+          onExample={onExample}
+          onBlank={onBlank}
+          onImport={onImport}
+        />
       </div>
       <IdentityDialog open={editing} onClose={() => setEditing(false)} />
     </section>

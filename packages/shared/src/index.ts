@@ -4,3 +4,4 @@ export * from './sheet/local-sheet';
 export * from './sheet/migrations';
 export * from './sheet/creation';
 export * from './sheet/sections';
+export * from './sheet/transfer';

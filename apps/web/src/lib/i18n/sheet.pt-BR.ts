@@ -16,7 +16,6 @@ const DURATION_UNITS = {
 export const sheetPtBR = {
   pageTitle: 'Ficha de personagem',
   unnamed: 'Personagem sem nome',
-  loadingSubclass: 'Carregando a subclasse…',
   savedLocally: 'Salvo neste navegador',
   wizardHint: {
     title: 'Primeira vez? Deixe o assistente montar a ficha',
@@ -26,6 +25,8 @@ export const sheetPtBR = {
   },
   newSheet: 'Nova ficha',
   loadExample: 'Carregar exemplo',
+  exportSheet: 'Exportar ficha',
+  importSheet: 'Importar ficha',
   newSheetConfirmTitle: 'Começar uma ficha nova?',
   newSheetConfirmText: 'A ficha atual será apagada deste navegador. Isso não pode ser desfeito.',
   exampleConfirmTitle: 'Carregar o personagem de exemplo?',

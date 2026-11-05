@@ -1,5 +1,5 @@
 import { bookSubclassesReady, loadBookSubclasses, sheetNeedsBookSubclasses } from '@grimorio/rules';
-import { useEffect, useReducer } from 'react';
+import { useEffect, useState } from 'react';
 
 type ProgressionLike = { classId: string; subclassId?: string | undefined } | undefined;
 
@@ -8,24 +8,18 @@ type ProgressionLike = { classId: string; subclassId?: string | undefined } | un
  * vier (sem internet), segue com as do SRD em vez de esperar para sempre.
  */
 export function useClassBookSubclasses(classId: string | undefined): boolean {
-  const [failed, markFailed] = useReducer(
-    (_: string | undefined, id: string | undefined) => id,
-    undefined,
-  );
-  const [, rerender] = useReducer((n: number) => n + 1, 0);
+  const [done, setDone] = useState<string>();
   useEffect(() => {
     if (!classId) return;
     let alive = true;
-    // Ao chegar, desenha de novo: é o que tira a tela de espera (sem "vai e volta").
-    void loadBookSubclasses(classId).then(
-      () => alive && rerender(),
-      () => alive && markFailed(classId),
-    );
+    // Ao chegar (ou falhar), desenha de novo: é o que tira a tela de espera.
+    const finish = () => alive && setDone(classId);
+    void loadBookSubclasses(classId).then(finish, finish);
     return () => {
       alive = false;
     };
   }, [classId]);
-  return bookSubclassesReady(classId) || failed === classId;
+  return bookSubclassesReady(classId) || done === classId;
 }
 
 /**
