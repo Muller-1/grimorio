@@ -19,6 +19,10 @@ import { newId } from '@/ports/ids';
 
 const inv = te.inventory;
 
+/** Os mesmos tetos do formato da ficha (`WeaponSchema`, `InventorySchema`). */
+const MAX_WEAPONS = 50;
+const MAX_ITEMS = 200;
+
 /** "1d8 Cortante · Versátil (1d10) · Maestria: Afligir" / "CA 16 · Armadura Pesada · sem Destreza". */
 function detail(e: CatalogEntry): string {
   const parts: string[] = [];
@@ -47,9 +51,26 @@ export default function BookItemsDialog({ onClose }: { onClose: () => void }) {
   const results = useMemo(() => searchCatalog(query, kind || undefined), [query, kind]);
 
   const add = (entry: CatalogEntry) => {
+    const sheet = useSheetStore.getState().sheet;
+    const out = catalogToSheet(entry, sheet, newId);
+    // Item igual (mesmo nome, sem números mudados) soma na quantidade: 20 flechas, uma linha só.
+    const same =
+      'item' in out
+        ? sheet.inventory.items.findIndex(
+            (i) => i.name === out.item.name && Boolean(i.armor) === Boolean(out.item.armor),
+          )
+        : -1;
+    const full =
+      'weapon' in out
+        ? sheet.weapons.length >= MAX_WEAPONS
+        : same < 0 && sheet.inventory.items.length >= MAX_ITEMS;
+    if (full) {
+      toast(b.full, 'danger');
+      return;
+    }
     edit((d) => {
-      const out = catalogToSheet(entry, d, newId);
       if ('weapon' in out) d.weapons.push(out.weapon);
+      else if (same >= 0) d.inventory.items[same]!.quantity += 1;
       else d.inventory.items.push(out.item);
     });
     toast(b.added(entry.name), 'success');

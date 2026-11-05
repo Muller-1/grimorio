@@ -6,6 +6,7 @@ export const bookItemsPtBR = {
   kind: 'Tipo',
   kinds: { all: 'Tudo', weapon: 'Armas', armor: 'Armaduras', gear: 'Equipamento' },
   empty: 'Nada encontrado.',
+  full: 'A ficha chegou ao limite (50 armas ou 200 itens). Tire algo antes de adicionar.',
   addOne: (name: string) => `Adicionar ${name}`,
   added: (name: string) => `Adicionado: ${name}.`,
   dexMax: (cap: number) => (cap === 0 ? 'sem Destreza' : `+ Destreza (máx. ${cap})`),

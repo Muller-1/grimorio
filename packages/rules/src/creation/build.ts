@@ -93,7 +93,7 @@ function isMonkWeapon(weapon: WeaponDef): boolean {
 }
 
 /** Propriedades estruturadas a partir do texto do livro ("Arremesso (6/18 m), Leve"). */
-function weaponProperties(weapon: WeaponDef): Partial<Weapon> {
+export function weaponProperties(weapon: WeaponDef): Partial<Weapon> {
   const text = weapon.properties;
   const distance = /\((\d+(?:,\d+)?)\/(\d+(?:,\d+)?) m/.exec(text);
   const meters = (s: string) => Number(s.replace(',', '.'));

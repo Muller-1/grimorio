@@ -1,5 +1,5 @@
 import type { DamageType, Item, LocalSheet, Weapon } from '@grimorio/shared';
-import { toSheetWeapon } from '../creation/build';
+import { toSheetWeapon, weaponProperties } from '../creation/build';
 import { CLASSES, WEAPONS, type ClassId, type WeaponId } from '../creation/content';
 import { ARMOR, armorItemData, type ArmorKind } from './armor';
 import { itemKey, KNOWN_ITEM_WEIGHTS, knownWeightKg } from './weights';
@@ -51,23 +51,22 @@ export function bookCatalog(): CatalogEntry[] {
     armor: { kind: a.kind, base: a.base, dexCap: a.dexCap },
   }));
   const taken = new Set([...weapons, ...armor].map((e) => itemKey(e.name)));
-  const gear: CatalogEntry[] = KNOWN_ITEM_WEIGHTS.filter(([name]) => !taken.has(itemKey(name))).map(
-    ([name, kg]) => ({ id: `gear:${itemKey(name)}`, kind: 'gear', name, weightKg: kg }),
-  );
+  // Ataque Desarmado está na tabela de pesos (peso 0), mas não é item.
+  const gear: CatalogEntry[] = KNOWN_ITEM_WEIGHTS.filter(
+    ([name]) => !taken.has(itemKey(name)) && !name.startsWith('Ataque Desarmado'),
+  ).map(([name, kg]) => ({ id: `gear:${itemKey(name)}`, kind: 'gear', name, weightKg: kg }));
   const byName = (a: CatalogEntry, b: CatalogEntry) => a.name.localeCompare(b.name, 'pt-BR');
   cache = [...weapons.sort(byName), ...armor, ...gear.sort(byName)];
   return cache;
 }
 
-const fold = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-
-/** Busca sem acento pelo nome (e pelas propriedades das armas), num tipo ou em todos. */
+/** Busca sem acento e no singular ("flechas" acha Flecha), pelo nome e pelas propriedades das armas. */
 export function searchCatalog(query: string, kind?: CatalogKind): CatalogEntry[] {
-  const q = fold(query.trim());
+  const q = itemKey(query);
   return bookCatalog().filter(
     (e) =>
       (!kind || e.kind === kind) &&
-      (q === '' || fold(`${e.name} ${e.weapon?.properties ?? ''}`).includes(q)),
+      (q === '' || itemKey(`${e.name} ${e.weapon?.properties ?? ''}`).includes(q)),
   );
 }
 
@@ -105,6 +104,7 @@ export function catalogToSheet(
           magicBonus: 0,
           critRange: 20,
           properties: def.properties,
+          ...weaponProperties(def),
           ...(entry.weightKg !== undefined ? { weightKg: entry.weightKg } : {}),
         },
       };

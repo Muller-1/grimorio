@@ -70,4 +70,13 @@ describe('catálogo de itens do livro', () => {
     const out = catalogToSheet(entry('gear:corda'), createBlankSheet(), newId);
     expect('item' in out && out.item).toMatchObject({ name: 'Corda', quantity: 1, weightKg: 2.5 });
   });
+
+  it('sem Ataque Desarmado; busca no plural; arma sem classe mantém arremesso e distância', () => {
+    expect(bookCatalog().some((e) => e.name.startsWith('Ataque Desarmado'))).toBe(false);
+    expect(searchCatalog('flechas').map((e) => e.name)).toContain('Flecha');
+    expect(searchCatalog('adagas').map((e) => e.name)).toContain('Adaga');
+    const out = catalogToSheet(entry('weapon:javelin'), createBlankSheet(), newId);
+    expect('weapon' in out && out.weapon).toMatchObject({ thrown: true, range: 'melee' });
+    expect('weapon' in out && out.weapon.rangeM).toBeDefined();
+  });
 });
