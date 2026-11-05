@@ -184,7 +184,13 @@ function HpChoice({
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold text-muted">{tl.hp}</p>
         <p className="font-display text-xl font-bold">
-          <span data-testid="levelup.hp.value" data-value={total}>
+          <span
+            // O valor rolado aparece com o mesmo efeito da rolagem de dados (desliga com as animações).
+            key={rolled ?? 'media'}
+            className={rolled === undefined ? undefined : 'animate-roll-pop'}
+            data-testid="levelup.hp.value"
+            data-value={total}
+          >
             +{total}
           </span>
         </p>

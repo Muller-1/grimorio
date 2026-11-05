@@ -333,13 +333,25 @@ function BackgroundBonus() {
   );
 }
 
+/** Cada linha começa 140 ms depois da anterior; cada dado, 50 ms depois do vizinho. */
+const ROW_MS = 140;
+const DIE_MS = 50;
+const landing = (row: number) => row * ROW_MS + 3 * DIE_MS + 500;
+const rollStyle = (animation: string, row: number, die: number): CSSProperties => ({
+  animation,
+  animationDelay: `${row * ROW_MS + die * DIE_MS}ms`,
+});
+
 function RollPanel() {
   const rolls = useBuilderStore((s) => s.rolls);
   const update = useBuilderStore((s) => s.update);
   const setRolls = useBuilderStore((s) => s.setRolls);
   const [confirm, setConfirm] = useState(false);
+  // Só a rolagem feita agora anima (voltar para esta etapa mostra os valores parados).
+  const [fresh, setFresh] = useState(0);
   const roll = () => {
     const result = rollAbilityScores(getRng());
+    setFresh((n) => n + 1);
     setRolls(result);
     update((d) => {
       d.rolled = result.map((r) => r.total);
@@ -351,7 +363,7 @@ function RollPanel() {
       {rolls ? (
         <div>
           <p className="mb-1 text-xs font-semibold text-muted">{a.rolledTitle}</p>
-          <ul className="flex flex-wrap gap-2" data-testid="wizard.rolls">
+          <ul key={fresh} className="flex flex-wrap gap-2" data-testid="wizard.rolls">
             {rolls.map((r, i) => (
               <li
                 key={i}
@@ -366,11 +378,19 @@ function RollPanel() {
                         ? 'border-dashed text-muted line-through'
                         : 'border-border-strong',
                     )}
+                    // Os d6 giram (gr-tumble, do CSS do site), uma linha depois da outra. Com as
+                    // animações desligadas, a regra global corta tudo.
+                    style={fresh ? rollStyle(`gr-tumble 0.25s linear 2`, i, j) : undefined}
                   >
                     {d}
                   </span>
                 ))}
-                <strong className="tabular ml-1 font-display text-lg">{r.total}</strong>
+                <strong
+                  className={cn('tabular ml-1 font-display text-lg', fresh && 'animate-roll-pop')}
+                  style={fresh ? { animationDelay: `${landing(i)}ms` } : undefined}
+                >
+                  {r.total}
+                </strong>
               </li>
             ))}
           </ul>
